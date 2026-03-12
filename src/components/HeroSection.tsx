@@ -32,7 +32,7 @@ const HeroSection = () => {
             <span className="text-[10px] md:text-xs text-primary font-medium">Now Streaming Worldwide</span>
           </div>
 
-          <h1 className="font-display text-3xl sm:text-5xl md:text-7xl lg:text-8xl text-foreground leading-[0.9] mb-3 md:mb-4">
+          <h1 className="netflix-title text-3xl sm:text-5xl md:text-7xl lg:text-8xl text-foreground leading-[0.9] mb-3 md:mb-4">
             UNLIMITED MOVIES,
             <br />
             <span className="bg-gradient-to-r from-primary via-accent to-orange-500 bg-clip-text text-transparent">
@@ -40,12 +40,12 @@ const HeroSection = () => {
             </span>
           </h1>
 
-          <p className="text-sm md:text-xl text-muted-foreground mb-2 md:mb-3 max-w-2xl mx-auto">
+          <p className="text-sm md:text-xl text-muted-foreground mb-2 md:mb-3 max-w-2xl mx-auto font-medium">
             Access Netflix, Prime Video, Disney+, HBO Max & 50+ OTT platforms — all in one place.
           </p>
 
-          <p className="text-xs md:text-sm text-muted-foreground mb-5 md:mb-8">
-            Starting at just <span className="text-primary font-bold">ZMW 39</span> — one-time payment, instant access.
+          <p className="text-xs md:text-sm text-muted-foreground mb-5 md:mb-8 font-medium">
+            Starting at just <span className="text-primary font-bold">ZMW 49</span> — one-time payment, instant access.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-2 md:gap-3 max-w-lg mx-auto mb-4 md:mb-6">

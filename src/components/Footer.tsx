@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -7,14 +6,14 @@ import LogoShowcase from "@/components/LogoShowcase";
 
 const termsContent = [
   { heading: "1. Service Description", text: "Stream Net Mirror provides users with access credentials to the NetMirror streaming portal upon successful payment. We act as an access gateway and do not host, upload, or store any streaming content on our servers." },
-  { heading: "2. Payment", text: "The service requires a one-time payment of ZMW 39 (Zambian Kwacha) via Mobile Money (Airtel Money or MTN MoMo). Payment is processed instantly and access is granted immediately upon confirmation." },
+  { heading: "2. Payment", text: "The service requires a one-time payment of ZMW 49 (Zambian Kwacha) via Mobile Money (Airtel Money or MTN MoMo). Payment is processed instantly and access is granted immediately upon confirmation." },
   { heading: "3. Chargebacks", text: "Filing a chargeback or disputing a legitimate transaction may result in immediate suspension of your account and access to the streaming portal." },
   { heading: "4. Refund Policy", text: "Refunds are available within 7 days of purchase. Contact onlineplagiarismremover@gmail.com with your transaction details." },
   { heading: "5. Disclaimer", text: "This website is intended strictly for educational and informational purposes. We do not own, manage, or have any affiliation with any streaming platforms." },
 ];
 
 const privacyContent = [
-  { heading: "1. Information We Collect", text: "We collect your name and phone number solely for payment processing via Mobile Money." },
+  { heading: "1. Information We Collect", text: "We collect your name, email, and phone number solely for payment processing via Mobile Money." },
   { heading: "2. How We Use Your Information", text: "Your information is used exclusively to process your payment and provide access. We do not sell or share your data." },
   { heading: "3. Data Security", text: "We implement appropriate security measures. Payment processing is handled by trusted Mobile Money providers." },
   { heading: "4. Cookies", text: "Our website may use cookies for analytics purposes to improve user experience." },
@@ -28,7 +27,7 @@ const LegalDialog = ({ title, content, fullPageLink }: { title: string; content:
     </DialogTrigger>
     <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto bg-background border-border">
       <DialogHeader>
-        <DialogTitle className="font-display text-xl text-foreground">{title}</DialogTitle>
+        <DialogTitle className="netflix-title text-xl text-foreground">{title}</DialogTitle>
       </DialogHeader>
       <div className="space-y-4 mt-2">
         {content.map((s) => (
@@ -80,7 +79,7 @@ const Footer = () => {
             ]},
           ].map((col) => (
             <div key={col.title}>
-              <h4 className="font-display text-sm md:text-lg text-foreground mb-2 md:mb-4">{col.title}</h4>
+              <h4 className="netflix-title text-sm md:text-lg text-foreground mb-2 md:mb-4">{col.title}</h4>
               <ul className="space-y-1.5 md:space-y-2 text-[10px] md:text-sm text-muted-foreground">
                 {col.items.map((item: any) => (
                   <li key={item.label}>
@@ -102,7 +101,7 @@ const Footer = () => {
 
         {/* Disclaimer */}
         <div className="mb-4 md:mb-8">
-          <h5 className="font-display text-[10px] md:text-sm text-muted-foreground mb-1.5 md:mb-3 tracking-wide">DISCLAIMER</h5>
+          <h5 className="netflix-title text-[10px] md:text-sm text-muted-foreground mb-1.5 md:mb-3 tracking-wide">DISCLAIMER</h5>
           <p className="text-[9px] md:text-xs text-muted-foreground/70 leading-relaxed max-w-4xl">
             The website https://www.netmirrorc.com/ is intended strictly for educational and informational purposes. We do not own, manage, or have any affiliation with any streaming platforms, services, or the NetMirror app itself. We do not encourage or promote piracy or the use of illegal services in any form.
           </p>

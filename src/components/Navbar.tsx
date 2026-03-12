@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import LogoShowcase from "@/components/LogoShowcase";
 
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
@@ -32,10 +33,9 @@ const Navbar = () => {
     >
       <div className="container mx-auto flex items-center justify-between px-4 py-2 md:py-3">
         <Link to="/" className="flex items-center gap-2">
-          <img src="/logo-hexagon.png" alt="Stream Net Mirror" className="h-12 w-12 md:h-16 md:w-16 object-contain" />
-          <img src="/logo-n.png" alt="NetMirror" className="h-12 w-12 md:h-16 md:w-16 object-contain" />
-          <span className="font-display text-base md:text-2xl tracking-wider text-foreground">
-            STREAM NET MIRROR
+          <LogoShowcase size="md" />
+          <span className="netflix-title text-lg md:text-2xl text-primary">
+            NETMIRROR
           </span>
         </Link>
 
