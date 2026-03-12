@@ -4,15 +4,32 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AnimatePresence } from "framer-motion";
+import { useEffect } from "react";
+import { trackPageView } from "@/lib/analytics";
 import PageTransition from "@/components/PageTransition";
+import AdminRoute from "@/components/admin/AdminRoute";
 import Index from "./pages/Index.tsx";
 import Payment from "./pages/Payment.tsx";
 import Access from "./pages/Access.tsx";
 import Terms from "./pages/Terms.tsx";
 import Privacy from "./pages/Privacy.tsx";
 import NotFound from "./pages/NotFound.tsx";
+import AdminLogin from "./pages/admin/AdminLogin.tsx";
+import Dashboard from "./pages/admin/Dashboard.tsx";
+import AdminPayments from "./pages/admin/Payments.tsx";
+import Analytics from "./pages/admin/Analytics.tsx";
+import Customers from "./pages/admin/Customers.tsx";
+import AdminSettings from "./pages/admin/Settings.tsx";
 
 const queryClient = new QueryClient();
+
+const PageViewTracker = () => {
+  const location = useLocation();
+  useEffect(() => {
+    trackPageView(location.pathname);
+  }, [location.pathname]);
+  return null;
+};
 
 const AnimatedRoutes = () => {
   const location = useLocation();
@@ -24,6 +41,12 @@ const AnimatedRoutes = () => {
         <Route path="/access" element={<PageTransition><Access /></PageTransition>} />
         <Route path="/terms" element={<PageTransition><Terms /></PageTransition>} />
         <Route path="/privacy" element={<PageTransition><Privacy /></PageTransition>} />
+        <Route path="/admin/login" element={<AdminLogin />} />
+        <Route path="/admin" element={<AdminRoute><Dashboard /></AdminRoute>} />
+        <Route path="/admin/payments" element={<AdminRoute><AdminPayments /></AdminRoute>} />
+        <Route path="/admin/analytics" element={<AdminRoute><Analytics /></AdminRoute>} />
+        <Route path="/admin/customers" element={<AdminRoute><Customers /></AdminRoute>} />
+        <Route path="/admin/settings" element={<AdminRoute><AdminSettings /></AdminRoute>} />
         <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
       </Routes>
     </AnimatePresence>
@@ -36,6 +59,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
+        <PageViewTracker />
         <AnimatedRoutes />
       </BrowserRouter>
     </TooltipProvider>

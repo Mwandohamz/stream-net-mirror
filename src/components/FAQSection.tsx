@@ -6,8 +6,8 @@ import {
 } from "@/components/ui/accordion";
 
 const faqs = [
-  { q: "What is Stream Net Mirror?", a: "Stream Net Mirror is your gateway to accessing premium content from 50+ OTT platforms including Netflix, Disney+, Prime Video, HBO Max and more — all with a single one-time payment of ZMW 39." },
-  { q: "How much does it cost?", a: "Stream Net Mirror costs a one-time payment of ZMW 39. There are no recurring fees or hidden charges. Pay once and get instant access." },
+  { q: "What is Stream Net Mirror?", a: "Stream Net Mirror is your gateway to accessing premium content from 50+ OTT platforms including Netflix, Disney+, Prime Video, HBO Max and more — all with a single one-time payment of ZMW 49." },
+  { q: "How much does it cost?", a: "Stream Net Mirror costs a one-time payment of ZMW 49. There are no recurring fees or hidden charges. Pay once and get instant access." },
   { q: "What payment methods are accepted?", a: "We accept Mobile Money payments through Airtel Money and MTN MoMo. Simply enter your phone number and provider to complete the payment." },
   { q: "How do I access the streaming service after payment?", a: "After successful payment, you'll receive instant access credentials and a direct link to the NetMirror streaming portal where you can start watching immediately." },
   { q: "Can I download the app?", a: "Yes! The NetMirror APK is available for Android devices. iOS users can access it via WebView tools like DODO or iOSMirror. You can also stream directly through any web browser." },
@@ -20,10 +20,10 @@ const FAQSection = () => {
   return (
     <section id="faq" className="py-8 md:py-16">
       <div className="container mx-auto px-4 max-w-3xl">
-        <h2 className="font-display text-2xl md:text-5xl text-foreground text-center mb-1 md:mb-2">
+        <h2 className="netflix-title text-2xl md:text-5xl text-foreground text-center mb-1 md:mb-2">
           FREQUENTLY ASKED QUESTIONS
         </h2>
-        <p className="text-xs md:text-base text-muted-foreground text-center mb-6 md:mb-10">
+        <p className="text-xs md:text-base text-muted-foreground text-center mb-6 md:mb-10 font-medium">
           Everything you need to know about Stream Net Mirror
         </p>
 
