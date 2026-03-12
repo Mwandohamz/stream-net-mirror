@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
@@ -29,10 +30,10 @@ const Navbar = () => {
           : "bg-gradient-to-b from-background/80 to-transparent"
       }`}
     >
-      <div className="container mx-auto flex items-center justify-between px-4 py-3">
+      <div className="container mx-auto flex items-center justify-between px-4 py-2 md:py-3">
         <Link to="/" className="flex items-center gap-2">
-          <img src="/logo-hexagon.png" alt="Stream Net Mirror" className="h-10 w-10 object-contain" />
-          <span className="font-display text-2xl tracking-wider text-foreground hidden sm:inline">
+          <img src="/logo-hexagon.png" alt="Stream Net Mirror" className="h-10 w-10 md:h-12 md:w-12 object-contain" />
+          <span className="font-display text-lg md:text-2xl tracking-wider text-foreground">
             STREAM NET MIRROR
           </span>
         </Link>
@@ -63,32 +64,40 @@ const Navbar = () => {
         </div>
 
         {/* Mobile toggle */}
-        <button className="md:hidden text-foreground" onClick={() => setMobileOpen(!mobileOpen)}>
-          {mobileOpen ? <X size={24} /> : <Menu size={24} />}
+        <button className="md:hidden text-foreground p-2 -mr-2 active:scale-90 transition-transform" onClick={() => setMobileOpen(!mobileOpen)}>
+          {mobileOpen ? <X size={22} /> : <Menu size={22} />}
         </button>
       </div>
 
       {/* Mobile menu */}
-      {mobileOpen && (
-        <div className="md:hidden bg-background/95 backdrop-blur-md border-t border-border px-4 pb-4">
-          {links.map((l) => (
-            <a
-              key={l.label}
-              href={l.href}
-              className="block py-3 text-muted-foreground hover:text-foreground transition-colors border-b border-border/50"
-              onClick={() => setMobileOpen(false)}
-            >
-              {l.label}
-            </a>
-          ))}
-          <Button
-            className="w-full mt-3 bg-primary text-primary-foreground"
-            onClick={() => { setMobileOpen(false); navigate("/payment"); }}
+      <AnimatePresence>
+        {mobileOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="md:hidden bg-background/95 backdrop-blur-md border-t border-border px-4 pb-4 overflow-hidden"
           >
-            Get Started
-          </Button>
-        </div>
-      )}
+            {links.map((l) => (
+              <a
+                key={l.label}
+                href={l.href}
+                className="block py-3 text-sm text-muted-foreground hover:text-foreground transition-colors border-b border-border/50 active:bg-secondary/30"
+                onClick={() => setMobileOpen(false)}
+              >
+                {l.label}
+              </a>
+            ))}
+            <Button
+              className="w-full mt-3 bg-primary text-primary-foreground active:scale-95 transition-transform"
+              onClick={() => { setMobileOpen(false); navigate("/payment"); }}
+            >
+              Get Started
+            </Button>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </nav>
   );
 };
