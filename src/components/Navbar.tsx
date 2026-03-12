@@ -32,8 +32,9 @@ const Navbar = () => {
     >
       <div className="container mx-auto flex items-center justify-between px-4 py-2 md:py-3">
         <Link to="/" className="flex items-center gap-2">
-          <img src="/logo-hexagon.png" alt="Stream Net Mirror" className="h-10 w-10 md:h-12 md:w-12 object-contain" />
-          <span className="font-display text-lg md:text-2xl tracking-wider text-foreground">
+          <img src="/logo-hexagon.png" alt="Stream Net Mirror" className="h-12 w-12 md:h-16 md:w-16 object-contain" />
+          <img src="/logo-n.png" alt="NetMirror" className="h-12 w-12 md:h-16 md:w-16 object-contain" />
+          <span className="font-display text-base md:text-2xl tracking-wider text-foreground">
             STREAM NET MIRROR
           </span>
         </Link>
