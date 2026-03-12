@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { Tv, Film, Play, Monitor, Radio, Clapperboard, Popcorn, Headphones, Video } from "lucide-react";
+import LogoShowcase from "@/components/LogoShowcase";
 
 const partners = [
   { name: "Netflix", icon: Film, color: "text-red-500" },
@@ -17,6 +18,9 @@ const OTTPartners = () => {
   return (
     <section className="py-8 md:py-16 bg-secondary/30">
       <div className="container mx-auto px-4 text-center">
+        <div className="flex justify-center mb-4 md:mb-6">
+          <LogoShowcase size="md" />
+        </div>
         <h2 className="font-display text-2xl md:text-5xl text-foreground mb-1 md:mb-2">ALL YOUR FAVORITES</h2>
         <p className="text-xs md:text-base text-muted-foreground mb-6 md:mb-10">Access 50+ OTT platforms with a single payment</p>
 

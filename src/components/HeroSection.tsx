@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Play, ChevronRight } from "lucide-react";
+import LogoShowcase from "@/components/LogoShowcase";
 
 const HeroSection = () => {
   const navigate = useNavigate();
@@ -22,6 +23,10 @@ const HeroSection = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
         >
+          <div className="flex justify-center mb-4 md:mb-6">
+            <LogoShowcase size="lg" />
+          </div>
+
           <div className="inline-flex items-center gap-1.5 md:gap-2 bg-primary/20 border border-primary/30 rounded-full px-3 md:px-4 py-1 md:py-1.5 mb-4 md:mb-6">
             <Play size={12} className="text-primary fill-primary md:w-3.5 md:h-3.5" />
             <span className="text-[10px] md:text-xs text-primary font-medium">Now Streaming Worldwide</span>
