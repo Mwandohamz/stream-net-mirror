@@ -15,17 +15,17 @@ const partners = [
 
 const OTTPartners = () => {
   return (
-    <section className="py-16 bg-secondary/30">
+    <section className="py-8 md:py-16 bg-secondary/30">
       <div className="container mx-auto px-4 text-center">
-        <h2 className="font-display text-4xl md:text-5xl text-foreground mb-2">ALL YOUR FAVORITES</h2>
-        <p className="text-muted-foreground mb-10">Access 50+ OTT platforms with a single payment</p>
+        <h2 className="font-display text-2xl md:text-5xl text-foreground mb-1 md:mb-2">ALL YOUR FAVORITES</h2>
+        <p className="text-xs md:text-base text-muted-foreground mb-6 md:mb-10">Access 50+ OTT platforms with a single payment</p>
 
-        <div className="relative mb-8 max-w-3xl mx-auto overflow-hidden rounded-xl">
+        <div className="relative mb-6 md:mb-8 max-w-3xl mx-auto overflow-hidden rounded-xl">
           <img src="/ott-brands.jpg" alt="OTT Platforms" className="w-full object-cover rounded-xl opacity-70" />
           <div className="absolute inset-0 bg-gradient-to-t from-background to-transparent" />
         </div>
 
-        <div className="grid grid-cols-3 md:grid-cols-9 gap-4 max-w-4xl mx-auto">
+        <div className="grid grid-cols-3 md:grid-cols-9 gap-2 md:gap-4 max-w-4xl mx-auto">
           {partners.map((p, i) => (
             <motion.div
               key={p.name}
@@ -33,10 +33,10 @@ const OTTPartners = () => {
               whileInView={{ opacity: 1, scale: 1 }}
               transition={{ delay: i * 0.05 }}
               viewport={{ once: true }}
-              className="flex flex-col items-center gap-2 p-3 rounded-lg bg-card/50 hover:bg-card transition-colors cursor-pointer group"
+              className="flex flex-col items-center gap-1 md:gap-2 p-2 md:p-3 rounded-lg bg-card/50 hover:bg-card transition-colors cursor-pointer group active:scale-90"
             >
-              <p.icon size={28} className={`${p.color} group-hover:scale-110 transition-transform`} />
-              <span className="text-[10px] text-muted-foreground group-hover:text-foreground transition-colors">{p.name}</span>
+              <p.icon className="w-6 h-6 md:w-8 md:h-8 group-hover:scale-110 transition-transform" />
+              <span className="text-[8px] md:text-[10px] text-muted-foreground group-hover:text-foreground transition-colors">{p.name}</span>
             </motion.div>
           ))}
         </div>
