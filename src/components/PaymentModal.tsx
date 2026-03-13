@@ -37,12 +37,15 @@ export default function PaymentModal({ isOpen, onClose, onSuccess, onFailure, us
   const [countryDropdownOpen, setCountryDropdownOpen] = useState(false);
   const [showRevival, setShowRevival] = useState(false);
 
+  const { settings: appSettings, loading: settingsLoading } = useAppSettings();
+  const baseAmountZMW = parseFloat(appSettings.base_price_zmw || "49") || 49;
+
   const { getUSDEquivalent, convertFromZMW, loading: ratesLoading, error: ratesError } = useExchangeRate();
   const { providers, loading: providersLoading, error: providersError } = useActiveConf(step >= 3 ? country.iso3 : "");
   const paymentResult = usePaymentStatus(step === 5 ? depositId : null);
 
-  const usdAmount = getUSDEquivalent(BASE_AMOUNT_ZMW);
-  const localAmount = country.currency === "ZMW" ? BASE_AMOUNT_ZMW : convertFromZMW(BASE_AMOUNT_ZMW, country.currency);
+  const usdAmount = getUSDEquivalent(baseAmountZMW);
+  const localAmount = country.currency === "ZMW" ? baseAmountZMW : convertFromZMW(baseAmountZMW, country.currency);
 
   // Handle payment result
   useEffect(() => {

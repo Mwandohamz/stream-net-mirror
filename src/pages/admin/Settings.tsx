@@ -11,8 +11,11 @@ import { toast } from "sonner";
 
 const AdminSettings = () => {
   const { user } = useAdmin();
+  const { settings, loading: settingsLoading, updateSetting } = useAppSettings();
   const [newPassword, setNewPassword] = useState("");
   const [saving, setSaving] = useState(false);
+  const [priceInput, setPriceInput] = useState("");
+  const [priceSaving, setPriceSaving] = useState(false);
 
   const handlePasswordChange = async () => {
     if (newPassword.length < 6) {
