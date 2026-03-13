@@ -2,7 +2,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 const PROXY_URL_BASE = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/pawapay-proxy`;
 
-async function proxyCall(action: string, body: Record<string, unknown> = {}) {
+async function proxyCall(action: string, body: Record<string, any> = {}) {
   const res = await fetch(PROXY_URL_BASE, {
     method: "POST",
     headers: { "Content-Type": "application/json", "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY },
