@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useAdmin } from "@/hooks/useAdmin";
+import { useAppSettings } from "@/hooks/useAppSettings";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -10,8 +11,11 @@ import { toast } from "sonner";
 
 const AdminSettings = () => {
   const { user } = useAdmin();
+  const { settings, loading: settingsLoading, updateSetting } = useAppSettings();
   const [newPassword, setNewPassword] = useState("");
   const [saving, setSaving] = useState(false);
+  const [priceInput, setPriceInput] = useState("");
+  const [priceSaving, setPriceSaving] = useState(false);
 
   const handlePasswordChange = async () => {
     if (newPassword.length < 6) {
@@ -71,6 +75,49 @@ const AdminSettings = () => {
               className="bg-primary text-primary-foreground hover:bg-primary/80"
             >
               {saving ? "Saving..." : "Update Password"}
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-card border-border">
+          <CardHeader>
+            <CardTitle className="netflix-title text-lg text-foreground">PRICING</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label className="text-foreground text-sm">Base Price (ZMW)</Label>
+              <Input
+                type="number"
+                value={priceInput || settings.base_price_zmw || "49"}
+                onChange={(e) => setPriceInput(e.target.value)}
+                placeholder="49"
+                className="bg-secondary border-border text-foreground"
+                min="1"
+              />
+              <p className="text-xs text-muted-foreground">
+                This is the base price in Zambian Kwacha. It will be converted to local currencies for other countries.
+              </p>
+            </div>
+            <Button
+              onClick={async () => {
+                const val = priceInput || settings.base_price_zmw || "49";
+                if (parseFloat(val) <= 0) {
+                  toast.error("Price must be greater than 0");
+                  return;
+                }
+                setPriceSaving(true);
+                const { error } = await updateSetting("base_price_zmw", val);
+                if (error) {
+                  toast.error(error.message);
+                } else {
+                  toast.success("Price updated successfully");
+                }
+                setPriceSaving(false);
+              }}
+              disabled={priceSaving || settingsLoading}
+              className="bg-primary text-primary-foreground hover:bg-primary/80"
+            >
+              {priceSaving ? "Saving..." : "Update Price"}
             </Button>
           </CardContent>
         </Card>

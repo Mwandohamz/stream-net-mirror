@@ -11,8 +11,7 @@ import { useActiveConf, type ProviderConf } from "@/hooks/useActiveConf";
 import { usePaymentStatus } from "@/hooks/usePaymentStatus";
 import { initiateDeposit, predictProvider } from "@/lib/pawapay";
 import { formatCurrencyAmount, roundForCurrency } from "@/lib/currency";
-
-const BASE_AMOUNT_ZMW = 49;
+import { useAppSettings } from "@/hooks/useAppSettings";
 
 interface PaymentModalProps {
   isOpen: boolean;
@@ -38,12 +37,15 @@ export default function PaymentModal({ isOpen, onClose, onSuccess, onFailure, us
   const [countryDropdownOpen, setCountryDropdownOpen] = useState(false);
   const [showRevival, setShowRevival] = useState(false);
 
+  const { settings: appSettings, loading: settingsLoading } = useAppSettings();
+  const baseAmountZMW = parseFloat(appSettings.base_price_zmw || "49") || 49;
+
   const { getUSDEquivalent, convertFromZMW, loading: ratesLoading, error: ratesError } = useExchangeRate();
   const { providers, loading: providersLoading, error: providersError } = useActiveConf(step >= 3 ? country.iso3 : "");
   const paymentResult = usePaymentStatus(step === 5 ? depositId : null);
 
-  const usdAmount = getUSDEquivalent(BASE_AMOUNT_ZMW);
-  const localAmount = country.currency === "ZMW" ? BASE_AMOUNT_ZMW : convertFromZMW(BASE_AMOUNT_ZMW, country.currency);
+  const usdAmount = getUSDEquivalent(baseAmountZMW);
+  const localAmount = country.currency === "ZMW" ? baseAmountZMW : convertFromZMW(baseAmountZMW, country.currency);
 
   // Handle payment result
   useEffect(() => {
@@ -160,7 +162,7 @@ export default function PaymentModal({ isOpen, onClose, onSuccess, onFailure, us
                     {localAmount !== null ? formatCurrencyAmount(localAmount, country.currency) : "ZMW 49.00"}
                   </p>
                   {country.currency !== "ZMW" && (
-                    <p className="text-xs text-muted-foreground">Converted from ZMW 49 at live exchange rate</p>
+                    <p className="text-xs text-muted-foreground">Converted from ZMW {baseAmountZMW} at live exchange rate</p>
                   )}
                   <p className="text-xs text-muted-foreground">One-time payment · Unlimited streaming access</p>
                 </div>
@@ -211,7 +213,7 @@ export default function PaymentModal({ isOpen, onClose, onSuccess, onFailure, us
                     {localAmount !== null ? formatCurrencyAmount(localAmount, country.currency) : "ZMW 49.00"}
                   </p>
                   {country.currency !== "ZMW" && (
-                    <p className="text-[10px] text-muted-foreground mt-1">Converted from ZMW 49 at live exchange rate</p>
+                    <p className="text-[10px] text-muted-foreground mt-1">Converted from ZMW {baseAmountZMW} at live exchange rate</p>
                   )}
                 </div>
 
