@@ -11,8 +11,7 @@ import { useActiveConf, type ProviderConf } from "@/hooks/useActiveConf";
 import { usePaymentStatus } from "@/hooks/usePaymentStatus";
 import { initiateDeposit, predictProvider } from "@/lib/pawapay";
 import { formatCurrencyAmount, roundForCurrency } from "@/lib/currency";
-
-const BASE_AMOUNT_ZMW = 49;
+import { useAppSettings } from "@/hooks/useAppSettings";
 
 interface PaymentModalProps {
   isOpen: boolean;
