@@ -162,7 +162,7 @@ export default function PaymentModal({ isOpen, onClose, onSuccess, onFailure, us
                     {localAmount !== null ? formatCurrencyAmount(localAmount, country.currency) : "ZMW 49.00"}
                   </p>
                   {country.currency !== "ZMW" && (
-                    <p className="text-xs text-muted-foreground">Converted from ZMW 49 at live exchange rate</p>
+                    <p className="text-xs text-muted-foreground">Converted from ZMW {baseAmountZMW} at live exchange rate</p>
                   )}
                   <p className="text-xs text-muted-foreground">One-time payment · Unlimited streaming access</p>
                 </div>
