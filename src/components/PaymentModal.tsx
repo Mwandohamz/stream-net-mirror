@@ -213,7 +213,7 @@ export default function PaymentModal({ isOpen, onClose, onSuccess, onFailure, us
                     {localAmount !== null ? formatCurrencyAmount(localAmount, country.currency) : "ZMW 49.00"}
                   </p>
                   {country.currency !== "ZMW" && (
-                    <p className="text-[10px] text-muted-foreground mt-1">Converted from ZMW 49 at live exchange rate</p>
+                    <p className="text-[10px] text-muted-foreground mt-1">Converted from ZMW {baseAmountZMW} at live exchange rate</p>
                   )}
                 </div>
 
