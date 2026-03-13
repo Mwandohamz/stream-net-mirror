@@ -44,34 +44,49 @@ export type Database = {
       payments: {
         Row: {
           amount: number
+          country: string | null
           created_at: string
+          currency: string | null
+          deposit_id: string | null
           email: string
+          failure_reason: string | null
           id: string
           name: string
           phone: string
           provider: string
+          provider_transaction_id: string | null
           status: string
           transaction_id: string | null
         }
         Insert: {
           amount?: number
+          country?: string | null
           created_at?: string
+          currency?: string | null
+          deposit_id?: string | null
           email: string
+          failure_reason?: string | null
           id?: string
           name: string
           phone: string
           provider: string
+          provider_transaction_id?: string | null
           status?: string
           transaction_id?: string | null
         }
         Update: {
           amount?: number
+          country?: string | null
           created_at?: string
+          currency?: string | null
+          deposit_id?: string | null
           email?: string
+          failure_reason?: string | null
           id?: string
           name?: string
           phone?: string
           provider?: string
+          provider_transaction_id?: string | null
           status?: string
           transaction_id?: string | null
         }
