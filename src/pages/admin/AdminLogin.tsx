@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAdmin } from "@/hooks/useAdmin";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,16 +12,14 @@ import { useToast } from "@/hooks/use-toast";
 
 const AdminLogin = () => {
   const navigate = useNavigate();
-  const { user, isAdmin, loading } = useAdmin();
+  const { user, isAdmin, loading, refresh } = useAdmin();
   const { toast } = useToast();
-  
-  // Login state
+
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [loginError, setLoginError] = useState("");
   const [loginSubmitting, setLoginSubmitting] = useState(false);
 
-  // Register state
   const [regName, setRegName] = useState("");
   const [regEmail, setRegEmail] = useState("");
   const [regPassword, setRegPassword] = useState("");
@@ -29,11 +27,11 @@ const AdminLogin = () => {
   const [regError, setRegError] = useState("");
   const [regSubmitting, setRegSubmitting] = useState(false);
 
-  // Redirect if already admin
-  if (!loading && user && isAdmin) {
-    navigate("/admin", { replace: true });
-    return null;
-  }
+  useEffect(() => {
+    if (!loading && user && isAdmin) {
+      navigate("/admin", { replace: true });
+    }
+  }, [loading, user, isAdmin, navigate]);
 
   const validateAdminEmail = async (email: string): Promise<boolean> => {
     try {
@@ -49,12 +47,7 @@ const AdminLogin = () => {
 
   const assignAdminRole = async () => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return false;
-      
-      const { data, error } = await supabase.functions.invoke("assign-admin-role", {
-        body: {},
-      });
+      const { data, error } = await supabase.functions.invoke("assign-admin-role");
       return !error && data?.success;
     } catch {
       return false;
@@ -66,7 +59,6 @@ const AdminLogin = () => {
     setLoginError("");
     setLoginSubmitting(true);
 
-    // Validate email is admin
     const isValidAdmin = await validateAdminEmail(loginEmail);
     if (!isValidAdmin) {
       setLoginError("This email is not authorized for admin access.");
@@ -85,14 +77,11 @@ const AdminLogin = () => {
       return;
     }
 
-    // Ensure admin role is assigned
     await assignAdminRole();
+    await refresh();
 
     toast({ title: "Welcome back!", description: "Redirecting to dashboard..." });
-    setTimeout(() => {
-      setLoginSubmitting(false);
-      navigate("/admin");
-    }, 1000);
+    setLoginSubmitting(false);
   };
 
   const handleRegister = async (e: React.FormEvent) => {
@@ -110,7 +99,6 @@ const AdminLogin = () => {
 
     setRegSubmitting(true);
 
-    // Validate email is admin
     const isValidAdmin = await validateAdminEmail(regEmail);
     if (!isValidAdmin) {
       setRegError("This email is not authorized for admin access.");
@@ -121,9 +109,7 @@ const AdminLogin = () => {
     const { error } = await supabase.auth.signUp({
       email: regEmail,
       password: regPassword,
-      options: {
-        data: { full_name: regName },
-      },
+      options: { data: { full_name: regName } },
     });
 
     if (error) {
@@ -139,6 +125,14 @@ const AdminLogin = () => {
     setRegSubmitting(false);
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4">
       <Card className="w-full max-w-sm bg-card border-border">
@@ -147,9 +141,7 @@ const AdminLogin = () => {
             <Lock className="h-5 w-5 text-primary" />
           </div>
           <CardTitle className="netflix-title text-2xl text-foreground">ADMIN PORTAL</CardTitle>
-          <CardDescription className="text-muted-foreground">
-            Authorized personnel only
-          </CardDescription>
+          <CardDescription className="text-muted-foreground">Authorized personnel only</CardDescription>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="login" className="w-full">
@@ -162,32 +154,14 @@ const AdminLogin = () => {
               <form onSubmit={handleLogin} className="space-y-4">
                 <div className="space-y-2">
                   <Label className="text-foreground text-sm">Email</Label>
-                  <Input
-                    type="email"
-                    value={loginEmail}
-                    onChange={(e) => setLoginEmail(e.target.value)}
-                    placeholder="admin@example.com"
-                    className="bg-secondary border-border text-foreground"
-                    required
-                  />
+                  <Input type="email" value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)} placeholder="admin@example.com" className="bg-secondary border-border text-foreground" required />
                 </div>
                 <div className="space-y-2">
                   <Label className="text-foreground text-sm">Password</Label>
-                  <Input
-                    type="password"
-                    value={loginPassword}
-                    onChange={(e) => setLoginPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="bg-secondary border-border text-foreground"
-                    required
-                  />
+                  <Input type="password" value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} placeholder="••••••••" className="bg-secondary border-border text-foreground" required />
                 </div>
                 {loginError && <p className="text-destructive text-sm">{loginError}</p>}
-                <Button
-                  type="submit"
-                  disabled={loginSubmitting}
-                  className="w-full bg-primary text-primary-foreground hover:bg-primary/80"
-                >
+                <Button type="submit" disabled={loginSubmitting} className="w-full bg-primary text-primary-foreground hover:bg-primary/80">
                   {loginSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Sign In"}
                 </Button>
               </form>
@@ -197,54 +171,22 @@ const AdminLogin = () => {
               <form onSubmit={handleRegister} className="space-y-4">
                 <div className="space-y-2">
                   <Label className="text-foreground text-sm">Full Name</Label>
-                  <Input
-                    type="text"
-                    value={regName}
-                    onChange={(e) => setRegName(e.target.value)}
-                    placeholder="Your name"
-                    className="bg-secondary border-border text-foreground"
-                    required
-                  />
+                  <Input type="text" value={regName} onChange={(e) => setRegName(e.target.value)} placeholder="Your name" className="bg-secondary border-border text-foreground" required />
                 </div>
                 <div className="space-y-2">
                   <Label className="text-foreground text-sm">Email</Label>
-                  <Input
-                    type="email"
-                    value={regEmail}
-                    onChange={(e) => setRegEmail(e.target.value)}
-                    placeholder="admin@example.com"
-                    className="bg-secondary border-border text-foreground"
-                    required
-                  />
+                  <Input type="email" value={regEmail} onChange={(e) => setRegEmail(e.target.value)} placeholder="admin@example.com" className="bg-secondary border-border text-foreground" required />
                 </div>
                 <div className="space-y-2">
                   <Label className="text-foreground text-sm">Password</Label>
-                  <Input
-                    type="password"
-                    value={regPassword}
-                    onChange={(e) => setRegPassword(e.target.value)}
-                    placeholder="Min 6 characters"
-                    className="bg-secondary border-border text-foreground"
-                    required
-                  />
+                  <Input type="password" value={regPassword} onChange={(e) => setRegPassword(e.target.value)} placeholder="Min 6 characters" className="bg-secondary border-border text-foreground" required />
                 </div>
                 <div className="space-y-2">
                   <Label className="text-foreground text-sm">Confirm Password</Label>
-                  <Input
-                    type="password"
-                    value={regConfirm}
-                    onChange={(e) => setRegConfirm(e.target.value)}
-                    placeholder="Repeat password"
-                    className="bg-secondary border-border text-foreground"
-                    required
-                  />
+                  <Input type="password" value={regConfirm} onChange={(e) => setRegConfirm(e.target.value)} placeholder="Repeat password" className="bg-secondary border-border text-foreground" required />
                 </div>
                 {regError && <p className="text-destructive text-sm">{regError}</p>}
-                <Button
-                  type="submit"
-                  disabled={regSubmitting}
-                  className="w-full bg-primary text-primary-foreground hover:bg-primary/80"
-                >
+                <Button type="submit" disabled={regSubmitting} className="w-full bg-primary text-primary-foreground hover:bg-primary/80">
                   {regSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : (
                     <span className="flex items-center gap-2"><UserPlus className="h-4 w-4" /> Create Account</span>
                   )}
