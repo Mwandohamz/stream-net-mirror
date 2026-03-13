@@ -30,24 +30,44 @@ export function useActiveConf(countryIso3: string) {
 
     getActiveConf(countryIso3)
       .then((data) => {
-        // pawaPay returns array of correspondents or wrapped object
-        const items = Array.isArray(data) ? data : data?.correspondents ?? data?.data ?? [];
+        // pawaPay v2 active-conf returns { countries: [{ providers: [...] }] }
+        let items: any[] = [];
+        if (data?.countries && Array.isArray(data.countries)) {
+          items = data.countries[0]?.providers ?? [];
+        } else if (Array.isArray(data)) {
+          items = data;
+        } else {
+          items = data?.correspondents ?? data?.data ?? [];
+        }
+
         setProviders(
-          items.map((item: any) => ({
-            correspondentId: item.correspondentId ?? item.correspondent ?? "",
-            displayName: item.displayName ?? item.correspondentId ?? "",
-            logo: item.logo ?? "",
-            status: item.operationTypes?.[0]?.status ?? item.status ?? "OPERATIONAL",
-            prefix: item.operationTypes?.[0]?.prefix ?? item.prefix ?? [],
-            decimalsInAmount: item.operationTypes?.[0]?.decimalsInAmount ?? item.decimalsInAmount ?? "TWO",
-            minAmount: item.operationTypes?.[0]?.minAmount ?? item.minAmount ?? "0",
-            maxAmount: item.operationTypes?.[0]?.maxAmount ?? item.maxAmount ?? "999999",
-            nameDisplayedToCustomer: item.operationTypes?.[0]?.nameDisplayedToCustomer ?? "",
-            pinPrompt: item.operationTypes?.[0]?.pinPrompt ?? "AUTO",
-            pinPromptInstructions: item.operationTypes?.[0]?.pinPromptInstructions ?? [],
-            pinPromptRevivable: item.operationTypes?.[0]?.pinPromptRevivable ?? false,
-            revivalInstructions: item.operationTypes?.[0]?.revivalInstructions ?? [],
-          }))
+          items.map((item: any) => {
+            // Find the first currency's DEPOSIT operation
+            const firstCurrency = item.currencies?.[0];
+            const deposit = firstCurrency?.operationTypes?.DEPOSIT;
+
+            // Parse pin prompt instructions from channels
+            const channels = deposit?.pinPromptInstructions?.channels ?? [];
+            const pinInstructions = channels[0]?.instructions?.en?.map((i: any) => i.text) ?? [];
+            const revivalChannels = channels.slice(1);
+            const revivalInstructions = revivalChannels[0]?.instructions?.en?.map((i: any) => i.text) ?? [];
+
+            return {
+              correspondentId: item.provider ?? item.correspondentId ?? "",
+              displayName: item.displayName ?? item.provider ?? "",
+              logo: item.logo ?? "",
+              status: deposit?.status ?? item.status ?? "OPERATIONAL",
+              prefix: [],
+              decimalsInAmount: deposit?.decimalsInAmount ?? "TWO_PLACES",
+              minAmount: deposit?.minAmount ?? "0",
+              maxAmount: deposit?.maxAmount ?? "999999",
+              nameDisplayedToCustomer: deposit?.nameDisplayedToCustomer ?? item.nameDisplayedToCustomer ?? "",
+              pinPrompt: deposit?.pinPrompt ?? "AUTOMATIC",
+              pinPromptInstructions: pinInstructions,
+              pinPromptRevivable: deposit?.pinPromptRevivable ?? false,
+              revivalInstructions: revivalInstructions,
+            };
+          })
         );
       })
       .catch((e) => setError("Unable to load payment options. Please try again."))
