@@ -63,7 +63,7 @@ serve(async (req) => {
 
     // INITIATE DEPOSIT
     if (action === "deposit") {
-      const { depositId, amount, currency, phoneNumber, provider, name, email, country } = params;
+      const { depositId, amount, currency, phoneNumber, provider, name, email, country, promoCode, discountApplied } = params;
 
       // Insert payment record
       await supabase.from("payments").insert({
@@ -77,6 +77,8 @@ serve(async (req) => {
         status: "pending",
         deposit_id: depositId,
         transaction_id: `TXN-${Date.now()}`,
+        promo_code: promoCode || null,
+        discount_applied: discountApplied || 0,
       });
 
       const depositBody = {
