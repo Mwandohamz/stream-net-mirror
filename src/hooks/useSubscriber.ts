@@ -7,7 +7,7 @@ const checkIsAdmin = async (email: string): Promise<boolean> => {
     const { data } = await supabase.functions.invoke("validate-admin-email", {
       body: { email },
     });
-    return data?.isAdmin === true;
+    return data?.valid === true;
   } catch {
     return false;
   }
