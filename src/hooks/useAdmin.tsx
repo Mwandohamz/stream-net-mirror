@@ -22,15 +22,21 @@ export const useAdmin = () => {
   const [loading, setLoading] = useState(true);
 
   const refresh = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    const currentUser = session?.user ?? null;
-    setUser(currentUser);
-    if (currentUser) {
-      setIsAdmin(await checkAdminRole(currentUser.id));
-    } else {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const currentUser = session?.user ?? null;
+      setUser(currentUser);
+      if (currentUser) {
+        setIsAdmin(await checkAdminRole(currentUser.id));
+      } else {
+        setIsAdmin(false);
+      }
+    } catch {
+      setUser(null);
       setIsAdmin(false);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   useEffect(() => {
