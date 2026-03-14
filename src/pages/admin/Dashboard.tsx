@@ -36,8 +36,9 @@ const Dashboard = () => {
     const todayPayments = todayRes.data || [];
     const totalViews = viewsRes.data?.length || 0;
     const uniqueSessions = new Set((sessionsRes.data || []).map((v: any) => v.session_id)).size;
-    const totalRevenue = payments.reduce((sum: number, p: any) => sum + Number(p.amount), 0);
-    const conversionRate = uniqueSessions > 0 ? ((payments.length / uniqueSessions) * 100) : 0;
+    const completedPayments = payments.filter((p: any) => p.status === "completed");
+    const totalRevenue = completedPayments.reduce((sum: number, p: any) => sum + Number(p.amount), 0);
+    const conversionRate = uniqueSessions > 0 ? ((completedPayments.length / uniqueSessions) * 100) : 0;
 
     setStats({
       totalRevenue,
