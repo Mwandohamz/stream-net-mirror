@@ -171,12 +171,23 @@ const MemberDashboard = () => {
                 <div className="bg-secondary rounded-lg p-4 text-center">
                   <Smartphone size={24} className="text-primary mx-auto mb-2" />
                   <p className="text-foreground font-medium text-sm">Android APK</p>
-                  <p className="text-xs text-muted-foreground mb-3">Direct download from portal</p>
-                  <a href={portalUrl} target="_blank" rel="noopener noreferrer">
-                    <Button size="sm" variant="outline" className="w-full border-border text-foreground gap-1">
-                      <Download size={14} /> Download
-                    </Button>
-                  </a>
+                  <p className="text-xs text-muted-foreground mb-3">Direct download</p>
+                  {settings.apk_file_name ? (
+                    <a
+                      href={supabase.storage.from("app-files").getPublicUrl(settings.apk_file_name).data.publicUrl}
+                      download
+                    >
+                      <Button size="sm" variant="outline" className="w-full border-border text-foreground gap-1">
+                        <Download size={14} /> Download APK
+                      </Button>
+                    </a>
+                  ) : (
+                    <a href={portalUrl} target="_blank" rel="noopener noreferrer">
+                      <Button size="sm" variant="outline" className="w-full border-border text-foreground gap-1">
+                        <Download size={14} /> Download
+                      </Button>
+                    </a>
+                  )}
                 </div>
                 <div className="bg-secondary rounded-lg p-4 text-center">
                   <Monitor size={24} className="text-primary mx-auto mb-2" />
