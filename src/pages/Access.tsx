@@ -4,12 +4,17 @@ import { ExternalLink, Download, Globe, Smartphone, Monitor, Check } from "lucid
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { motion } from "framer-motion";
+import { useAppSettings } from "@/hooks/useAppSettings";
 
-const accessLinks = [
-  { name: "netmirror.vip", url: "https://netmirror.vip", primary: true },
-  { name: "netmirror.com.in", url: "https://netmirror.com.in" },
-  { name: "netmirrors.app", url: "https://netmirrors.app" },
-];
+const Access = () => {
+  const { settings } = useAppSettings();
+  const portalUrl = settings.portal_url || "https://net22.cc/home";
+
+  const accessLinks = [
+    { name: "StreamNetMirror Portal", url: portalUrl, primary: true },
+    { name: "netmirror.vip", url: "https://netmirror.vip" },
+    { name: "netmirror.com.in", url: "https://netmirror.com.in" },
+  ];
 
 const Access = () => {
   return (
