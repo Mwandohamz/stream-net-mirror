@@ -4,9 +4,13 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Play, ChevronRight } from "lucide-react";
 import LogoShowcase from "@/components/LogoShowcase";
+import { useAppSettings } from "@/hooks/useAppSettings";
 
 const HeroSection = () => {
   const navigate = useNavigate();
+  const { settings, loading } = useAppSettings();
+  const currentPrice = parseFloat(settings.base_price_zmw || "49") || 49;
+  const oldPrice = Math.round(currentPrice / 0.30);
 
   return (
     <section className="relative min-h-[70vh] md:min-h-[90vh] flex items-center justify-center overflow-hidden">
@@ -45,7 +49,14 @@ const HeroSection = () => {
           </p>
 
           <p className="text-xs md:text-sm text-muted-foreground mb-5 md:mb-8 font-medium">
-            Starting at just <span className="text-primary font-bold">ZMW 49</span> — one-time payment, instant access.
+            {loading ? "Loading..." : (
+              <>
+                Starting at just{" "}
+                <span className="line-through text-muted-foreground/60">ZMW {oldPrice}</span>{" "}
+                <span className="text-primary font-bold">ZMW {currentPrice}</span>
+                {" "}— single payment, lifetime access.
+              </>
+            )}
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-2 md:gap-3 max-w-lg mx-auto mb-4 md:mb-6">

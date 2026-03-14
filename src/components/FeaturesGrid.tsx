@@ -13,7 +13,7 @@ const FeaturesGrid = () => {
     <section className="py-8 md:py-16">
       <div className="container mx-auto px-4">
         <div className="text-center mb-6 md:mb-12">
-          <h2 className="font-display text-2xl md:text-5xl text-foreground mb-1 md:mb-2">WHY STREAM NET MIRROR?</h2>
+          <h2 className="font-display text-2xl md:text-5xl text-foreground mb-1 md:mb-2">WHY STREAMNETMIRROR?</h2>
           <p className="text-xs md:text-base text-muted-foreground">Premium features, unbeatable price</p>
         </div>
 

@@ -2,6 +2,7 @@ import Navbar from "@/components/Navbar";
 import HeroSection from "@/components/HeroSection";
 import TrendingSection from "@/components/TrendingSection";
 import OTTPartners from "@/components/OTTPartners";
+import PricingTier from "@/components/PricingTier";
 import FeaturesGrid from "@/components/FeaturesGrid";
 import ReasonsToJoin from "@/components/ReasonsToJoin";
 import HowItWorks from "@/components/HowItWorks";
@@ -16,6 +17,7 @@ const Index = () => {
       <HeroSection />
       <TrendingSection />
       <OTTPartners />
+      <PricingTier />
       <FeaturesGrid />
       <ReasonsToJoin />
       <HowItWorks />
