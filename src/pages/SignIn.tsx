@@ -22,7 +22,7 @@ const SignIn = () => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session?.user) {
         const { data } = await supabase
-          .from("subscribers" as any)
+          .from("subscribers")
           .select("id, status")
           .eq("user_id", session.user.id)
           .eq("status", "active")
