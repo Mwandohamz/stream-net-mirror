@@ -28,7 +28,7 @@ type Step = 1 | 2 | 3 | 4 | 5;
 
 const STEP_LABELS = ["Amount", "Country", "Provider", "Phone", "Payment"];
 
-export default function PaymentModal({ isOpen, onClose, onSuccess, onFailure, userName, userEmail }: PaymentModalProps) {
+export default function PaymentModal({ isOpen, onClose, onSuccess, onFailure, userName, userEmail, promoCode, discountPercent = 0 }: PaymentModalProps) {
   const [step, setStep] = useState<Step>(1);
   const [country, setCountry] = useState<Country>(DEFAULT_COUNTRY);
   const [selectedProvider, setSelectedProvider] = useState<ProviderConf | null>(null);
