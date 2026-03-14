@@ -27,7 +27,20 @@ const SignIn = () => {
           .eq("user_id", session.user.id)
           .eq("status", "active")
           .maybeSingle();
-        if (data) navigate("/dashboard", { replace: true });
+        if (data) {
+          navigate("/dashboard", { replace: true });
+          return;
+        }
+        // Admin bypass
+        try {
+          const { data: adminData } = await supabase.functions.invoke("validate-admin-email", {
+            body: { email: session.user.email },
+          });
+          if (adminData?.valid) {
+            navigate("/dashboard", { replace: true });
+            return;
+          }
+        } catch {}
       }
     });
   }, [navigate]);

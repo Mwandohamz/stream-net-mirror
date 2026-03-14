@@ -16,7 +16,6 @@ const Access = () => {
     { name: "netmirror.com.in", url: "https://netmirror.com.in" },
   ];
 
-const Access = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />

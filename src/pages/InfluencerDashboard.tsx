@@ -63,7 +63,7 @@ const InfluencerDashboard = () => {
     // Fetch payments with this promo code
     const { data: paymentData } = await supabase
       .from("payments")
-      .select("name, email, amount, currency, created_at, status")
+      .select("name, email, amount, currency, created_at, status, promo_code")
       .eq("status", "completed")
       .order("created_at", { ascending: false });
 

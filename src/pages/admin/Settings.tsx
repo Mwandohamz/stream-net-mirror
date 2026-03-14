@@ -123,6 +123,47 @@ const AdminSettings = () => {
             </Button>
           </CardContent>
         </Card>
+        <Card className="bg-card border-border">
+          <CardHeader>
+            <CardTitle className="netflix-title text-lg text-foreground">STREAMING PORTAL URL</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label className="text-foreground text-sm">Portal URL</Label>
+              <Input
+                type="url"
+                value={portalInput || settings.portal_url || "https://net22.cc/home"}
+                onChange={(e) => setPortalInput(e.target.value)}
+                placeholder="https://net22.cc/home"
+                className="bg-secondary border-border text-foreground"
+              />
+              <p className="text-xs text-muted-foreground">
+                This is the official streaming portal link shown to subscribers on their dashboard.
+              </p>
+            </div>
+            <Button
+              onClick={async () => {
+                const val = portalInput || settings.portal_url || "https://net22.cc/home";
+                if (!val.startsWith("http")) {
+                  toast.error("Please enter a valid URL");
+                  return;
+                }
+                setPortalSaving(true);
+                const { error } = await updateSetting("portal_url", val);
+                if (error) {
+                  toast.error(error.message);
+                } else {
+                  toast.success("Portal URL updated successfully");
+                }
+                setPortalSaving(false);
+              }}
+              disabled={portalSaving || settingsLoading}
+              className="bg-primary text-primary-foreground hover:bg-primary/80"
+            >
+              {portalSaving ? "Saving..." : "Update Portal URL"}
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     </AdminLayout>
   );
