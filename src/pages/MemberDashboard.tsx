@@ -128,7 +128,7 @@ const MemberDashboard = () => {
                 </Button>
               ) : (
                 <a
-                  href="https://net22.cc/home"
+                  href={portalUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="block"
