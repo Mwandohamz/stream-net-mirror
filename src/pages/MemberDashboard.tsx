@@ -36,6 +36,8 @@ const ottPlatforms = [
 const MemberDashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { settings } = useAppSettings();
+  const portalUrl = settings.portal_url || "https://net22.cc/home";
   const [userName, setUserName] = useState("");
   const [showPortal, setShowPortal] = useState(false);
   const [ticketSubject, setTicketSubject] = useState("");
