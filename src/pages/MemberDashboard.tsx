@@ -15,6 +15,7 @@ import {
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { useToast } from "@/hooks/use-toast";
+import { useAppSettings } from "@/hooks/useAppSettings";
 
 import netflixLogo from "@/assets/ott/netflix.jpg";
 import disneyLogo from "@/assets/ott/disney-plus.jpg";
