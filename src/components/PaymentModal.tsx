@@ -20,6 +20,8 @@ interface PaymentModalProps {
   onFailure: (depositId: string, reason: string) => void;
   userName: string;
   userEmail: string;
+  promoCode?: string;
+  discountPercent?: number;
 }
 
 type Step = 1 | 2 | 3 | 4 | 5;
