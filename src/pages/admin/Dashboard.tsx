@@ -54,7 +54,7 @@ const Dashboard = () => {
       const d = new Date();
       d.setDate(d.getDate() - (6 - i));
       const dateStr = d.toISOString().split("T")[0];
-      const dayPayments = payments.filter((p: any) => p.created_at?.startsWith(dateStr));
+      const dayPayments = completedPayments.filter((p: any) => p.created_at?.startsWith(dateStr));
       return {
         date: d.toLocaleDateString("en", { weekday: "short" }),
         revenue: dayPayments.reduce((s: number, p: any) => s + Number(p.amount), 0),
