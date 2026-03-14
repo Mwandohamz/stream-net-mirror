@@ -3,13 +3,17 @@ import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
 
 const checkAdminRole = async (userId: string) => {
-  const { data } = await supabase
-    .from("user_roles")
-    .select("role")
-    .eq("user_id", userId)
-    .eq("role", "admin")
-    .maybeSingle();
-  return !!data;
+  try {
+    const { data } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId)
+      .eq("role", "admin")
+      .maybeSingle();
+    return !!data;
+  } catch {
+    return false;
+  }
 };
 
 export const useAdmin = () => {
@@ -18,21 +22,8 @@ export const useAdmin = () => {
   const [loading, setLoading] = useState(true);
 
   const refresh = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    const currentUser = session?.user ?? null;
-    setUser(currentUser);
-    if (currentUser) {
-      setIsAdmin(await checkAdminRole(currentUser.id));
-    } else {
-      setIsAdmin(false);
-    }
-    setLoading(false);
-  };
-
-  useEffect(() => {
-    refresh();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
       const currentUser = session?.user ?? null;
       setUser(currentUser);
       if (currentUser) {
@@ -40,7 +31,32 @@ export const useAdmin = () => {
       } else {
         setIsAdmin(false);
       }
+    } catch {
+      setUser(null);
+      setIsAdmin(false);
+    } finally {
       setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    refresh();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      try {
+        const currentUser = session?.user ?? null;
+        setUser(currentUser);
+        if (currentUser) {
+          setIsAdmin(await checkAdminRole(currentUser.id));
+        } else {
+          setIsAdmin(false);
+        }
+      } catch {
+        setUser(null);
+        setIsAdmin(false);
+      } finally {
+        setLoading(false);
+      }
     });
 
     return () => subscription.unsubscribe();
