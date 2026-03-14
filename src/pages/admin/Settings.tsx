@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAdmin } from "@/hooks/useAdmin";
 import { useAppSettings } from "@/hooks/useAppSettings";
 import AdminLayout from "@/components/admin/AdminLayout";
@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Upload, FileDown, Trash2 } from "lucide-react";
 
 const AdminSettings = () => {
   const { user } = useAdmin();
@@ -18,6 +19,19 @@ const AdminSettings = () => {
   const [priceSaving, setPriceSaving] = useState(false);
   const [portalInput, setPortalInput] = useState("");
   const [portalSaving, setPortalSaving] = useState(false);
+  const [apkUploading, setApkUploading] = useState(false);
+  const [apkUrl, setApkUrl] = useState<string | null>(null);
+  const [apkFileName, setApkFileName] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Load current APK info from settings
+  useEffect(() => {
+    if (settings.apk_file_name) {
+      setApkFileName(settings.apk_file_name);
+      const { data } = supabase.storage.from("app-files").getPublicUrl(settings.apk_file_name);
+      setApkUrl(data.publicUrl);
+    }
+  }, [settings.apk_file_name]);
 
   const handlePasswordChange = async () => {
     if (newPassword.length < 6) {
@@ -33,6 +47,52 @@ const AdminSettings = () => {
       setNewPassword("");
     }
     setSaving(false);
+  };
+
+  const handleApkUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.name.endsWith(".apk")) {
+      toast.error("Please upload an APK file (.apk)");
+      return;
+    }
+
+    setApkUploading(true);
+    const fileName = `streamnetmirror-${Date.now()}.apk`;
+
+    // Delete old file if exists
+    if (apkFileName) {
+      await supabase.storage.from("app-files").remove([apkFileName]);
+    }
+
+    const { error } = await supabase.storage.from("app-files").upload(fileName, file, {
+      contentType: "application/vnd.android.package-archive",
+      upsert: true,
+    });
+
+    if (error) {
+      toast.error("Upload failed: " + error.message);
+    } else {
+      await updateSetting("apk_file_name", fileName);
+      setApkFileName(fileName);
+      const { data } = supabase.storage.from("app-files").getPublicUrl(fileName);
+      setApkUrl(data.publicUrl);
+      toast.success("APK uploaded successfully!");
+    }
+    setApkUploading(false);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const handleApkDelete = async () => {
+    if (!apkFileName) return;
+    setApkUploading(true);
+    await supabase.storage.from("app-files").remove([apkFileName]);
+    await updateSetting("apk_file_name", "");
+    setApkUrl(null);
+    setApkFileName(null);
+    toast.success("APK removed");
+    setApkUploading(false);
   };
 
   return (
@@ -123,6 +183,7 @@ const AdminSettings = () => {
             </Button>
           </CardContent>
         </Card>
+
         <Card className="bg-card border-border">
           <CardHeader>
             <CardTitle className="netflix-title text-lg text-foreground">STREAMING PORTAL URL</CardTitle>
@@ -161,6 +222,63 @@ const AdminSettings = () => {
               className="bg-primary text-primary-foreground hover:bg-primary/80"
             >
               {portalSaving ? "Saving..." : "Update Portal URL"}
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-card border-border">
+          <CardHeader>
+            <CardTitle className="netflix-title text-lg text-foreground">ANDROID APK</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-xs text-muted-foreground">
+              Upload the StreamNetMirror Android APK file. Subscribers will see a direct download button on their dashboard.
+            </p>
+
+            {apkFileName && apkUrl ? (
+              <div className="bg-secondary rounded-lg p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <FileDown size={18} className="text-primary shrink-0" />
+                    <span className="text-sm text-foreground truncate">{apkFileName}</span>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleApkDelete}
+                    disabled={apkUploading}
+                    className="text-destructive hover:text-destructive shrink-0"
+                  >
+                    <Trash2 size={16} />
+                  </Button>
+                </div>
+                <a href={apkUrl} target="_blank" rel="noopener noreferrer">
+                  <Button size="sm" variant="outline" className="w-full border-border text-foreground gap-1">
+                    <Download size={14} /> Test Download
+                  </Button>
+                </a>
+              </div>
+            ) : (
+              <div className="bg-secondary/50 border border-dashed border-border rounded-lg p-6 text-center">
+                <Upload size={24} className="text-muted-foreground mx-auto mb-2" />
+                <p className="text-sm text-muted-foreground">No APK uploaded yet</p>
+              </div>
+            )}
+
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".apk"
+              onChange={handleApkUpload}
+              className="hidden"
+            />
+            <Button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={apkUploading}
+              className="w-full bg-primary text-primary-foreground hover:bg-primary/80 gap-2"
+            >
+              <Upload size={16} />
+              {apkUploading ? "Uploading..." : apkFileName ? "Replace APK" : "Upload APK"}
             </Button>
           </CardContent>
         </Card>
