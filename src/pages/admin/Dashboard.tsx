@@ -40,6 +40,8 @@ const Dashboard = () => {
     const uniqueSessions = new Set((sessionsRes.data || []).map((v: any) => v.session_id)).size;
     const completedPayments = payments.filter((p: any) => p.status === "completed");
     const totalRevenue = completedPayments.reduce((sum: number, p: any) => sum + Number(p.amount), 0);
+    const organicRevenue = completedPayments.filter((p: any) => !p.promo_code).reduce((sum: number, p: any) => sum + Number(p.amount), 0);
+    const influencerRevenue = completedPayments.filter((p: any) => !!p.promo_code).reduce((sum: number, p: any) => sum + Number(p.amount), 0);
     const conversionRate = uniqueSessions > 0 ? ((completedPayments.length / uniqueSessions) * 100) : 0;
 
     setStats({
