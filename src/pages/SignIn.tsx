@@ -59,10 +59,22 @@ const SignIn = () => {
 
         if (sub) {
           navigate("/dashboard", { replace: true });
-        } else {
-          setError("No active subscription found. Please complete payment first, then create your account.");
-          await supabase.auth.signOut();
+          return;
         }
+
+        // Admin bypass - check whitelisted email
+        try {
+          const { data: adminData } = await supabase.functions.invoke("validate-admin-email", {
+            body: { email: data.user.email },
+          });
+          if (adminData?.isAdmin) {
+            navigate("/dashboard", { replace: true });
+            return;
+          }
+        } catch {}
+
+        setError("No active subscription found. Please complete payment first, then create your account.");
+        await supabase.auth.signOut();
       }
     } catch (e: any) {
       setError(e.message || "Something went wrong");
