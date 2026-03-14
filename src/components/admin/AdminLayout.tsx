@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { useAdmin } from "@/hooks/useAdmin";
+import { supabase } from "@/integrations/supabase/client";
 import {
   SidebarProvider,
   Sidebar,
@@ -29,8 +29,10 @@ const navItems = [
 const AdminSidebar = () => {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
-  const location = useLocation();
-  const { signOut } = useAdmin();
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+  };
 
   return (
     <Sidebar collapsible="icon">
@@ -65,7 +67,7 @@ const AdminSidebar = () => {
             variant="ghost"
             size="sm"
             className="w-full justify-start text-muted-foreground hover:text-foreground gap-2"
-            onClick={signOut}
+            onClick={handleSignOut}
           >
             <LogOut className="h-4 w-4" />
             {!collapsed && "Sign Out"}

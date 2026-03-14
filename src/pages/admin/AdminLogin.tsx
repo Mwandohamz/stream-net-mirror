@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAdmin } from "@/hooks/useAdmin";
+import { validateAdminEmail } from "@/hooks/useAdmin";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,55 +34,39 @@ const AdminLogin = () => {
     }
   }, [loading, user, isAdmin, navigate]);
 
-  const validateAdminEmail = async (email: string): Promise<boolean> => {
-    try {
-      const { data, error } = await supabase.functions.invoke("validate-admin-email", {
-        body: { email },
-      });
-      if (error) return false;
-      return data?.valid === true;
-    } catch {
-      return false;
-    }
-  };
-
-  const assignAdminRole = async () => {
-    try {
-      const { data, error } = await supabase.functions.invoke("assign-admin-role");
-      return !error && data?.success;
-    } catch {
-      return false;
-    }
-  };
-
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoginError("");
     setLoginSubmitting(true);
 
-    const isValidAdmin = await validateAdminEmail(loginEmail);
-    if (!isValidAdmin) {
-      setLoginError("This email is not authorized for admin access.");
+    try {
+      const isValidAdmin = await validateAdminEmail(loginEmail);
+      if (!isValidAdmin) {
+        setLoginError("This email is not authorized for admin access.");
+        setLoginSubmitting(false);
+        return;
+      }
+
+      const { error } = await supabase.auth.signInWithPassword({
+        email: loginEmail,
+        password: loginPassword,
+      });
+
+      if (error) {
+        setLoginError(error.message);
+        setLoginSubmitting(false);
+        return;
+      }
+
+      // Role sync + refresh happens automatically via useAdmin auth listener
+      // But we can also force a refresh
+      await refresh();
+      toast({ title: "Welcome back!", description: "Redirecting to dashboard..." });
+    } catch {
+      setLoginError("An unexpected error occurred.");
+    } finally {
       setLoginSubmitting(false);
-      return;
     }
-
-    const { error } = await supabase.auth.signInWithPassword({
-      email: loginEmail,
-      password: loginPassword,
-    });
-
-    if (error) {
-      setLoginError(error.message);
-      setLoginSubmitting(false);
-      return;
-    }
-
-    await assignAdminRole();
-    await refresh();
-
-    toast({ title: "Welcome back!", description: "Redirecting to dashboard..." });
-    setLoginSubmitting(false);
   };
 
   const handleRegister = async (e: React.FormEvent) => {
@@ -99,32 +84,38 @@ const AdminLogin = () => {
 
     setRegSubmitting(true);
 
-    const isValidAdmin = await validateAdminEmail(regEmail);
-    if (!isValidAdmin) {
-      setRegError("This email is not authorized for admin access.");
+    try {
+      const isValidAdmin = await validateAdminEmail(regEmail);
+      if (!isValidAdmin) {
+        setRegError("This email is not authorized for admin access.");
+        setRegSubmitting(false);
+        return;
+      }
+
+      const { error } = await supabase.auth.signUp({
+        email: regEmail,
+        password: regPassword,
+        options: { data: { full_name: regName } },
+      });
+
+      if (error) {
+        setRegError(error.message);
+        setRegSubmitting(false);
+        return;
+      }
+
+      toast({
+        title: "Account created!",
+        description: "Please check your email to verify your account, then sign in.",
+      });
+    } catch {
+      setRegError("An unexpected error occurred.");
+    } finally {
       setRegSubmitting(false);
-      return;
     }
-
-    const { error } = await supabase.auth.signUp({
-      email: regEmail,
-      password: regPassword,
-      options: { data: { full_name: regName } },
-    });
-
-    if (error) {
-      setRegError(error.message);
-      setRegSubmitting(false);
-      return;
-    }
-
-    toast({
-      title: "Account created!",
-      description: "Please check your email to verify your account, then sign in.",
-    });
-    setRegSubmitting(false);
   };
 
+  // Show form immediately once loading resolves (don't block on admin check for the login page itself)
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
