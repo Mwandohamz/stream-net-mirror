@@ -15,6 +15,7 @@ import {
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { useToast } from "@/hooks/use-toast";
+import { useAppSettings } from "@/hooks/useAppSettings";
 
 import netflixLogo from "@/assets/ott/netflix.jpg";
 import disneyLogo from "@/assets/ott/disney-plus.jpg";
@@ -35,6 +36,8 @@ const ottPlatforms = [
 const MemberDashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { settings } = useAppSettings();
+  const portalUrl = settings.portal_url || "https://net22.cc/home";
   const [userName, setUserName] = useState("");
   const [showPortal, setShowPortal] = useState(false);
   const [ticketSubject, setTicketSubject] = useState("");
@@ -125,7 +128,7 @@ const MemberDashboard = () => {
                 </Button>
               ) : (
                 <a
-                  href="https://net22.cc/home"
+                  href={portalUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="block"
@@ -169,7 +172,7 @@ const MemberDashboard = () => {
                   <Smartphone size={24} className="text-primary mx-auto mb-2" />
                   <p className="text-foreground font-medium text-sm">Android APK</p>
                   <p className="text-xs text-muted-foreground mb-3">Direct download from portal</p>
-                  <a href="https://net22.cc/home" target="_blank" rel="noopener noreferrer">
+                  <a href={portalUrl} target="_blank" rel="noopener noreferrer">
                     <Button size="sm" variant="outline" className="w-full border-border text-foreground gap-1">
                       <Download size={14} /> Download
                     </Button>
@@ -179,7 +182,7 @@ const MemberDashboard = () => {
                   <Monitor size={24} className="text-primary mx-auto mb-2" />
                   <p className="text-foreground font-medium text-sm">iOS WebView</p>
                   <p className="text-xs text-muted-foreground mb-3">Via DODO / iOSMirror</p>
-                  <a href="https://net22.cc/home" target="_blank" rel="noopener noreferrer">
+                  <a href={portalUrl} target="_blank" rel="noopener noreferrer">
                     <Button size="sm" variant="outline" className="w-full border-border text-foreground gap-1">
                       <ExternalLink size={14} /> Learn More
                     </Button>
@@ -189,7 +192,7 @@ const MemberDashboard = () => {
                   <Globe size={24} className="text-primary mx-auto mb-2" />
                   <p className="text-foreground font-medium text-sm">Web Browser</p>
                   <p className="text-xs text-muted-foreground mb-3">Stream directly</p>
-                  <a href="https://net22.cc/home" target="_blank" rel="noopener noreferrer">
+                  <a href={portalUrl} target="_blank" rel="noopener noreferrer">
                     <Button size="sm" variant="outline" className="w-full border-border text-foreground gap-1">
                       <Globe size={14} /> Open
                     </Button>
