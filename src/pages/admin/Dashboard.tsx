@@ -89,7 +89,7 @@ const Dashboard = () => {
 
         {/* Stat Cards */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-          <StatCard title="Total Revenue" value={`ZMW ${stats.totalRevenue}`} icon={DollarSign} trend="+12%" trendUp />
+          <StatCard title="Total Revenue" value={`ZMW ${stats.totalRevenue}`} icon={DollarSign} description="Completed payments" />
           <StatCard title="Total Payments" value={stats.totalPayments} icon={CreditCard} description="All time" />
           <StatCard title="Today" value={stats.todayPayments} icon={TrendingUp} description="Payments today" />
           <StatCard title="Page Views" value={stats.totalPageViews} icon={Eye} description="All time" />
