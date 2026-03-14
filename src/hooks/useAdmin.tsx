@@ -3,28 +3,15 @@ import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
 
 const LOADING_TIMEOUT_MS = 8000;
-const ASYNC_TIMEOUT_MS = 8000;
-
-const withTimeout = async <T,>(promise: Promise<T>, ms: number): Promise<T> => {
-  return await Promise.race([
-    promise,
-    new Promise<T>((_, reject) => {
-      setTimeout(() => reject(new Error("Operation timed out")), ms);
-    }),
-  ]);
-};
 
 const validateAdminEmail = async (email: string): Promise<boolean> => {
   const normalized = email.trim().toLowerCase();
   if (!normalized) return false;
 
   try {
-    const { data } = await withTimeout(
-      supabase.functions.invoke("validate-admin-email", {
-        body: { email: normalized },
-      }),
-      ASYNC_TIMEOUT_MS
-    );
+    const { data } = await supabase.functions.invoke("validate-admin-email", {
+      body: { email: normalized },
+    });
 
     return data?.valid === true;
   } catch {
@@ -34,7 +21,7 @@ const validateAdminEmail = async (email: string): Promise<boolean> => {
 
 const syncAdminRole = async () => {
   try {
-    await withTimeout(supabase.functions.invoke("assign-admin-role"), ASYNC_TIMEOUT_MS);
+    await supabase.functions.invoke("assign-admin-role");
   } catch {
     // best-effort sync
   }
@@ -69,15 +56,12 @@ export const useAdmin = () => {
       }
 
       // Fallback: check user_roles table directly
-      const { data, error } = await withTimeout(
-        supabase
-          .from("user_roles")
-          .select("role")
-          .eq("user_id", sessionUser.id)
-          .eq("role", "admin")
-          .maybeSingle(),
-        ASYNC_TIMEOUT_MS
-      );
+      const { data, error } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", sessionUser.id)
+        .eq("role", "admin")
+        .maybeSingle();
 
       if (error) throw error;
       setIsAdmin(!!data);
