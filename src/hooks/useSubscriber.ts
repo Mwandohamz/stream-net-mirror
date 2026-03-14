@@ -1,17 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
-
-const checkIsAdmin = async (email: string): Promise<boolean> => {
-  try {
-    const { data } = await supabase.functions.invoke("validate-admin-email", {
-      body: { email },
-    });
-    return data?.valid === true;
-  } catch {
-    return false;
-  }
-};
+import { validateAdminEmail } from "@/hooks/useAdmin";
 
 export const useSubscriber = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -35,10 +25,9 @@ export const useSubscriber = () => {
         setIsSubscriber(true);
         return;
       }
-      // Admin bypass
-      const email = currentUser.email;
-      if (email) {
-        const admin = await checkIsAdmin(email);
+      // Admin bypass using same unified helper
+      if (currentUser.email) {
+        const admin = await validateAdminEmail(currentUser.email);
         if (admin) {
           setIsSubscriber(true);
           return;
@@ -51,21 +40,10 @@ export const useSubscriber = () => {
   };
 
   useEffect(() => {
-    const check = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        const currentUser = session?.user ?? null;
-        setUser(currentUser);
-        await checkAccess(currentUser);
-      } catch {
-        setUser(null);
-        setIsSubscriber(false);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    check();
+    // Safety timeout
+    const timeout = setTimeout(() => {
+      setLoading(false);
+    }, 8000);
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       try {
@@ -80,7 +58,25 @@ export const useSubscriber = () => {
       }
     });
 
-    return () => subscription.unsubscribe();
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      try {
+        const currentUser = session?.user ?? null;
+        setUser(currentUser);
+        await checkAccess(currentUser);
+      } catch {
+        setUser(null);
+        setIsSubscriber(false);
+      } finally {
+        setLoading(false);
+      }
+    }).catch(() => {
+      setLoading(false);
+    });
+
+    return () => {
+      clearTimeout(timeout);
+      subscription.unsubscribe();
+    };
   }, []);
 
   return { user, isSubscriber, loading };
