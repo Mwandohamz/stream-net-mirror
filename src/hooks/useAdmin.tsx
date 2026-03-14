@@ -43,14 +43,20 @@ export const useAdmin = () => {
     refresh();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      const currentUser = session?.user ?? null;
-      setUser(currentUser);
-      if (currentUser) {
-        setIsAdmin(await checkAdminRole(currentUser.id));
-      } else {
+      try {
+        const currentUser = session?.user ?? null;
+        setUser(currentUser);
+        if (currentUser) {
+          setIsAdmin(await checkAdminRole(currentUser.id));
+        } else {
+          setIsAdmin(false);
+        }
+      } catch {
+        setUser(null);
         setIsAdmin(false);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     });
 
     return () => subscription.unsubscribe();
