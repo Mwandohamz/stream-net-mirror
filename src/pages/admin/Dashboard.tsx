@@ -46,6 +46,8 @@ const Dashboard = () => {
 
     setStats({
       totalRevenue,
+      organicRevenue,
+      influencerRevenue,
       totalPayments: payments.length,
       todayPayments: todayPayments.length,
       totalPageViews: totalViews,
