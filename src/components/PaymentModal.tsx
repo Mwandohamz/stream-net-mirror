@@ -40,7 +40,10 @@ export default function PaymentModal({ isOpen, onClose, onSuccess, onFailure, us
   const [showRevival, setShowRevival] = useState(false);
 
   const { settings: appSettings, loading: settingsLoading } = useAppSettings();
-  const baseAmountZMW = parseFloat(appSettings.base_price_zmw || "49") || 49;
+  const baseAmountZMW = (() => {
+    const raw = parseFloat(appSettings.base_price_zmw || "49") || 49;
+    return discountPercent > 0 ? Math.round(raw * (1 - discountPercent / 100)) : raw;
+  })();
 
   const { getUSDEquivalent, convertFromZMW, loading: ratesLoading, error: ratesError } = useExchangeRate();
   const { providers, loading: providersLoading, error: providersError } = useActiveConf(step >= 3 ? country.iso3 : "");
