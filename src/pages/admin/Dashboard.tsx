@@ -9,6 +9,8 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 const Dashboard = () => {
   const [stats, setStats] = useState({
     totalRevenue: 0,
+    organicRevenue: 0,
+    influencerRevenue: 0,
     totalPayments: 0,
     todayPayments: 0,
     totalPageViews: 0,
