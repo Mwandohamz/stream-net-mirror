@@ -67,7 +67,7 @@ const SignIn = () => {
           const { data: adminData } = await supabase.functions.invoke("validate-admin-email", {
             body: { email: data.user.email },
           });
-          if (adminData?.isAdmin) {
+          if (adminData?.valid) {
             navigate("/dashboard", { replace: true });
             return;
           }
