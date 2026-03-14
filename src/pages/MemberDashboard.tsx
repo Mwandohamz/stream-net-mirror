@@ -147,7 +147,7 @@ const MemberDashboard = () => {
               <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
                 {ottPlatforms.map((p) => (
                   <div key={p.name} className="flex flex-col items-center gap-1">
-                    <div className="w-12 h-12 rounded-lg overflow-hidden bg-secondary">
+                    <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg overflow-hidden bg-secondary">
                       <img src={p.logo} alt={p.name} className="w-full h-full object-cover" />
                     </div>
                     <span className="text-[9px] text-muted-foreground">{p.name}</span>

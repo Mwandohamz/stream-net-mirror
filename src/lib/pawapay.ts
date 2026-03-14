@@ -29,10 +29,11 @@ export interface DepositRequest {
   currency: string;
   phoneNumber: string;
   provider: string;
-  // metadata for DB
   name: string;
   email: string;
   country: string;
+  promoCode?: string;
+  discountApplied?: number;
 }
 
 export async function initiateDeposit(req: DepositRequest) {

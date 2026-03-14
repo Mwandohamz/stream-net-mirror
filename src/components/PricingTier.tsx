@@ -104,7 +104,7 @@ const PricingTier = () => {
                   <div className="grid grid-cols-3 gap-3">
                     {ottPlatforms.map((p) => (
                       <div key={p.name} className="flex flex-col items-center gap-1">
-                        <div className="w-12 h-12 md:w-14 md:h-14 rounded-lg overflow-hidden bg-secondary flex items-center justify-center">
+                        <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg overflow-hidden bg-secondary flex items-center justify-center">
                           <img
                             src={p.logo}
                             alt={p.name}

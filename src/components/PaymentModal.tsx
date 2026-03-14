@@ -20,13 +20,15 @@ interface PaymentModalProps {
   onFailure: (depositId: string, reason: string) => void;
   userName: string;
   userEmail: string;
+  promoCode?: string;
+  discountPercent?: number;
 }
 
 type Step = 1 | 2 | 3 | 4 | 5;
 
 const STEP_LABELS = ["Amount", "Country", "Provider", "Phone", "Payment"];
 
-export default function PaymentModal({ isOpen, onClose, onSuccess, onFailure, userName, userEmail }: PaymentModalProps) {
+export default function PaymentModal({ isOpen, onClose, onSuccess, onFailure, userName, userEmail, promoCode, discountPercent = 0 }: PaymentModalProps) {
   const [step, setStep] = useState<Step>(1);
   const [country, setCountry] = useState<Country>(DEFAULT_COUNTRY);
   const [selectedProvider, setSelectedProvider] = useState<ProviderConf | null>(null);
@@ -38,7 +40,10 @@ export default function PaymentModal({ isOpen, onClose, onSuccess, onFailure, us
   const [showRevival, setShowRevival] = useState(false);
 
   const { settings: appSettings, loading: settingsLoading } = useAppSettings();
-  const baseAmountZMW = parseFloat(appSettings.base_price_zmw || "49") || 49;
+  const baseAmountZMW = (() => {
+    const raw = parseFloat(appSettings.base_price_zmw || "49") || 49;
+    return discountPercent > 0 ? Math.round(raw * (1 - discountPercent / 100)) : raw;
+  })();
 
   const { getUSDEquivalent, convertFromZMW, loading: ratesLoading, error: ratesError } = useExchangeRate();
   const { providers, loading: providersLoading, error: providersError } = useActiveConf(step >= 3 ? country.iso3 : "");
@@ -122,6 +127,8 @@ export default function PaymentModal({ isOpen, onClose, onSuccess, onFailure, us
         name: userName,
         email: userEmail,
         country: country.iso3,
+        promoCode: promoCode || undefined,
+        discountApplied: discountPercent || 0,
       });
 
       if (result?.status === "REJECTED") {

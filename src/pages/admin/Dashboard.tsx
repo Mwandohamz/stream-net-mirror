@@ -9,6 +9,8 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 const Dashboard = () => {
   const [stats, setStats] = useState({
     totalRevenue: 0,
+    organicRevenue: 0,
+    influencerRevenue: 0,
     totalPayments: 0,
     todayPayments: 0,
     totalPageViews: 0,
@@ -38,10 +40,14 @@ const Dashboard = () => {
     const uniqueSessions = new Set((sessionsRes.data || []).map((v: any) => v.session_id)).size;
     const completedPayments = payments.filter((p: any) => p.status === "completed");
     const totalRevenue = completedPayments.reduce((sum: number, p: any) => sum + Number(p.amount), 0);
+    const organicRevenue = completedPayments.filter((p: any) => !p.promo_code).reduce((sum: number, p: any) => sum + Number(p.amount), 0);
+    const influencerRevenue = completedPayments.filter((p: any) => !!p.promo_code).reduce((sum: number, p: any) => sum + Number(p.amount), 0);
     const conversionRate = uniqueSessions > 0 ? ((completedPayments.length / uniqueSessions) * 100) : 0;
 
     setStats({
       totalRevenue,
+      organicRevenue,
+      influencerRevenue,
       totalPayments: payments.length,
       todayPayments: todayPayments.length,
       totalPageViews: totalViews,
@@ -88,8 +94,10 @@ const Dashboard = () => {
         <h1 className="netflix-title text-3xl text-foreground">DASHBOARD OVERVIEW</h1>
 
         {/* Stat Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
           <StatCard title="Total Revenue" value={`ZMW ${stats.totalRevenue}`} icon={DollarSign} description="Completed payments" />
+          <StatCard title="Organic Revenue" value={`ZMW ${stats.organicRevenue}`} icon={DollarSign} description="No promo code" />
+          <StatCard title="Promo Revenue" value={`ZMW ${stats.influencerRevenue}`} icon={TrendingUp} description="Via influencers" />
           <StatCard title="Total Payments" value={stats.totalPayments} icon={CreditCard} description="All time" />
           <StatCard title="Today" value={stats.todayPayments} icon={TrendingUp} description="Payments today" />
           <StatCard title="Page Views" value={stats.totalPageViews} icon={Eye} description="All time" />

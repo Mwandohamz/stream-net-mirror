@@ -35,6 +35,42 @@ export type Database = {
         }
         Relationships: []
       }
+      influencers: {
+        Row: {
+          created_at: string
+          discount_percent: number
+          email: string
+          full_name: string
+          id: string
+          is_active: boolean
+          phone: string | null
+          promo_code: string
+          revenue_share_percent: number
+        }
+        Insert: {
+          created_at?: string
+          discount_percent?: number
+          email: string
+          full_name: string
+          id?: string
+          is_active?: boolean
+          phone?: string | null
+          promo_code: string
+          revenue_share_percent?: number
+        }
+        Update: {
+          created_at?: string
+          discount_percent?: number
+          email?: string
+          full_name?: string
+          id?: string
+          is_active?: boolean
+          phone?: string | null
+          promo_code?: string
+          revenue_share_percent?: number
+        }
+        Relationships: []
+      }
       page_views: {
         Row: {
           created_at: string
@@ -69,11 +105,13 @@ export type Database = {
           created_at: string
           currency: string | null
           deposit_id: string | null
+          discount_applied: number | null
           email: string
           failure_reason: string | null
           id: string
           name: string
           phone: string
+          promo_code: string | null
           provider: string
           provider_transaction_id: string | null
           status: string
@@ -85,11 +123,13 @@ export type Database = {
           created_at?: string
           currency?: string | null
           deposit_id?: string | null
+          discount_applied?: number | null
           email: string
           failure_reason?: string | null
           id?: string
           name: string
           phone: string
+          promo_code?: string | null
           provider: string
           provider_transaction_id?: string | null
           status?: string
@@ -101,11 +141,13 @@ export type Database = {
           created_at?: string
           currency?: string | null
           deposit_id?: string | null
+          discount_applied?: number | null
           email?: string
           failure_reason?: string | null
           id?: string
           name?: string
           phone?: string
+          promo_code?: string | null
           provider?: string
           provider_transaction_id?: string | null
           status?: string

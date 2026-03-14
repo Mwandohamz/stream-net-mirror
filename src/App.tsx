@@ -24,6 +24,8 @@ import AdminPayments from "./pages/admin/Payments.tsx";
 import Analytics from "./pages/admin/Analytics.tsx";
 import Customers from "./pages/admin/Customers.tsx";
 import AdminSettings from "./pages/admin/Settings.tsx";
+import Influencers from "./pages/admin/Influencers.tsx";
+import InfluencerDashboard from "./pages/InfluencerDashboard.tsx";
 
 const queryClient = new QueryClient();
 
@@ -54,6 +56,8 @@ const AnimatedRoutes = () => {
         <Route path="/admin/analytics" element={<AdminRoute><Analytics /></AdminRoute>} />
         <Route path="/admin/customers" element={<AdminRoute><Customers /></AdminRoute>} />
         <Route path="/admin/settings" element={<AdminRoute><AdminSettings /></AdminRoute>} />
+        <Route path="/admin/influencers" element={<AdminRoute><Influencers /></AdminRoute>} />
+        <Route path="/influencer/:promoCode" element={<InfluencerDashboard />} />
         <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
       </Routes>
     </AnimatePresence>
