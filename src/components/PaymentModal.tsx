@@ -127,6 +127,8 @@ export default function PaymentModal({ isOpen, onClose, onSuccess, onFailure, us
         name: userName,
         email: userEmail,
         country: country.iso3,
+        promoCode: promoCode || undefined,
+        discountApplied: discountPercent || 0,
       });
 
       if (result?.status === "REJECTED") {

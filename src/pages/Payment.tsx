@@ -5,24 +5,52 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { motion } from "framer-motion";
-import { ArrowLeft, Mail, User, Shield } from "lucide-react";
+import { ArrowLeft, Mail, User, Shield, Tag, Check } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import PaymentModal from "@/components/PaymentModal";
 import { useAppSettings } from "@/hooks/useAppSettings";
+import { supabase } from "@/integrations/supabase/client";
 
 const Payment = () => {
   const navigate = useNavigate();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
+  const [promoCode, setPromoCode] = useState("");
+  const [promoValid, setPromoValid] = useState<null | boolean>(null);
+  const [promoDiscount, setPromoDiscount] = useState(0);
+  const [promoChecking, setPromoChecking] = useState(false);
+  const [showPromo, setShowPromo] = useState(false);
 
   const { settings, loading } = useAppSettings();
   const currentPrice = parseFloat(settings.base_price_zmw || "49") || 49;
   const oldPrice = Math.round(currentPrice / 0.30);
+  const discountedPrice = promoValid ? Math.round(currentPrice * (1 - promoDiscount / 100)) : currentPrice;
 
   const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   const isValid = name.trim().length >= 2 && emailValid;
+
+  const validatePromo = async () => {
+    if (!promoCode.trim()) return;
+    setPromoChecking(true);
+    const { data } = await supabase
+      .from("influencers" as any)
+      .select("discount_percent, is_active")
+      .eq("promo_code", promoCode.trim().toUpperCase())
+      .eq("is_active", true)
+      .maybeSingle();
+
+    const inf = data as any;
+    if (inf) {
+      setPromoValid(true);
+      setPromoDiscount(inf.discount_percent);
+    } else {
+      setPromoValid(false);
+      setPromoDiscount(0);
+    }
+    setPromoChecking(false);
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -53,11 +81,18 @@ const Payment = () => {
                   <span className="text-muted-foreground line-through text-lg">
                     ZMW {loading ? "..." : oldPrice}
                   </span>
+                  {promoValid && (
+                    <span className="text-muted-foreground line-through text-base">
+                      ZMW {loading ? "..." : currentPrice}
+                    </span>
+                  )}
                   <span className="netflix-title text-4xl text-primary">
-                    ZMW {loading ? "..." : currentPrice}
+                    ZMW {loading ? "..." : discountedPrice}
                   </span>
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">One-time payment · Lifetime access · <span className="text-primary font-semibold">Save 70%</span></p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  One-time payment · Lifetime access · <span className="text-primary font-semibold">Save 70%{promoValid ? ` + ${promoDiscount}% promo` : ""}</span>
+                </p>
               </div>
 
               {/* Name */}
@@ -65,12 +100,7 @@ const Payment = () => {
                 <Label className="text-foreground text-sm">Full Name</Label>
                 <div className="relative">
                   <User size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="Enter your full name"
-                    className="pl-9 bg-secondary border-border text-foreground"
-                  />
+                  <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Enter your full name" className="pl-9 bg-secondary border-border text-foreground" />
                 </div>
               </div>
 
@@ -79,15 +109,40 @@ const Payment = () => {
                 <Label className="text-foreground text-sm">Email Address</Label>
                 <div className="relative">
                   <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="your@email.com"
-                    className="pl-9 bg-secondary border-border text-foreground"
-                    type="email"
-                  />
+                  <Input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="your@email.com" className="pl-9 bg-secondary border-border text-foreground" type="email" />
                 </div>
               </div>
+
+              {/* Promo code */}
+              {!showPromo ? (
+                <button onClick={() => setShowPromo(true)} className="text-xs text-primary hover:underline flex items-center gap-1">
+                  <Tag size={12} /> Have a promo code?
+                </button>
+              ) : (
+                <div className="space-y-2">
+                  <Label className="text-foreground text-sm">Promo Code (optional)</Label>
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <Tag size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                      <Input
+                        value={promoCode}
+                        onChange={(e) => { setPromoCode(e.target.value.toUpperCase()); setPromoValid(null); }}
+                        placeholder="PROMO-CODE"
+                        className="pl-9 bg-secondary border-border text-foreground uppercase"
+                      />
+                    </div>
+                    <Button variant="outline" onClick={validatePromo} disabled={promoChecking || !promoCode.trim()} className="border-border text-foreground">
+                      {promoChecking ? "..." : "Apply"}
+                    </Button>
+                  </div>
+                  {promoValid === true && (
+                    <p className="text-xs text-primary flex items-center gap-1"><Check size={12} /> {promoDiscount}% discount applied!</p>
+                  )}
+                  {promoValid === false && (
+                    <p className="text-xs text-destructive">Invalid or expired promo code</p>
+                  )}
+                </div>
+              )}
 
               <Button
                 onClick={() => setModalOpen(true)}
@@ -123,6 +178,8 @@ const Payment = () => {
         }}
         userName={name.trim()}
         userEmail={email.trim()}
+        promoCode={promoValid ? promoCode.trim().toUpperCase() : undefined}
+        discountPercent={promoValid ? promoDiscount : 0}
       />
 
       <Footer />
