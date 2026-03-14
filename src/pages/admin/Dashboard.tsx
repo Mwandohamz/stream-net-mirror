@@ -94,8 +94,10 @@ const Dashboard = () => {
         <h1 className="netflix-title text-3xl text-foreground">DASHBOARD OVERVIEW</h1>
 
         {/* Stat Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
           <StatCard title="Total Revenue" value={`ZMW ${stats.totalRevenue}`} icon={DollarSign} description="Completed payments" />
+          <StatCard title="Organic Revenue" value={`ZMW ${stats.organicRevenue}`} icon={DollarSign} description="No promo code" />
+          <StatCard title="Promo Revenue" value={`ZMW ${stats.influencerRevenue}`} icon={TrendingUp} description="Via influencers" />
           <StatCard title="Total Payments" value={stats.totalPayments} icon={CreditCard} description="All time" />
           <StatCard title="Today" value={stats.todayPayments} icon={TrendingUp} description="Payments today" />
           <StatCard title="Page Views" value={stats.totalPageViews} icon={Eye} description="All time" />
