@@ -16,6 +16,8 @@ const AdminSettings = () => {
   const [saving, setSaving] = useState(false);
   const [priceInput, setPriceInput] = useState("");
   const [priceSaving, setPriceSaving] = useState(false);
+  const [portalInput, setPortalInput] = useState("");
+  const [portalSaving, setPortalSaving] = useState(false);
 
   const handlePasswordChange = async () => {
     if (newPassword.length < 6) {
