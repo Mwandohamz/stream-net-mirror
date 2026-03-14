@@ -13,7 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 
 const AdminLogin = () => {
   const navigate = useNavigate();
-  const { user, isAdmin, loading, refresh } = useAdmin();
+  const { user, isAdmin, loading } = useAdmin();
   const { toast } = useToast();
 
   const [loginEmail, setLoginEmail] = useState("");
@@ -40,7 +40,9 @@ const AdminLogin = () => {
     setLoginSubmitting(true);
 
     try {
-      const isValidAdmin = await validateAdminEmail(loginEmail);
+      const normalizedEmail = loginEmail.trim().toLowerCase();
+
+      const isValidAdmin = await validateAdminEmail(normalizedEmail);
       if (!isValidAdmin) {
         setLoginError("This email is not authorized for admin access.");
         setLoginSubmitting(false);
@@ -48,7 +50,7 @@ const AdminLogin = () => {
       }
 
       const { error } = await supabase.auth.signInWithPassword({
-        email: loginEmail,
+        email: normalizedEmail,
         password: loginPassword,
       });
 
@@ -58,10 +60,8 @@ const AdminLogin = () => {
         return;
       }
 
-      // Role sync + refresh happens automatically via useAdmin auth listener
-      // But we can also force a refresh
-      await refresh();
       toast({ title: "Welcome back!", description: "Redirecting to dashboard..." });
+      navigate("/admin", { replace: true });
     } catch {
       setLoginError("An unexpected error occurred.");
     } finally {
@@ -85,7 +85,9 @@ const AdminLogin = () => {
     setRegSubmitting(true);
 
     try {
-      const isValidAdmin = await validateAdminEmail(regEmail);
+      const normalizedEmail = regEmail.trim().toLowerCase();
+
+      const isValidAdmin = await validateAdminEmail(normalizedEmail);
       if (!isValidAdmin) {
         setRegError("This email is not authorized for admin access.");
         setRegSubmitting(false);
@@ -93,7 +95,7 @@ const AdminLogin = () => {
       }
 
       const { error } = await supabase.auth.signUp({
-        email: regEmail,
+        email: normalizedEmail,
         password: regPassword,
         options: { data: { full_name: regName } },
       });
