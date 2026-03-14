@@ -210,7 +210,7 @@ const Influencers = () => {
                       <TableCell className="text-foreground">ZMW {Math.round(s.totalRevenue)}</TableCell>
                       <TableCell className="text-primary font-medium">ZMW {Math.round(s.influencerShare)}</TableCell>
                       <TableCell>
-                        <span className={`text-xs font-medium ${inf.is_active ? "text-green-500" : "text-destructive"}`}>
+                        <span className={`text-xs font-medium ${inf.is_active ? "text-primary" : "text-destructive"}`}>
                           {inf.is_active ? "Active" : "Inactive"}
                         </span>
                       </TableCell>

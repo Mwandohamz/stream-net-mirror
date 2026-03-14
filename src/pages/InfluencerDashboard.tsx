@@ -64,11 +64,10 @@ const InfluencerDashboard = () => {
     const { data: paymentData } = await supabase
       .from("payments")
       .select("name, email, amount, currency, created_at, status")
-      .eq("promo_code" as any, promoCode || "")
       .eq("status", "completed")
       .order("created_at", { ascending: false });
 
-    const pList = (paymentData || []) as unknown as Payment[];
+    const pList = ((paymentData || []) as any[]).filter((p: any) => p.promo_code === (promoCode || "")) as unknown as Payment[];
     setPayments(pList);
     const rev = pList.reduce((s, p) => s + Number(p.amount), 0);
     setTotalRevenue(rev);
