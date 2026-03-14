@@ -5,8 +5,8 @@ import { Button } from "@/components/ui/button";
 import LogoShowcase from "@/components/LogoShowcase";
 
 const termsContent = [
-  { heading: "1. Service Description", text: "Stream Net Mirror provides users with access credentials to the NetMirror streaming portal upon successful payment. We act as an access gateway and do not host, upload, or store any streaming content on our servers." },
-  { heading: "2. Payment", text: "The service requires a one-time payment of ZMW 49 (Zambian Kwacha) via Mobile Money (Airtel Money or MTN MoMo). Payment is processed instantly and access is granted immediately upon confirmation." },
+  { heading: "1. Service Description", text: "StreamNetMirror provides users with access credentials to the streaming portal upon successful payment. We act as an access gateway and do not host, upload, or store any streaming content on our servers." },
+  { heading: "2. Payment", text: "The service requires a one-time payment (amount set dynamically) via Mobile Money (Airtel Money or MTN MoMo). Payment is processed instantly and access is granted immediately upon confirmation." },
   { heading: "3. Chargebacks", text: "Filing a chargeback or disputing a legitimate transaction may result in immediate suspension of your account and access to the streaming portal." },
   { heading: "4. Refund Policy", text: "Refunds are available within 7 days of purchase. Contact onlineplagiarismremover@gmail.com with your transaction details." },
   { heading: "5. Disclaimer", text: "This website is intended strictly for educational and informational purposes. We do not own, manage, or have any affiliation with any streaming platforms." },
@@ -50,7 +50,6 @@ const Footer = () => {
   return (
     <footer className="bg-background border-t border-border pt-8 md:pt-12 pb-4 md:pb-6">
       <div className="container mx-auto px-4">
-        {/* Top Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 mb-6 md:mb-10">
           {[
             { title: "Company", items: [
@@ -63,7 +62,7 @@ const Footer = () => {
               { label: "FAQ", href: "#faq" },
               { label: "Help Center", href: "#" },
               { label: "Contact Us", href: "mailto:onlineplagiarismremover@gmail.com" },
-              { label: "Account", href: "#" },
+              { label: "My Account", href: "/signin" },
             ]},
             { title: "Stream", items: [
               { label: "Movies", href: "/#trending" },
@@ -99,21 +98,19 @@ const Footer = () => {
 
         <Separator className="bg-border mb-4 md:mb-8" />
 
-        {/* Disclaimer */}
         <div className="mb-4 md:mb-8">
           <h5 className="netflix-title text-[10px] md:text-sm text-muted-foreground mb-1.5 md:mb-3 tracking-wide">DISCLAIMER</h5>
           <p className="text-[9px] md:text-xs text-muted-foreground/70 leading-relaxed max-w-4xl">
-            The website https://www.netmirrorc.com/ is intended strictly for educational and informational purposes. We do not own, manage, or have any affiliation with any streaming platforms, services, or the NetMirror app itself. We do not encourage or promote piracy or the use of illegal services in any form.
+            StreamNetMirror is intended strictly for educational and informational purposes. We do not own, manage, or have any affiliation with any streaming platforms, services, or the StreamNetMirror app itself. We do not encourage or promote piracy or the use of illegal services in any form.
           </p>
         </div>
 
         <Separator className="bg-border mb-4 md:mb-6" />
 
-        {/* Bottom */}
         <div className="flex flex-col md:flex-row items-center justify-between gap-3 md:gap-4">
           <div className="flex items-center gap-3">
             <LogoShowcase size="md" />
-            <span className="text-[9px] md:text-xs text-muted-foreground">© 2024 Stream Net Mirror. All rights reserved.</span>
+            <span className="text-[9px] md:text-xs text-muted-foreground">© 2024 StreamNetMirror. All rights reserved.</span>
           </div>
           <div className="flex items-center gap-3 md:gap-4 text-[10px] md:text-xs text-muted-foreground">
             <Link to="/terms" className="hover:text-foreground transition-colors">Terms</Link>

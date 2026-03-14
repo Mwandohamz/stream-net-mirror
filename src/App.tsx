@@ -8,12 +8,16 @@ import { useEffect } from "react";
 import { trackPageView } from "@/lib/analytics";
 import PageTransition from "@/components/PageTransition";
 import AdminRoute from "@/components/admin/AdminRoute";
+import SubscriberRoute from "@/components/SubscriberRoute";
 import Index from "./pages/Index.tsx";
 import Payment from "./pages/Payment.tsx";
 import Access from "./pages/Access.tsx";
 import Terms from "./pages/Terms.tsx";
 import Privacy from "./pages/Privacy.tsx";
 import NotFound from "./pages/NotFound.tsx";
+import SignIn from "./pages/SignIn.tsx";
+import SignUp from "./pages/SignUp.tsx";
+import MemberDashboard from "./pages/MemberDashboard.tsx";
 import AdminLogin from "./pages/admin/AdminLogin.tsx";
 import Dashboard from "./pages/admin/Dashboard.tsx";
 import AdminPayments from "./pages/admin/Payments.tsx";
@@ -39,6 +43,9 @@ const AnimatedRoutes = () => {
         <Route path="/" element={<PageTransition><Index /></PageTransition>} />
         <Route path="/payment" element={<PageTransition><Payment /></PageTransition>} />
         <Route path="/access" element={<PageTransition><Access /></PageTransition>} />
+        <Route path="/signin" element={<PageTransition><SignIn /></PageTransition>} />
+        <Route path="/signup" element={<PageTransition><SignUp /></PageTransition>} />
+        <Route path="/dashboard" element={<SubscriberRoute><MemberDashboard /></SubscriberRoute>} />
         <Route path="/terms" element={<PageTransition><Terms /></PageTransition>} />
         <Route path="/privacy" element={<PageTransition><Privacy /></PageTransition>} />
         <Route path="/admin/login" element={<AdminLogin />} />

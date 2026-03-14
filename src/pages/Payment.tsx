@@ -9,12 +9,17 @@ import { ArrowLeft, Mail, User, Shield } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import PaymentModal from "@/components/PaymentModal";
+import { useAppSettings } from "@/hooks/useAppSettings";
 
 const Payment = () => {
   const navigate = useNavigate();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
+
+  const { settings, loading } = useAppSettings();
+  const currentPrice = parseFloat(settings.base_price_zmw || "49") || 49;
+  const oldPrice = Math.round(currentPrice / 0.30);
 
   const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   const isValid = name.trim().length >= 2 && emailValid;
@@ -34,7 +39,7 @@ const Payment = () => {
 
           <Card className="bg-card border-border">
             <CardHeader className="text-center">
-              <img src="/logo-hexagon.png" alt="Stream Net Mirror" className="h-12 w-12 mx-auto mb-2" />
+              <img src="/logo-hexagon.png" alt="StreamNetMirror" className="h-12 w-12 mx-auto mb-2" />
               <CardTitle className="netflix-title text-3xl text-foreground">GET STARTED</CardTitle>
               <CardDescription className="text-muted-foreground">
                 Enter your details to proceed to payment
@@ -44,8 +49,15 @@ const Payment = () => {
               {/* Price display */}
               <div className="bg-primary/10 border border-primary/20 rounded-lg p-4 text-center">
                 <p className="text-sm text-muted-foreground">Total Amount</p>
-                <p className="netflix-title text-4xl text-primary">ZMW 49</p>
-                <p className="text-xs text-muted-foreground mt-1">One-time payment · Instant access</p>
+                <div className="flex items-baseline justify-center gap-2">
+                  <span className="text-muted-foreground line-through text-lg">
+                    ZMW {loading ? "..." : oldPrice}
+                  </span>
+                  <span className="netflix-title text-4xl text-primary">
+                    ZMW {loading ? "..." : currentPrice}
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">One-time payment · Lifetime access · <span className="text-primary font-semibold">Save 70%</span></p>
               </div>
 
               {/* Name */}
@@ -104,7 +116,7 @@ const Payment = () => {
         onClose={() => setModalOpen(false)}
         onSuccess={(depositId) => {
           setModalOpen(false);
-          navigate("/access");
+          navigate(`/signup?email=${encodeURIComponent(email.trim())}&name=${encodeURIComponent(name.trim())}`);
         }}
         onFailure={(depositId, reason) => {
           console.error("Payment failed:", reason);

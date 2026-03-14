@@ -36,8 +36,9 @@ const Dashboard = () => {
     const todayPayments = todayRes.data || [];
     const totalViews = viewsRes.data?.length || 0;
     const uniqueSessions = new Set((sessionsRes.data || []).map((v: any) => v.session_id)).size;
-    const totalRevenue = payments.reduce((sum: number, p: any) => sum + Number(p.amount), 0);
-    const conversionRate = uniqueSessions > 0 ? ((payments.length / uniqueSessions) * 100) : 0;
+    const completedPayments = payments.filter((p: any) => p.status === "completed");
+    const totalRevenue = completedPayments.reduce((sum: number, p: any) => sum + Number(p.amount), 0);
+    const conversionRate = uniqueSessions > 0 ? ((completedPayments.length / uniqueSessions) * 100) : 0;
 
     setStats({
       totalRevenue,
@@ -53,7 +54,7 @@ const Dashboard = () => {
       const d = new Date();
       d.setDate(d.getDate() - (6 - i));
       const dateStr = d.toISOString().split("T")[0];
-      const dayPayments = payments.filter((p: any) => p.created_at?.startsWith(dateStr));
+      const dayPayments = completedPayments.filter((p: any) => p.created_at?.startsWith(dateStr));
       return {
         date: d.toLocaleDateString("en", { weekday: "short" }),
         revenue: dayPayments.reduce((s: number, p: any) => s + Number(p.amount), 0),
@@ -88,7 +89,7 @@ const Dashboard = () => {
 
         {/* Stat Cards */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-          <StatCard title="Total Revenue" value={`ZMW ${stats.totalRevenue}`} icon={DollarSign} trend="+12%" trendUp />
+          <StatCard title="Total Revenue" value={`ZMW ${stats.totalRevenue}`} icon={DollarSign} description="Completed payments" />
           <StatCard title="Total Payments" value={stats.totalPayments} icon={CreditCard} description="All time" />
           <StatCard title="Today" value={stats.todayPayments} icon={TrendingUp} description="Payments today" />
           <StatCard title="Page Views" value={stats.totalPageViews} icon={Eye} description="All time" />

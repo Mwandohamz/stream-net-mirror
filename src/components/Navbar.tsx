@@ -34,8 +34,8 @@ const Navbar = () => {
       <div className="container mx-auto flex items-center justify-between px-4 py-2 md:py-3">
         <Link to="/" className="flex items-center gap-2">
           <LogoShowcase size="md" />
-          <span className="netflix-title text-lg md:text-2xl text-primary">
-            NETMIRROR
+          <span className="netflix-title text-base md:text-2xl text-primary">
+            STREAMNETMIRROR
           </span>
         </Link>
 
@@ -53,7 +53,7 @@ const Navbar = () => {
         </div>
 
         <div className="hidden md:flex items-center gap-3">
-          <Button variant="ghost" className="text-sm text-muted-foreground" onClick={() => navigate("/payment")}>
+          <Button variant="ghost" className="text-sm text-muted-foreground" onClick={() => navigate("/signin")}>
             Sign In
           </Button>
           <Button
@@ -91,7 +91,14 @@ const Navbar = () => {
               </a>
             ))}
             <Button
-              className="w-full mt-3 bg-primary text-primary-foreground active:scale-95 transition-transform"
+              variant="ghost"
+              className="w-full mt-2 text-muted-foreground justify-start"
+              onClick={() => { setMobileOpen(false); navigate("/signin"); }}
+            >
+              Sign In
+            </Button>
+            <Button
+              className="w-full mt-1 bg-primary text-primary-foreground active:scale-95 transition-transform"
               onClick={() => { setMobileOpen(false); navigate("/payment"); }}
             >
               Get Started
