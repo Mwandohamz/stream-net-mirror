@@ -2,9 +2,10 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import AdminLayout from "@/components/admin/AdminLayout";
 import StatCard from "@/components/admin/StatCard";
-import { DollarSign, CreditCard, Users, TrendingUp, Eye, BarChart3 } from "lucide-react";
+import { DollarSign, CreditCard, Users, TrendingUp, Eye, BarChart3, HelpCircle, ChevronDown, ChevronRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts";
+import { Button } from "@/components/ui/button";
 
 const Dashboard = () => {
   const [stats, setStats] = useState({
