@@ -2,18 +2,22 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import AdminLayout from "@/components/admin/AdminLayout";
 import StatCard from "@/components/admin/StatCard";
-import { DollarSign, CreditCard, Users, TrendingUp, Eye, BarChart3, HelpCircle, ChevronDown, ChevronRight } from "lucide-react";
+import { DollarSign, CreditCard, Users, TrendingUp, Eye, BarChart3, HelpCircle, ChevronDown, ChevronRight, RefreshCw } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts";
 import { Button } from "@/components/ui/button";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 
 const Dashboard = () => {
   const [showGuide, setShowGuide] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [stats, setStats] = useState({
     totalRevenue: 0,
     organicRevenue: 0,
     influencerRevenue: 0,
     totalPayments: 0,
+    completedPayments: 0,
     todayPayments: 0,
     totalPageViews: 0,
     uniqueSessions: 0,
@@ -21,73 +25,100 @@ const Dashboard = () => {
   });
   const [revenueData, setRevenueData] = useState<any[]>([]);
   const [viewsData, setViewsData] = useState<any[]>([]);
+  const [recentPayments, setRecentPayments] = useState<any[]>([]);
 
   useEffect(() => {
     fetchStats();
   }, []);
 
   const fetchStats = async () => {
+    setRefreshing(true);
     const today = new Date().toISOString().split("T")[0];
 
-    const [paymentsRes, todayRes, viewsRes, sessionsRes] = await Promise.all([
-      supabase.from("payments").select("*"),
-      supabase.from("payments").select("*").gte("created_at", today),
-      supabase.from("page_views").select("id"),
-      supabase.from("page_views").select("session_id"),
-    ]);
+    try {
+      // Fetch payments - use separate queries for robustness
+      const { data: allPayments, error: paymentsErr } = await supabase
+        .from("payments")
+        .select("*")
+        .order("created_at", { ascending: false });
 
-    const payments = paymentsRes.data || [];
-    const todayPayments = todayRes.data || [];
-    const totalViews = viewsRes.data?.length || 0;
-    const uniqueSessions = new Set((sessionsRes.data || []).map((v: any) => v.session_id)).size;
-    const completedPayments = payments.filter((p: any) => p.status === "completed");
-    const totalRevenue = completedPayments.reduce((sum: number, p: any) => sum + Number(p.amount), 0);
-    const organicRevenue = completedPayments.filter((p: any) => !p.promo_code).reduce((sum: number, p: any) => sum + Number(p.amount), 0);
-    const influencerRevenue = completedPayments.filter((p: any) => !!p.promo_code).reduce((sum: number, p: any) => sum + Number(p.amount), 0);
-    const conversionRate = uniqueSessions > 0 ? ((completedPayments.length / uniqueSessions) * 100) : 0;
+      if (paymentsErr) {
+        console.error("Dashboard payments query error:", paymentsErr);
+      }
 
-    setStats({
-      totalRevenue,
-      organicRevenue,
-      influencerRevenue,
-      totalPayments: payments.length,
-      todayPayments: todayPayments.length,
-      totalPageViews: totalViews,
-      uniqueSessions,
-      conversionRate: Math.round(conversionRate * 10) / 10,
-    });
+      const payments = allPayments || [];
+      console.log("Dashboard: fetched", payments.length, "payments");
 
-    // Build revenue chart data (last 7 days)
-    const last7 = Array.from({ length: 7 }, (_, i) => {
-      const d = new Date();
-      d.setDate(d.getDate() - (6 - i));
-      const dateStr = d.toISOString().split("T")[0];
-      const dayPayments = completedPayments.filter((p: any) => p.created_at?.startsWith(dateStr));
-      return {
-        date: d.toLocaleDateString("en", { weekday: "short" }),
-        revenue: dayPayments.reduce((s: number, p: any) => s + Number(p.amount), 0),
-        count: dayPayments.length,
-      };
-    });
-    setRevenueData(last7);
+      const { data: todayData, error: todayErr } = await supabase
+        .from("payments")
+        .select("id")
+        .gte("created_at", today);
 
-    // Build views chart data (last 7 days)
-    const allViews = (viewsRes.data as any[]) || [];
-    // We only have IDs so we need to re-fetch with timestamps for chart
-    const { data: viewsFull } = await supabase.from("page_views").select("created_at, session_id");
-    const viewsArr = viewsFull || [];
-    const viewsLast7 = Array.from({ length: 7 }, (_, i) => {
-      const d = new Date();
-      d.setDate(d.getDate() - (6 - i));
-      const dateStr = d.toISOString().split("T")[0];
-      const dayViews = viewsArr.filter((v: any) => v.created_at?.startsWith(dateStr));
-      return {
-        date: d.toLocaleDateString("en", { weekday: "short" }),
-        views: dayViews.length,
-        sessions: new Set(dayViews.map((v: any) => v.session_id)).size,
-      };
-    });
-    setViewsData(viewsLast7);
+      if (todayErr) console.error("Dashboard today payments error:", todayErr);
+
+      const { data: viewsData2, error: viewsErr } = await supabase
+        .from("page_views")
+        .select("created_at, session_id");
+
+      if (viewsErr) console.error("Dashboard page_views error:", viewsErr);
+
+      const viewsArr = viewsData2 || [];
+      const totalViews = viewsArr.length;
+      const uniqueSessions = new Set(viewsArr.map((v: any) => v.session_id)).size;
+
+      const completedPayments = payments.filter((p: any) => p.status === "completed");
+      const totalRevenue = completedPayments.reduce((sum: number, p: any) => sum + Number(p.amount), 0);
+      const organicRevenue = completedPayments.filter((p: any) => !p.promo_code).reduce((sum: number, p: any) => sum + Number(p.amount), 0);
+      const influencerRevenue = completedPayments.filter((p: any) => !!p.promo_code).reduce((sum: number, p: any) => sum + Number(p.amount), 0);
+      const conversionRate = uniqueSessions > 0 ? ((completedPayments.length / uniqueSessions) * 100) : 0;
+
+      setStats({
+        totalRevenue,
+        organicRevenue,
+        influencerRevenue,
+        totalPayments: payments.length,
+        completedPayments: completedPayments.length,
+        todayPayments: (todayData || []).length,
+        totalPageViews: totalViews,
+        uniqueSessions,
+        conversionRate: Math.round(conversionRate * 10) / 10,
+      });
+
+      // Recent payments for table
+      setRecentPayments(payments.slice(0, 10));
+
+      // Build revenue chart data (last 7 days)
+      const last7 = Array.from({ length: 7 }, (_, i) => {
+        const d = new Date();
+        d.setDate(d.getDate() - (6 - i));
+        const dateStr = d.toISOString().split("T")[0];
+        const dayPayments = completedPayments.filter((p: any) => p.created_at?.startsWith(dateStr));
+        return {
+          date: d.toLocaleDateString("en", { weekday: "short" }),
+          revenue: dayPayments.reduce((s: number, p: any) => s + Number(p.amount), 0),
+          count: dayPayments.length,
+        };
+      });
+      setRevenueData(last7);
+
+      // Build views chart data (last 7 days)
+      const viewsLast7 = Array.from({ length: 7 }, (_, i) => {
+        const d = new Date();
+        d.setDate(d.getDate() - (6 - i));
+        const dateStr = d.toISOString().split("T")[0];
+        const dayViews = viewsArr.filter((v: any) => v.created_at?.startsWith(dateStr));
+        return {
+          date: d.toLocaleDateString("en", { weekday: "short" }),
+          views: dayViews.length,
+          sessions: new Set(dayViews.map((v: any) => v.session_id)).size,
+        };
+      });
+      setViewsData(viewsLast7);
+    } catch (err) {
+      console.error("Dashboard fetchStats error:", err);
+    } finally {
+      setRefreshing(false);
+    }
   };
 
   return (
@@ -95,16 +126,28 @@ const Dashboard = () => {
       <div className="space-y-6">
         <div className="flex items-center justify-between flex-wrap gap-2">
           <h1 className="netflix-title text-3xl text-foreground">DASHBOARD OVERVIEW</h1>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowGuide(!showGuide)}
-            className="border-border text-foreground gap-1"
-          >
-            <HelpCircle size={14} />
-            {showGuide ? "Hide Guide" : "Admin Guide"}
-            {showGuide ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={fetchStats}
+              disabled={refreshing}
+              className="border-border text-foreground gap-1"
+            >
+              <RefreshCw size={14} className={refreshing ? "animate-spin" : ""} />
+              Refresh
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowGuide(!showGuide)}
+              className="border-border text-foreground gap-1"
+            >
+              <HelpCircle size={14} />
+              {showGuide ? "Hide Guide" : "Admin Guide"}
+              {showGuide ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+            </Button>
+          </div>
         </div>
 
         {showGuide && (
@@ -182,6 +225,15 @@ const Dashboard = () => {
                   <li><strong>Password:</strong> Change your admin password</li>
                 </ul>
               </div>
+
+              <div>
+                <h3 className="text-foreground font-semibold mb-1">🔐 Password Reset</h3>
+                <ul className="list-disc list-inside space-y-1">
+                  <li>Users can reset their password at <code className="text-primary">/forgot-password</code></li>
+                  <li>A reset link is sent to their email, leading to <code className="text-primary">/reset-password</code></li>
+                  <li>On the sign-in page, if email is unverified, they can resend the verification email</li>
+                </ul>
+              </div>
             </CardContent>
           </Card>
         )}
@@ -191,7 +243,7 @@ const Dashboard = () => {
           <StatCard title="Total Revenue" value={`ZMW ${stats.totalRevenue}`} icon={DollarSign} description="Completed payments" />
           <StatCard title="Organic Revenue" value={`ZMW ${stats.organicRevenue}`} icon={DollarSign} description="No promo code" />
           <StatCard title="Promo Revenue" value={`ZMW ${stats.influencerRevenue}`} icon={TrendingUp} description="Via influencers" />
-          <StatCard title="Total Payments" value={stats.totalPayments} icon={CreditCard} description="All time" />
+          <StatCard title="Total Payments" value={stats.totalPayments} icon={CreditCard} description="All statuses" />
           <StatCard title="Today" value={stats.todayPayments} icon={TrendingUp} description="Payments today" />
           <StatCard title="Page Views" value={stats.totalPageViews} icon={Eye} description="All time" />
           <StatCard title="Sessions" value={stats.uniqueSessions} icon={Users} description="Unique visitors" />
@@ -235,6 +287,57 @@ const Dashboard = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* Recent Payments Table */}
+        <Card className="bg-card border-border">
+          <CardHeader>
+            <CardTitle className="netflix-title text-lg text-foreground">RECENT PAYMENTS</CardTitle>
+          </CardHeader>
+          <CardContent className="p-0 overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Amount</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Date</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {recentPayments.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center text-muted-foreground py-6">
+                      {refreshing ? "Loading..." : "No payments found. Payment data will appear here once users make payments."}
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  recentPayments.map((p: any) => (
+                    <TableRow key={p.id}>
+                      <TableCell className="font-medium text-foreground">{p.name}</TableCell>
+                      <TableCell className="text-muted-foreground text-sm">{p.email}</TableCell>
+                      <TableCell className="text-foreground font-medium">{p.currency || "ZMW"} {p.amount}</TableCell>
+                      <TableCell>
+                        <Badge variant={p.status === "completed" ? "default" : "secondary"}
+                          className={
+                            p.status === "completed" ? "bg-green-500/20 text-green-500 border-green-500/30" :
+                            p.status === "pending" ? "bg-yellow-500/20 text-yellow-500 border-yellow-500/30" :
+                            "bg-destructive/20 text-destructive border-destructive/30"
+                          }
+                        >
+                          {p.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground text-xs">
+                        {new Date(p.created_at).toLocaleDateString()}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
       </div>
     </AdminLayout>
   );
