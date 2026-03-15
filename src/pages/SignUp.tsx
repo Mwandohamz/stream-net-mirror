@@ -172,6 +172,10 @@ const SignUp = () => {
                   Already have an account?{" "}
                   <button onClick={() => navigate("/signin")} className="text-primary hover:underline">Sign In</button>
                 </p>
+                <p className="text-xs text-muted-foreground text-center">
+                  Having trouble?{" "}
+                  <button onClick={() => navigate("/support")} className="text-primary hover:underline">Contact Support</button>
+                </p>
               </CardContent>
             </Card>
           )}

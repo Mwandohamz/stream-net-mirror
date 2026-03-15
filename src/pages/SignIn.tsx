@@ -157,6 +157,10 @@ const SignIn = () => {
                   Haven't paid yet?{" "}
                   <button onClick={() => navigate("/payment")} className="text-primary hover:underline">Complete Payment</button>
                 </p>
+                <p className="text-xs text-muted-foreground">
+                  Paid but can't log in?{" "}
+                  <button onClick={() => navigate("/support")} className="text-primary hover:underline">Get Help</button>
+                </p>
               </div>
             </CardContent>
           </Card>
