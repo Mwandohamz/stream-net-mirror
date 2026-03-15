@@ -8,6 +8,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { Button } from "@/components/ui/button";
 
 const Dashboard = () => {
+  const [showGuide, setShowGuide] = useState(false);
   const [stats, setStats] = useState({
     totalRevenue: 0,
     organicRevenue: 0,
