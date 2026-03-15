@@ -23,7 +23,7 @@ const Terms = () => {
           <h3 className="netflix-title text-xl text-foreground">3. Chargebacks</h3>
           <p>Filing a chargeback or disputing a legitimate transaction may result in immediate suspension of your account.</p>
           <h3 className="netflix-title text-xl text-foreground">4. Refund Policy</h3>
-          <p>Refunds are available within 7 days of purchase. Contact onlineplagiarismremover@gmail.com with your transaction details.</p>
+          <p>Refunds are available within 7 days of purchase. Contact shuvaegonera@gmail.com with your transaction details.</p>
           <h3 className="netflix-title text-xl text-foreground">5. Disclaimer</h3>
           <p>This website is intended strictly for educational and informational purposes. We do not encourage or promote piracy.</p>
           <h3 className="netflix-title text-xl text-foreground">6. Contact</h3>
