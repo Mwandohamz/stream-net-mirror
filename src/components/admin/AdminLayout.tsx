@@ -70,6 +70,8 @@ const AdminSidebar = () => {
 
   const fetchBadges = useCallback(async () => {
     try {
+      await supabase.functions.invoke("assign-admin-role");
+
       const [
         { count: newPayments, error: paymentsErr },
         { count: newTickets, error: ticketsErr },
@@ -78,7 +80,7 @@ const AdminSidebar = () => {
         supabase
           .from("payments")
           .select("id", { count: "exact", head: true })
-          .in("status", SUCCESS_PAYMENT_STATUSES)
+          .in("status", [...SUCCESS_PAYMENT_STATUSES, "COMPLETED", "SUCCESS", "SUCCEEDED"])
           .gt("created_at", getSeenAt(SEEN_KEYS.payments)),
         supabase
           .from("support_tickets")
