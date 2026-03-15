@@ -23,6 +23,7 @@ serve(async (req) => {
     const status = body.status;
 
     if (!depositId || !status) {
+      console.error("Missing depositId or status in callback body");
       return new Response(JSON.stringify({ error: "Missing depositId or status" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -30,22 +31,41 @@ serve(async (req) => {
     }
 
     if (status === "COMPLETED") {
-      await supabase
+      const updateData: Record<string, any> = {
+        status: "completed",
+      };
+      if (body.providerTransactionId) {
+        updateData.provider_transaction_id = body.providerTransactionId;
+      }
+
+      const { error: updateError, data: updateResult } = await supabase
         .from("payments")
-        .update({
-          status: "completed",
-          provider_transaction_id: body.providerTransactionId ?? null,
-        })
-        .eq("deposit_id", depositId);
+        .update(updateData)
+        .eq("deposit_id", depositId)
+        .select("id, email, name");
+
+      if (updateError) {
+        console.error("Failed to update payment to completed:", updateError);
+      } else {
+        console.log("Payment updated to completed:", JSON.stringify(updateResult));
+      }
     } else if (status === "FAILED") {
       const reason = body.failureReason?.failureMessage ?? "Payment failed";
-      await supabase
+      const { error: updateError } = await supabase
         .from("payments")
         .update({
           status: "failed",
           failure_reason: reason,
         })
         .eq("deposit_id", depositId);
+
+      if (updateError) {
+        console.error("Failed to update payment to failed:", updateError);
+      } else {
+        console.log("Payment updated to failed for deposit:", depositId, "reason:", reason);
+      }
+    } else {
+      console.log("Unhandled callback status:", status, "for deposit:", depositId);
     }
 
     return new Response(JSON.stringify({ received: true }), {
