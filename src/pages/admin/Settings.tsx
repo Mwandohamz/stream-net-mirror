@@ -228,6 +228,51 @@ const AdminSettings = () => {
 
         <Card className="bg-card border-border">
           <CardHeader>
+            <CardTitle className="netflix-title text-lg text-foreground">OFFICIAL STREAMING LINKS</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-xs text-muted-foreground">
+              Set up to 3 official NetMirror website links. These will be shown to subscribers as backup access options.
+            </p>
+            {[1, 2, 3].map((n) => {
+              const key = `streaming_link_${n}`;
+              return (
+                <div key={key} className="space-y-2">
+                  <Label className="text-foreground text-sm">Official Link {n}</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      type="url"
+                      defaultValue={settings[key] || ""}
+                      id={`link-input-${n}`}
+                      placeholder="https://..."
+                      className="bg-secondary border-border text-foreground"
+                    />
+                    <Button
+                      size="sm"
+                      onClick={async () => {
+                        const input = document.getElementById(`link-input-${n}`) as HTMLInputElement;
+                        const val = input?.value || "";
+                        if (val && !val.startsWith("http")) {
+                          toast.error("Please enter a valid URL");
+                          return;
+                        }
+                        const { error } = await updateSetting(key, val);
+                        if (error) toast.error(error.message);
+                        else toast.success(`Link ${n} saved`);
+                      }}
+                      className="bg-primary text-primary-foreground shrink-0"
+                    >
+                      Save
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
+          </CardContent>
+        </Card>
+
+        <Card className="bg-card border-border">
+          <CardHeader>
             <CardTitle className="netflix-title text-lg text-foreground">ANDROID APK</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">

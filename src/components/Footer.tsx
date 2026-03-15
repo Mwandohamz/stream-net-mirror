@@ -8,7 +8,7 @@ const termsContent = [
   { heading: "1. Service Description", text: "StreamNetMirror provides users with access credentials to the streaming portal upon successful payment. We act as an access gateway and do not host, upload, or store any streaming content on our servers." },
   { heading: "2. Payment", text: "The service requires a one-time payment (amount set dynamically) via Mobile Money (Airtel Money or MTN MoMo). Payment is processed instantly and access is granted immediately upon confirmation." },
   { heading: "3. Chargebacks", text: "Filing a chargeback or disputing a legitimate transaction may result in immediate suspension of your account and access to the streaming portal." },
-  { heading: "4. Refund Policy", text: "Refunds are available within 7 days of purchase. Contact onlineplagiarismremover@gmail.com with your transaction details." },
+  { heading: "4. Refund Policy", text: "Refunds are available within 7 days of purchase. Contact shuvaegonera@gmail.com with your transaction details." },
   { heading: "5. Disclaimer", text: "This website is intended strictly for educational and informational purposes. We do not own, manage, or have any affiliation with any streaming platforms." },
 ];
 
@@ -17,7 +17,7 @@ const privacyContent = [
   { heading: "2. How We Use Your Information", text: "Your information is used exclusively to process your payment and provide access. We do not sell or share your data." },
   { heading: "3. Data Security", text: "We implement appropriate security measures. Payment processing is handled by trusted Mobile Money providers." },
   { heading: "4. Cookies", text: "Our website may use cookies for analytics purposes to improve user experience." },
-  { heading: "5. Contact", text: "If you have any concerns about your privacy, contact us at onlineplagiarismremover@gmail.com." },
+  { heading: "5. Contact", text: "If you have any concerns about your privacy, contact us at shuvaegonera@gmail.com." },
 ];
 
 const LegalDialog = ({ title, content, fullPageLink }: { title: string; content: typeof termsContent; fullPageLink: string }) => (
@@ -61,7 +61,7 @@ const Footer = () => {
             { title: "Support", items: [
               { label: "FAQ", href: "#faq" },
               { label: "Help Center", href: "#" },
-              { label: "Contact Us", href: "mailto:onlineplagiarismremover@gmail.com" },
+              { label: "Contact Us", href: "mailto:shuvaegonera@gmail.com" },
               { label: "My Account", href: "/signin" },
             ]},
             { title: "Stream", items: [
@@ -115,7 +115,7 @@ const Footer = () => {
           <div className="flex items-center gap-3 md:gap-4 text-[10px] md:text-xs text-muted-foreground">
             <Link to="/terms" className="hover:text-foreground transition-colors">Terms</Link>
             <Link to="/privacy" className="hover:text-foreground transition-colors">Privacy</Link>
-            <a href="mailto:onlineplagiarismremover@gmail.com" className="hover:text-foreground transition-colors">Contact</a>
+            <a href="mailto:shuvaegonera@gmail.com" className="hover:text-foreground transition-colors">Contact</a>
           </div>
         </div>
       </div>

@@ -6,11 +6,12 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
 import {
   ExternalLink, Download, Globe, Smartphone, Monitor,
   MessageCircle, Send, LogOut, Shield, Play, ChevronRight,
-  AlertTriangle, CheckCircle2
+  AlertTriangle, CheckCircle2, Info, RefreshCw, Laptop
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -33,6 +34,23 @@ const ottPlatforms = [
   { name: "Paramount+", logo: paramountLogo },
 ];
 
+interface Ticket {
+  id: string;
+  subject: string;
+  message: string;
+  status: string;
+  created_at: string;
+  updated_at?: string;
+}
+
+interface TicketMessage {
+  id: string;
+  ticket_id: string;
+  sender_role: string;
+  message: string;
+  created_at: string;
+}
+
 const MemberDashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -44,13 +62,65 @@ const MemberDashboard = () => {
   const [ticketMessage, setTicketMessage] = useState("");
   const [ticketLoading, setTicketLoading] = useState(false);
 
+  // Tickets & chat
+  const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [ticketMessages, setTicketMessages] = useState<Record<string, TicketMessage[]>>({});
+  const [expandedTicket, setExpandedTicket] = useState<string | null>(null);
+  const [replyText, setReplyText] = useState("");
+  const [replySending, setReplySending] = useState(false);
+
+  const streamingLink1 = settings.streaming_link_1 || "";
+  const streamingLink2 = settings.streaming_link_2 || "";
+  const streamingLink3 = settings.streaming_link_3 || "";
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
         setUserName(session.user.user_metadata?.full_name || session.user.email || "");
+        fetchTickets(session.user.id);
       }
     });
   }, []);
+
+  const fetchTickets = async (userId: string) => {
+    const { data } = await supabase
+      .from("support_tickets" as any)
+      .select("*")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false });
+    setTickets((data || []) as unknown as Ticket[]);
+  };
+
+  const fetchTicketMessages = async (ticketId: string) => {
+    const { data } = await supabase
+      .from("ticket_messages" as any)
+      .select("*")
+      .eq("ticket_id", ticketId)
+      .order("created_at", { ascending: true });
+    setTicketMessages(prev => ({ ...prev, [ticketId]: (data || []) as unknown as TicketMessage[] }));
+  };
+
+  const handleExpandTicket = (ticketId: string) => {
+    if (expandedTicket === ticketId) {
+      setExpandedTicket(null);
+    } else {
+      setExpandedTicket(ticketId);
+      fetchTicketMessages(ticketId);
+    }
+  };
+
+  const handleSendReply = async (ticketId: string) => {
+    if (!replyText.trim()) return;
+    setReplySending(true);
+    await supabase.from("ticket_messages" as any).insert({
+      ticket_id: ticketId,
+      sender_role: "user",
+      message: replyText.trim(),
+    } as any);
+    setReplyText("");
+    await fetchTicketMessages(ticketId);
+    setReplySending(false);
+  };
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -71,8 +141,13 @@ const MemberDashboard = () => {
       setTicketSubject("");
       setTicketMessage("");
       toast({ title: "Ticket submitted!", description: "We'll respond as soon as possible." });
+      fetchTickets(session.user.id);
     }
     setTicketLoading(false);
+  };
+
+  const handleWhatsApp = () => {
+    toast({ title: "Coming Soon", description: "WhatsApp support is not available at the moment." });
   };
 
   return (
@@ -92,6 +167,29 @@ const MemberDashboard = () => {
               <LogOut size={16} className="mr-1" /> Sign Out
             </Button>
           </div>
+
+          {/* Important Notice */}
+          <Card className="bg-accent/10 border-accent/30 border-2">
+            <CardContent className="p-4 md:p-6 space-y-3">
+              <div className="flex items-center gap-2">
+                <Info size={20} className="text-accent-foreground shrink-0" />
+                <h2 className="netflix-title text-base md:text-lg text-foreground">IMPORTANT — PLEASE READ</h2>
+              </div>
+              <div className="space-y-2 text-xs md:text-sm text-muted-foreground leading-relaxed">
+                <p>
+                  <strong className="text-foreground">StreamNetMirror</strong> facilitates easy, cheap, <strong className="text-foreground">lifetime streaming access</strong> by mirroring popular platforms like Netflix, Disney+, HBO Max and more. Think of it as a clone of the most popular streaming services — all in one place, forever free after your one-time payment.
+                </p>
+                <p>
+                  <AlertTriangle size={14} className="inline text-primary mr-1" />
+                  <strong className="text-foreground">Links may change or temporarily go down</strong> — especially for <strong className="text-foreground">iOS / WebView / browser users</strong>. If a link stops working, simply <strong className="text-foreground">come back to this dashboard</strong> to get the latest refreshed links.
+                </p>
+                <p>
+                  <RefreshCw size={14} className="inline text-primary mr-1" />
+                  Occasional lags or downtime are normal. The service will always remain free and active — we continuously update links and mirrors to keep everything working.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Streaming Portal Access */}
           <Card className="bg-card border-primary/30 border-2">
@@ -114,7 +212,7 @@ const MemberDashboard = () => {
               <div className="bg-primary/5 border border-primary/20 rounded-lg p-3 flex items-start gap-2">
                 <AlertTriangle size={16} className="text-primary mt-0.5 shrink-0" />
                 <p className="text-[10px] md:text-xs text-muted-foreground">
-                  <strong className="text-foreground">For mobile users:</strong> You may be prompted to download the official app. 
+                  <strong className="text-foreground">For mobile users:</strong> You may be prompted to download the official app.
                   Please accept and grant the necessary permissions to install the application for the best streaming experience.
                 </p>
               </div>
@@ -127,12 +225,7 @@ const MemberDashboard = () => {
                   <Shield size={18} /> I Understand — Show Portal Access
                 </Button>
               ) : (
-                <a
-                  href={portalUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block"
-                >
+                <a href={portalUrl} target="_blank" rel="noopener noreferrer" className="block">
                   <Button className="w-full h-14 bg-primary text-primary-foreground hover:bg-primary/80 font-semibold text-lg gap-2 active:scale-95 transition-transform">
                     Launch Streaming Portal <ChevronRight size={20} />
                   </Button>
@@ -140,6 +233,34 @@ const MemberDashboard = () => {
               )}
             </CardContent>
           </Card>
+
+          {/* Official Backup Links */}
+          {(streamingLink1 || streamingLink2 || streamingLink3) && (
+            <Card className="bg-card border-border">
+              <CardHeader>
+                <CardTitle className="netflix-title text-lg text-foreground flex items-center gap-2">
+                  <Globe size={18} className="text-primary" />
+                  OFFICIAL NETMIRROR WEBSITES
+                </CardTitle>
+                <p className="text-xs text-muted-foreground">If the main portal is down, try these official backup links:</p>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {[
+                  { label: "Official Link 1", url: streamingLink1 },
+                  { label: "Official Link 2", url: streamingLink2 },
+                  { label: "Official Link 3", url: streamingLink3 },
+                ].filter(l => l.url).map((link, i) => (
+                  <a key={i} href={link.url} target="_blank" rel="noopener noreferrer" className="block">
+                    <Button variant="outline" className="w-full border-border text-foreground gap-2 justify-start">
+                      <ExternalLink size={16} className="text-primary" />
+                      {link.label}
+                      <span className="text-xs text-muted-foreground ml-auto truncate max-w-[200px]">{link.url}</span>
+                    </Button>
+                  </a>
+                ))}
+              </CardContent>
+            </Card>
+          )}
 
           {/* Platforms grid */}
           <Card className="bg-card border-border">
@@ -161,34 +282,56 @@ const MemberDashboard = () => {
             </CardContent>
           </Card>
 
-          {/* Download Section */}
+          {/* Download Section - APK first for Android, WebView for iPhone */}
           <Card className="bg-card border-border">
             <CardHeader>
-              <CardTitle className="netflix-title text-lg text-foreground">DOWNLOAD THE APP</CardTitle>
+              <CardTitle className="netflix-title text-lg text-foreground">DOWNLOAD & ACCESS</CardTitle>
+              <p className="text-xs text-muted-foreground">Choose the best option for your device</p>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="bg-secondary rounded-lg p-4 text-center">
-                  <Smartphone size={24} className="text-primary mx-auto mb-2" />
+                {/* Android APK - Recommended */}
+                <div className="bg-secondary rounded-lg p-4 text-center border-2 border-primary/30 relative">
+                  <Badge className="absolute -top-2 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-[9px]">
+                    RECOMMENDED FOR ANDROID
+                  </Badge>
+                  <Smartphone size={24} className="text-primary mx-auto mb-2 mt-2" />
                   <p className="text-foreground font-medium text-sm">Android APK</p>
-                  <p className="text-xs text-muted-foreground mb-3">Direct download</p>
+                  <p className="text-xs text-muted-foreground mb-3">Best experience — direct download</p>
                   {settings.apk_file_name ? (
                     <a
                       href={supabase.storage.from("app-files").getPublicUrl(settings.apk_file_name).data.publicUrl}
                       download
                     >
-                      <Button size="sm" variant="outline" className="w-full border-border text-foreground gap-1">
+                      <Button size="sm" className="w-full bg-primary text-primary-foreground gap-1">
                         <Download size={14} /> Download APK
                       </Button>
                     </a>
                   ) : (
                     <a href={portalUrl} target="_blank" rel="noopener noreferrer">
-                      <Button size="sm" variant="outline" className="w-full border-border text-foreground gap-1">
+                      <Button size="sm" className="w-full bg-primary text-primary-foreground gap-1">
                         <Download size={14} /> Download
                       </Button>
                     </a>
                   )}
                 </div>
+
+                {/* Web Browser / Laptop - Recommended for iPhone */}
+                <div className="bg-secondary rounded-lg p-4 text-center border-2 border-accent/30 relative">
+                  <Badge variant="secondary" className="absolute -top-2 left-1/2 -translate-x-1/2 text-[9px]">
+                    RECOMMENDED FOR iPHONE / LAPTOP
+                  </Badge>
+                  <Laptop size={24} className="text-primary mx-auto mb-2 mt-2" />
+                  <p className="text-foreground font-medium text-sm">Web Browser</p>
+                  <p className="text-xs text-muted-foreground mb-3">Stream on any browser</p>
+                  <a href={portalUrl} target="_blank" rel="noopener noreferrer">
+                    <Button size="sm" variant="outline" className="w-full border-border text-foreground gap-1">
+                      <Globe size={14} /> Open in Browser
+                    </Button>
+                  </a>
+                </div>
+
+                {/* iOS WebView */}
                 <div className="bg-secondary rounded-lg p-4 text-center">
                   <Monitor size={24} className="text-primary mx-auto mb-2" />
                   <p className="text-foreground font-medium text-sm">iOS WebView</p>
@@ -196,16 +339,6 @@ const MemberDashboard = () => {
                   <a href={portalUrl} target="_blank" rel="noopener noreferrer">
                     <Button size="sm" variant="outline" className="w-full border-border text-foreground gap-1">
                       <ExternalLink size={14} /> Learn More
-                    </Button>
-                  </a>
-                </div>
-                <div className="bg-secondary rounded-lg p-4 text-center">
-                  <Globe size={24} className="text-primary mx-auto mb-2" />
-                  <p className="text-foreground font-medium text-sm">Web Browser</p>
-                  <p className="text-xs text-muted-foreground mb-3">Stream directly</p>
-                  <a href={portalUrl} target="_blank" rel="noopener noreferrer">
-                    <Button size="sm" variant="outline" className="w-full border-border text-foreground gap-1">
-                      <Globe size={14} /> Open
                     </Button>
                   </a>
                 </div>
@@ -220,17 +353,14 @@ const MemberDashboard = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex flex-col sm:flex-row gap-3">
-                <a
-                  href="https://wa.me/260000000000"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex-1"
+                <Button
+                  variant="outline"
+                  className="flex-1 border-border text-foreground gap-2"
+                  onClick={handleWhatsApp}
                 >
-                  <Button variant="outline" className="w-full border-border text-foreground gap-2">
-                    <MessageCircle size={16} /> WhatsApp Support
-                  </Button>
-                </a>
-                <a href="mailto:onlineplagiarismremover@gmail.com" className="flex-1">
+                  <MessageCircle size={16} /> WhatsApp Support
+                </Button>
+                <a href="mailto:shuvaegonera@gmail.com" className="flex-1">
                   <Button variant="outline" className="w-full border-border text-foreground gap-2">
                     <Send size={16} /> Email Support
                   </Button>
@@ -271,6 +401,77 @@ const MemberDashboard = () => {
                   {ticketLoading ? "Submitting..." : "Submit Ticket"}
                 </Button>
               </div>
+
+              {/* My Tickets */}
+              {tickets.length > 0 && (
+                <div className="border-t border-border pt-4 space-y-3">
+                  <h4 className="text-sm font-semibold text-foreground">My Tickets</h4>
+                  <div className="space-y-2">
+                    {tickets.map((ticket) => (
+                      <div key={ticket.id} className="bg-secondary rounded-lg overflow-hidden">
+                        <button
+                          onClick={() => handleExpandTicket(ticket.id)}
+                          className="w-full p-3 flex items-center justify-between text-left"
+                        >
+                          <div className="min-w-0">
+                            <p className="text-sm text-foreground font-medium truncate">{ticket.subject}</p>
+                            <p className="text-[10px] text-muted-foreground">
+                              {new Date(ticket.created_at).toLocaleDateString()}
+                            </p>
+                          </div>
+                          <Badge variant={ticket.status === "open" ? "default" : ticket.status === "closed" ? "secondary" : "outline"} className="text-[10px] shrink-0 ml-2">
+                            {ticket.status}
+                          </Badge>
+                        </button>
+
+                        {expandedTicket === ticket.id && (
+                          <div className="border-t border-border p-3 space-y-3">
+                            {/* Original message */}
+                            <div className="bg-background rounded p-2">
+                              <p className="text-[10px] text-muted-foreground mb-1">You (original message):</p>
+                              <p className="text-xs text-foreground">{ticket.message}</p>
+                            </div>
+
+                            {/* Chat messages */}
+                            {(ticketMessages[ticket.id] || []).map((msg) => (
+                              <div
+                                key={msg.id}
+                                className={`rounded p-2 ${msg.sender_role === "admin" ? "bg-primary/10 border border-primary/20" : "bg-background"}`}
+                              >
+                                <p className="text-[10px] text-muted-foreground mb-1">
+                                  {msg.sender_role === "admin" ? "Support Team" : "You"} — {new Date(msg.created_at).toLocaleString()}
+                                </p>
+                                <p className="text-xs text-foreground">{msg.message}</p>
+                              </div>
+                            ))}
+
+                            {/* Reply if open */}
+                            {ticket.status !== "closed" && (
+                              <div className="flex gap-2">
+                                <Input
+                                  value={replyText}
+                                  onChange={(e) => setReplyText(e.target.value)}
+                                  placeholder="Type a reply..."
+                                  className="bg-background border-border text-foreground text-xs"
+                                  onKeyDown={(e) => e.key === "Enter" && handleSendReply(ticket.id)}
+                                />
+                                <Button
+                                  size="sm"
+                                  onClick={() => handleSendReply(ticket.id)}
+                                  disabled={replySending || !replyText.trim()}
+                                  className="bg-primary text-primary-foreground shrink-0"
+                                >
+                                  <Send size={14} />
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </motion.div>
