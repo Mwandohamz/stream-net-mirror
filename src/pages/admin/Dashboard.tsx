@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import AdminLayout from "@/components/admin/AdminLayout";
 import StatCard from "@/components/admin/StatCard";
-import { DollarSign, CreditCard, Users, TrendingUp, Eye, BarChart3, HelpCircle, ChevronDown, ChevronRight, RefreshCw, MessageSquare, UserPlus } from "lucide-react";
+import { DollarSign, CreditCard, TrendingUp, BarChart3, HelpCircle, ChevronDown, ChevronRight, RefreshCw, MessageSquare, UserPlus } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts";
 import { Button } from "@/components/ui/button";
@@ -15,7 +15,26 @@ const Dashboard = () => {
   const [showGuide, setShowGuide] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [stats, setStats] = useState({
-...
+    totalRevenue: 0,
+    organicRevenue: 0,
+    influencerRevenue: 0,
+    totalPayments: 0,
+    completedPayments: 0,
+    todayPayments: 0,
+    totalPageViews: 0,
+    uniqueSessions: 0,
+    conversionRate: 0,
+    totalSubscribers: 0,
+    openTickets: 0,
+  });
+  const [revenueData, setRevenueData] = useState<any[]>([]);
+  const [viewsData, setViewsData] = useState<any[]>([]);
+  const [recentPayments, setRecentPayments] = useState<any[]>([]);
+
+  useEffect(() => {
+    void fetchStats();
+  }, []);
+
   const fetchStats = async () => {
     setRefreshing(true);
     const today = new Date().toISOString().split("T")[0];
@@ -111,7 +130,7 @@ const Dashboard = () => {
             <Button
               variant="outline"
               size="sm"
-              onClick={fetchStats}
+              onClick={() => void fetchStats()}
               disabled={refreshing}
               className="border-border text-foreground gap-1"
             >
@@ -167,7 +186,7 @@ const Dashboard = () => {
                   <li>Go to <strong className="text-foreground">Payments</strong> to see all payment records</li>
                   <li>Search by name, email, phone, or transaction ID</li>
                   <li>Use <strong>"Export CSV"</strong> to download all payment data</li>
-                  <li>Payment statuses: <span className="text-green-500">completed</span> = successful, <span className="text-yellow-500">pending</span> = awaiting, <span className="text-destructive">failed</span> = rejected</li>
+                  <li>Payment statuses: <span className="text-primary">completed</span> = successful, <span className="text-muted-foreground">pending</span> = awaiting, <span className="text-destructive">failed</span> = rejected</li>
                 </ul>
               </div>
 
@@ -208,7 +227,6 @@ const Dashboard = () => {
           </Card>
         )}
 
-        {/* Stat Cards - 2 rows of 4 */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <StatCard title="Total Revenue" value={`ZMW ${stats.totalRevenue}`} icon={DollarSign} description="All completed" />
           <StatCard title="Organic Revenue" value={`ZMW ${stats.organicRevenue}`} icon={DollarSign} description="No promo code" />
@@ -222,7 +240,6 @@ const Dashboard = () => {
           <StatCard title="Conversion" value={`${stats.conversionRate}%`} icon={BarChart3} description="Visitors → Paid" />
         </div>
 
-        {/* Charts */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <Card className="bg-card border-border">
             <CardHeader>
@@ -231,11 +248,11 @@ const Dashboard = () => {
             <CardContent>
               <ResponsiveContainer width="100%" height={250}>
                 <BarChart data={revenueData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(0 0% 18%)" />
-                  <XAxis dataKey="date" stroke="hsl(0 0% 60%)" fontSize={12} />
-                  <YAxis stroke="hsl(0 0% 60%)" fontSize={12} />
-                  <Tooltip contentStyle={{ background: "hsl(0 0% 8%)", border: "1px solid hsl(0 0% 18%)", borderRadius: 8, color: "hsl(0 0% 95%)" }} />
-                  <Bar dataKey="revenue" fill="hsl(0 85% 50%)" radius={[4, 4, 0, 0]} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                  <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                  <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, color: "hsl(var(--foreground))" }} />
+                  <Bar dataKey="revenue" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
@@ -248,19 +265,18 @@ const Dashboard = () => {
             <CardContent>
               <ResponsiveContainer width="100%" height={250}>
                 <LineChart data={viewsData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(0 0% 18%)" />
-                  <XAxis dataKey="date" stroke="hsl(0 0% 60%)" fontSize={12} />
-                  <YAxis stroke="hsl(0 0% 60%)" fontSize={12} />
-                  <Tooltip contentStyle={{ background: "hsl(0 0% 8%)", border: "1px solid hsl(0 0% 18%)", borderRadius: 8, color: "hsl(0 0% 95%)" }} />
-                  <Line type="monotone" dataKey="views" stroke="hsl(0 85% 50%)" strokeWidth={2} dot={false} />
-                  <Line type="monotone" dataKey="sessions" stroke="hsl(270 60% 55%)" strokeWidth={2} dot={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                  <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                  <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, color: "hsl(var(--foreground))" }} />
+                  <Line type="monotone" dataKey="views" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
+                  <Line type="monotone" dataKey="sessions" stroke="hsl(var(--accent))" strokeWidth={2} dot={false} />
                 </LineChart>
               </ResponsiveContainer>
             </CardContent>
           </Card>
         </div>
 
-        {/* Recent Payments Table */}
         <Card className="bg-card border-border">
           <CardHeader>
             <CardTitle className="netflix-title text-lg text-foreground">RECENT PAYMENTS</CardTitle>
@@ -285,28 +301,36 @@ const Dashboard = () => {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  recentPayments.map((p: any) => (
-                    <TableRow key={p.id}>
-                      <TableCell className="font-medium text-foreground">{p.name}</TableCell>
-                      <TableCell className="text-muted-foreground text-sm">{p.email}</TableCell>
-                      <TableCell className="text-muted-foreground text-sm">{p.phone}</TableCell>
-                      <TableCell className="text-foreground font-medium">{p.currency || "ZMW"} {p.amount}</TableCell>
-                      <TableCell>
-                        <Badge variant={p.status === "completed" ? "default" : "secondary"}
-                          className={
-                            p.status === "completed" ? "bg-green-500/20 text-green-500 border-green-500/30" :
-                            p.status === "pending" ? "bg-yellow-500/20 text-yellow-500 border-yellow-500/30" :
-                            "bg-destructive/20 text-destructive border-destructive/30"
-                          }
-                        >
-                          {p.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-muted-foreground text-xs whitespace-nowrap">
-                        {new Date(p.created_at).toLocaleString()}
-                      </TableCell>
-                    </TableRow>
-                  ))
+                  recentPayments.map((p: any) => {
+                    const normalizedStatus = String(p.status || "").toLowerCase();
+                    const isSuccess = SUCCESS_PAYMENT_STATUSES.includes(normalizedStatus);
+
+                    return (
+                      <TableRow key={p.id}>
+                        <TableCell className="font-medium text-foreground">{p.name}</TableCell>
+                        <TableCell className="text-muted-foreground text-sm">{p.email}</TableCell>
+                        <TableCell className="text-muted-foreground text-sm">{p.phone}</TableCell>
+                        <TableCell className="text-foreground font-medium">{p.currency || "ZMW"} {p.amount}</TableCell>
+                        <TableCell>
+                          <Badge
+                            variant={isSuccess ? "default" : "secondary"}
+                            className={
+                              isSuccess
+                                ? "bg-primary/20 text-primary border-primary/30"
+                                : normalizedStatus === "pending"
+                                  ? "bg-muted text-muted-foreground border-border"
+                                  : "bg-destructive/20 text-destructive border-destructive/30"
+                            }
+                          >
+                            {p.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-muted-foreground text-xs whitespace-nowrap">
+                          {new Date(p.created_at).toLocaleString()}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
                 )}
               </TableBody>
             </Table>
