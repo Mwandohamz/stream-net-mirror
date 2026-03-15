@@ -517,7 +517,7 @@ const MemberDashboard = () => {
           </Card>
 
           {/* Account Settings */}
-          <Card className="bg-card border-border">
+          <Card id="account-settings" className="bg-card border-border">
             <CardContent className="p-4">
               <Button
                 variant="outline"
