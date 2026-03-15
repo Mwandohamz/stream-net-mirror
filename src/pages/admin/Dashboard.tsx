@@ -93,7 +93,98 @@ const Dashboard = () => {
   return (
     <AdminLayout>
       <div className="space-y-6">
-        <h1 className="netflix-title text-3xl text-foreground">DASHBOARD OVERVIEW</h1>
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <h1 className="netflix-title text-3xl text-foreground">DASHBOARD OVERVIEW</h1>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowGuide(!showGuide)}
+            className="border-border text-foreground gap-1"
+          >
+            <HelpCircle size={14} />
+            {showGuide ? "Hide Guide" : "Admin Guide"}
+            {showGuide ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+          </Button>
+        </div>
+
+        {showGuide && (
+          <Card className="bg-accent/5 border-accent/20 border-2">
+            <CardHeader className="pb-2">
+              <CardTitle className="netflix-title text-lg text-foreground">📖 HOW TO MANAGE STREAMNETMIRROR</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4 text-xs md:text-sm text-muted-foreground leading-relaxed">
+              <div>
+                <h3 className="text-foreground font-semibold mb-1">🎯 User Access Flow</h3>
+                <ol className="list-decimal list-inside space-y-1">
+                  <li>User visits <code className="text-primary">/payment</code> and pays via mobile money (pawaPay)</li>
+                  <li>Payment is recorded in the database automatically</li>
+                  <li>User signs up at <code className="text-primary">/signup</code> using the <strong>same email</strong> they paid with</li>
+                  <li>They verify their email, then sign in at <code className="text-primary">/signin</code></li>
+                  <li>They access the streaming portal at <code className="text-primary">/dashboard</code></li>
+                </ol>
+              </div>
+
+              <div>
+                <h3 className="text-foreground font-semibold mb-1">🎫 Support Tickets</h3>
+                <ul className="list-disc list-inside space-y-1">
+                  <li>Go to <strong className="text-foreground">Support</strong> in the sidebar to view all tickets</li>
+                  <li>Tickets from <strong>Guest users</strong> (not logged in) show a yellow "Guest" badge with their name, email, phone, and payment reference</li>
+                  <li>Tickets from <strong>logged-in subscribers</strong> show their account info</li>
+                  <li>Click a ticket to expand it, view the conversation, and reply</li>
+                  <li>Use <strong className="text-primary">"Grant Access"</strong> button next to any user to manually create an account with a temporary password — useful when a paid user can't sign up on their own</li>
+                  <li>Copy the temp password and send it to the user (e.g. via WhatsApp or email)</li>
+                  <li>Close tickets when resolved; reopen if needed</li>
+                </ul>
+              </div>
+
+              <div>
+                <h3 className="text-foreground font-semibold mb-1">💰 Payments</h3>
+                <ul className="list-disc list-inside space-y-1">
+                  <li>Go to <strong className="text-foreground">Payments</strong> to see all payment records (completed, pending, failed)</li>
+                  <li>Search by name, email, phone, or transaction ID</li>
+                  <li>Use <strong>"Export CSV"</strong> to download all payment data</li>
+                  <li>Payment statuses: <span className="text-green-500">completed</span> = successful, <span className="text-yellow-500">pending</span> = awaiting confirmation, <span className="text-destructive">failed</span> = rejected</li>
+                </ul>
+              </div>
+
+              <div>
+                <h3 className="text-foreground font-semibold mb-1">👥 Customers</h3>
+                <ul className="list-disc list-inside space-y-1">
+                  <li>Shows unique customers with completed payments</li>
+                  <li>Includes country, currency, promo code, and discount info</li>
+                </ul>
+              </div>
+
+              <div>
+                <h3 className="text-foreground font-semibold mb-1">📊 Analytics</h3>
+                <ul className="list-disc list-inside space-y-1">
+                  <li>Tracks page views and unique sessions across the site</li>
+                  <li>Conversion rate = (completed payments ÷ unique sessions) × 100</li>
+                </ul>
+              </div>
+
+              <div>
+                <h3 className="text-foreground font-semibold mb-1">🤝 Influencers</h3>
+                <ul className="list-disc list-inside space-y-1">
+                  <li>Create influencer promo codes with custom discount % and revenue share %</li>
+                  <li>Influencers log in at <code className="text-primary">/influencer/PROMO_CODE</code> to see their stats</li>
+                  <li>Revenue from promo codes is tracked automatically in payments</li>
+                </ul>
+              </div>
+
+              <div>
+                <h3 className="text-foreground font-semibold mb-1">⚙️ Settings</h3>
+                <ul className="list-disc list-inside space-y-1">
+                  <li><strong>Pricing:</strong> Change the base price in ZMW (auto-converts for other countries)</li>
+                  <li><strong>Portal URL:</strong> Update the main streaming portal link subscribers see</li>
+                  <li><strong>Official Links:</strong> Set up to 3 backup streaming links</li>
+                  <li><strong>APK:</strong> Upload the Android app file for subscriber downloads</li>
+                  <li><strong>Password:</strong> Change your admin password</li>
+                </ul>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Stat Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
