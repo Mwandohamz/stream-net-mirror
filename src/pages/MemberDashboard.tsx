@@ -88,6 +88,10 @@ const MemberDashboard = () => {
       if (session?.user) {
         setUserName(session.user.user_metadata?.full_name || session.user.email || "");
         setUserEmail(session.user.email || "");
+        // Check if user was granted access with temp password
+        if (session.user.user_metadata?.temp_password) {
+          setShowTempPasswordBanner(true);
+        }
         fetchTickets(session.user.id);
 
         // Fetch payment receipt via subscriber's payment_id FK
