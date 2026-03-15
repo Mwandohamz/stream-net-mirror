@@ -8,7 +8,7 @@ const termsContent = [
   { heading: "1. Service Description", text: "StreamNetMirror provides users with access credentials to the streaming portal upon successful payment. We act as an access gateway and do not host, upload, or store any streaming content on our servers." },
   { heading: "2. Payment", text: "The service requires a one-time payment (amount set dynamically) via Mobile Money (Airtel Money or MTN MoMo). Payment is processed instantly and access is granted immediately upon confirmation." },
   { heading: "3. Chargebacks", text: "Filing a chargeback or disputing a legitimate transaction may result in immediate suspension of your account and access to the streaming portal." },
-  { heading: "4. Refund Policy", text: "Refunds are available within 7 days of purchase. Contact onlineplagiarismremover@gmail.com with your transaction details." },
+  { heading: "4. Refund Policy", text: "Refunds are available within 7 days of purchase. Contact shuvaegonera@gmail.com with your transaction details." },
   { heading: "5. Disclaimer", text: "This website is intended strictly for educational and informational purposes. We do not own, manage, or have any affiliation with any streaming platforms." },
 ];
 
