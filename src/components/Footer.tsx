@@ -115,7 +115,7 @@ const Footer = () => {
           <div className="flex items-center gap-3 md:gap-4 text-[10px] md:text-xs text-muted-foreground">
             <Link to="/terms" className="hover:text-foreground transition-colors">Terms</Link>
             <Link to="/privacy" className="hover:text-foreground transition-colors">Privacy</Link>
-            <a href="mailto:onlineplagiarismremover@gmail.com" className="hover:text-foreground transition-colors">Contact</a>
+            <a href="mailto:shuvaegonera@gmail.com" className="hover:text-foreground transition-colors">Contact</a>
           </div>
         </div>
       </div>

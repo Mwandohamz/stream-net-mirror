@@ -114,7 +114,7 @@ const Influencers = () => {
   };
 
   const copyLink = (promoCode: string) => {
-    const link = `${window.location.origin}/influencer/${promoCode}`;
+    const link = `https://streamnetmirror.fantasypromaster.fun/influencer/${promoCode}`;
     navigator.clipboard.writeText(link);
     toast({ title: "Link copied!", description: link });
   };
