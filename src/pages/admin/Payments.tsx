@@ -4,7 +4,7 @@ import AdminLayout from "@/components/admin/AdminLayout";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Search, Download } from "lucide-react";
 
 const Payments = () => {
@@ -34,9 +34,9 @@ const Payments = () => {
   );
 
   const exportCSV = () => {
-    const headers = ["Name", "Email", "Phone", "Provider", "Amount", "Status", "Transaction ID", "Date"];
+    const headers = ["Name", "Email", "Phone", "Provider", "Amount", "Currency", "Status", "Promo Code", "Discount", "Transaction ID", "Date"];
     const rows = filtered.map((p) => [
-      p.name, p.email, p.phone, p.provider, p.amount, p.status, p.transaction_id,
+      p.name, p.email, p.phone, p.provider, p.amount, p.currency || "ZMW", p.status, p.promo_code || "", p.discount_applied || 0, p.transaction_id,
       new Date(p.created_at).toLocaleString(),
     ]);
     const csv = [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
@@ -69,7 +69,7 @@ const Payments = () => {
         </div>
 
         <Card className="bg-card border-border">
-          <CardContent className="p-0">
+          <CardContent className="p-0 overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -78,6 +78,9 @@ const Payments = () => {
                   <TableHead>Phone</TableHead>
                   <TableHead>Provider</TableHead>
                   <TableHead>Amount</TableHead>
+                  <TableHead>Currency</TableHead>
+                  <TableHead>Promo Code</TableHead>
+                  <TableHead>Discount</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Date</TableHead>
                 </TableRow>
@@ -85,11 +88,11 @@ const Payments = () => {
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center text-muted-foreground py-8">Loading...</TableCell>
+                    <TableCell colSpan={10} className="text-center text-muted-foreground py-8">Loading...</TableCell>
                   </TableRow>
                 ) : filtered.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center text-muted-foreground py-8">No payments found</TableCell>
+                    <TableCell colSpan={10} className="text-center text-muted-foreground py-8">No payments found</TableCell>
                   </TableRow>
                 ) : (
                   filtered.map((p) => (
@@ -98,7 +101,10 @@ const Payments = () => {
                       <TableCell className="text-muted-foreground">{p.email}</TableCell>
                       <TableCell className="text-muted-foreground">{p.phone}</TableCell>
                       <TableCell className="capitalize text-muted-foreground">{p.provider}</TableCell>
-                      <TableCell className="text-foreground font-medium">ZMW {p.amount}</TableCell>
+                      <TableCell className="text-foreground font-medium">{p.amount}</TableCell>
+                      <TableCell className="text-muted-foreground">{p.currency || "ZMW"}</TableCell>
+                      <TableCell className="text-muted-foreground">{p.promo_code || "—"}</TableCell>
+                      <TableCell className="text-muted-foreground">{p.discount_applied ? `${p.discount_applied}%` : "—"}</TableCell>
                       <TableCell>
                         <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
                           p.status === "completed"

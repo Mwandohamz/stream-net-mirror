@@ -9,6 +9,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { motion } from "framer-motion";
 import { Lock, DollarSign, TrendingUp, CreditCard } from "lucide-react";
 import StatCard from "@/components/admin/StatCard";
+import PhoneInput from "react-phone-number-input";
+import "react-phone-number-input/style.css";
 
 interface Payment {
   name: string;
@@ -22,7 +24,7 @@ interface Payment {
 const InfluencerDashboard = () => {
   const { promoCode } = useParams<{ promoCode: string }>();
   const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
+  const [phone, setPhone] = useState<string | undefined>("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [authenticated, setAuthenticated] = useState(false);
@@ -35,7 +37,6 @@ const InfluencerDashboard = () => {
     setError("");
     setLoading(true);
 
-    // Match against influencers table (no Supabase auth)
     const { data, error: fetchError } = await supabase
       .from("influencers" as any)
       .select("*")
@@ -51,8 +52,8 @@ const InfluencerDashboard = () => {
       return;
     }
 
-    // Verify phone matches
-    if (inf.phone && inf.phone !== phone.trim()) {
+    // Compare phone with country code
+    if (inf.phone && phone && inf.phone !== phone.trim()) {
       setError("Phone number doesn't match our records.");
       setLoading(false);
       return;
@@ -60,7 +61,6 @@ const InfluencerDashboard = () => {
 
     setInfluencer(inf);
 
-    // Fetch payments with this promo code
     const { data: paymentData } = await supabase
       .from("payments")
       .select("name, email, amount, currency, created_at, status, promo_code")
@@ -94,7 +94,13 @@ const InfluencerDashboard = () => {
               </div>
               <div className="space-y-1">
                 <Label className="text-foreground text-sm">Phone Number (password)</Label>
-                <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+260..." className="bg-secondary border-border text-foreground" />
+                <PhoneInput
+                  international
+                  defaultCountry="ZM"
+                  value={phone}
+                  onChange={setPhone}
+                  className="phone-input-dark"
+                />
               </div>
               <Button onClick={handleLogin} disabled={!email || loading} className="w-full bg-primary text-primary-foreground">
                 {loading ? "Verifying..." : "View Dashboard"}

@@ -159,7 +159,7 @@ const Payment = () => {
 
               <p className="text-[10px] text-muted-foreground/40 text-center leading-relaxed">
                 By completing this payment, you agree to our Terms & Conditions. Refunds are available within 7 days of purchase.
-                Contact onlineplagiarismremover@gmail.com for refund requests. Chargebacks may result in account suspension.
+                Contact shuvaegonera@gmail.com for refund requests. Chargebacks may result in account suspension.
               </p>
             </CardContent>
           </Card>
