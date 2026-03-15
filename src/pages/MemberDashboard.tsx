@@ -175,6 +175,28 @@ const MemberDashboard = () => {
     toast({ title: "Coming Soon", description: "WhatsApp support is not available at the moment." });
   };
 
+  const handlePasswordChange = async () => {
+    if (newPassword.length < 6) {
+      toast({ title: "Error", description: "Password must be at least 6 characters", variant: "destructive" });
+      return;
+    }
+    if (newPassword !== confirmNewPassword) {
+      toast({ title: "Error", description: "Passwords don't match", variant: "destructive" });
+      return;
+    }
+    setPasswordLoading(true);
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Password updated!", description: "Your password has been changed successfully." });
+      setNewPassword("");
+      setConfirmNewPassword("");
+      setShowAccountSettings(false);
+    }
+    setPasswordLoading(false);
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
