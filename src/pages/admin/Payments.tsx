@@ -17,7 +17,7 @@ const Payments = () => {
   const [totalCount, setTotalCount] = useState(0);
 
   useEffect(() => {
-    fetchPayments();
+    void fetchPayments();
   }, [page]);
 
   useEffect(() => {
@@ -27,20 +27,31 @@ const Payments = () => {
   const fetchPayments = async () => {
     setLoading(true);
 
-    // Fetch count
-    const { count } = await supabase
-      .from("payments")
-      .select("*", { count: "exact", head: true });
-    setTotalCount(count || 0);
+    try {
+      await supabase.functions.invoke("assign-admin-role");
 
-    // Fetch page
-    const { data } = await supabase
-      .from("payments")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
-    setPayments(data || []);
-    setLoading(false);
+      const [countResult, dataResult] = await Promise.all([
+        supabase.from("payments").select("id", { count: "exact", head: true }),
+        supabase
+          .from("payments")
+          .select("*")
+          .order("created_at", { ascending: false })
+          .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1),
+      ]);
+
+      if (countResult.error || dataResult.error) {
+        console.error("Payments query error:", countResult.error || dataResult.error);
+      }
+
+      setTotalCount(countResult.count || 0);
+      setPayments(dataResult.data || []);
+    } catch (err) {
+      console.error("Payments fetch error:", err);
+      setPayments([]);
+      setTotalCount(0);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const filtered = payments.filter(
@@ -52,7 +63,6 @@ const Payments = () => {
   );
 
   const exportCSV = async () => {
-    // Export ALL records
     const { data: allData } = await supabase
       .from("payments")
       .select("*")
@@ -61,7 +71,16 @@ const Payments = () => {
 
     const headers = ["Name", "Email", "Phone", "Provider", "Amount", "Currency", "Status", "Promo Code", "Discount", "Transaction ID", "Date"];
     const rows = all.map((p: any) => [
-      p.name, p.email, p.phone, p.provider, p.amount, p.currency || "ZMW", p.status, p.promo_code || "", p.discount_applied || 0, p.transaction_id,
+      p.name,
+      p.email,
+      p.phone,
+      p.provider,
+      p.amount,
+      p.currency || "ZMW",
+      p.status,
+      p.promo_code || "",
+      p.discount_applied || 0,
+      p.transaction_id,
       new Date(p.created_at).toLocaleString(),
     ]);
     const csv = [headers.join(","), ...rows.map((r: any) => r.join(","))].join("\n");
@@ -124,47 +143,51 @@ const Payments = () => {
                     <TableCell colSpan={10} className="text-center text-muted-foreground py-8">No payments found</TableCell>
                   </TableRow>
                 ) : (
-                  filtered.map((p) => (
-                    <TableRow key={p.id}>
-                      <TableCell className="font-medium text-foreground">{p.name}</TableCell>
-                      <TableCell className="text-muted-foreground">{p.email}</TableCell>
-                      <TableCell className="text-muted-foreground">{p.phone}</TableCell>
-                      <TableCell className="capitalize text-muted-foreground">{p.provider}</TableCell>
-                      <TableCell className="text-foreground font-medium">{p.amount}</TableCell>
-                      <TableCell className="text-muted-foreground">{p.currency || "ZMW"}</TableCell>
-                      <TableCell className="text-muted-foreground">{p.promo_code || "—"}</TableCell>
-                      <TableCell className="text-muted-foreground">{p.discount_applied ? `${p.discount_applied}%` : "—"}</TableCell>
-                      <TableCell>
-                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                          p.status === "completed"
-                            ? "bg-green-500/20 text-green-500"
-                            : p.status === "pending"
-                            ? "bg-yellow-500/20 text-yellow-500"
-                            : "bg-destructive/20 text-destructive"
-                        }`}>
-                          {p.status}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-muted-foreground text-xs whitespace-nowrap">
-                        {new Date(p.created_at).toLocaleString()}
-                      </TableCell>
-                    </TableRow>
-                  ))
+                  filtered.map((p) => {
+                    const normalizedStatus = String(p.status || "").toLowerCase();
+                    return (
+                      <TableRow key={p.id}>
+                        <TableCell className="font-medium text-foreground">{p.name}</TableCell>
+                        <TableCell className="text-muted-foreground">{p.email}</TableCell>
+                        <TableCell className="text-muted-foreground">{p.phone}</TableCell>
+                        <TableCell className="capitalize text-muted-foreground">{p.provider}</TableCell>
+                        <TableCell className="text-foreground font-medium">{p.amount}</TableCell>
+                        <TableCell className="text-muted-foreground">{p.currency || "ZMW"}</TableCell>
+                        <TableCell className="text-muted-foreground">{p.promo_code || "—"}</TableCell>
+                        <TableCell className="text-muted-foreground">{p.discount_applied ? `${p.discount_applied}%` : "—"}</TableCell>
+                        <TableCell>
+                          <span
+                            className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                              normalizedStatus === "completed" || normalizedStatus === "success" || normalizedStatus === "succeeded"
+                                ? "bg-primary/20 text-primary"
+                                : normalizedStatus === "pending"
+                                  ? "bg-muted text-muted-foreground"
+                                  : "bg-destructive/20 text-destructive"
+                            }`}
+                          >
+                            {p.status}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-muted-foreground text-xs whitespace-nowrap">
+                          {new Date(p.created_at).toLocaleString()}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
                 )}
               </TableBody>
             </Table>
           </CardContent>
         </Card>
 
-        {/* Pagination */}
         {totalCount > 0 && (
           <div className="flex items-center justify-between text-sm text-muted-foreground">
             <p>Showing {showingStart}–{showingEnd} of {totalCount} records</p>
             <div className="flex gap-2">
-              <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage(p => p - 1)} className="border-border text-foreground gap-1">
+              <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage((p) => p - 1)} className="border-border text-foreground gap-1">
                 <ChevronLeft size={14} /> Previous
               </Button>
-              <Button variant="outline" size="sm" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)} className="border-border text-foreground gap-1">
+              <Button variant="outline" size="sm" disabled={page >= totalPages - 1} onClick={() => setPage((p) => p + 1)} className="border-border text-foreground gap-1">
                 Next <ChevronRight size={14} />
               </Button>
             </div>

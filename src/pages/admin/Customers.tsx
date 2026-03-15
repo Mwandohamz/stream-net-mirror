@@ -8,6 +8,7 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@
 import { Search, ChevronLeft, ChevronRight } from "lucide-react";
 
 const PAGE_SIZE = 100;
+const SUCCESS_PAYMENT_STATUSES = ["completed", "success", "succeeded", "COMPLETED", "SUCCESS", "SUCCEEDED"];
 
 const Customers = () => {
   const [customers, setCustomers] = useState<any[]>([]);
@@ -17,7 +18,7 @@ const Customers = () => {
   const [totalCount, setTotalCount] = useState(0);
 
   useEffect(() => {
-    fetchCustomers();
+    void fetchCustomers();
   }, [page]);
 
   useEffect(() => {
@@ -27,30 +28,44 @@ const Customers = () => {
   const fetchCustomers = async () => {
     setLoading(true);
 
-    // Get total completed payment count
-    const { count } = await supabase
-      .from("payments")
-      .select("*", { count: "exact", head: true })
-      .eq("status", "completed");
-    setTotalCount(count || 0);
+    try {
+      await supabase.functions.invoke("assign-admin-role");
 
-    const { data } = await supabase
-      .from("payments")
-      .select("*")
-      .eq("status", "completed")
-      .order("created_at", { ascending: false })
-      .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
+      const [countResult, dataResult] = await Promise.all([
+        supabase
+          .from("payments")
+          .select("id", { count: "exact", head: true })
+          .in("status", SUCCESS_PAYMENT_STATUSES),
+        supabase
+          .from("payments")
+          .select("*")
+          .in("status", SUCCESS_PAYMENT_STATUSES)
+          .order("created_at", { ascending: false })
+          .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1),
+      ]);
 
-    const seen = new Map<string, any>();
-    (data || []).forEach((p: any) => {
-      if (!seen.has(p.email)) {
-        seen.set(p.email, { ...p, paymentCount: 1 });
-      } else {
-        seen.get(p.email).paymentCount++;
+      if (countResult.error || dataResult.error) {
+        console.error("Customers query error:", countResult.error || dataResult.error);
       }
-    });
-    setCustomers(Array.from(seen.values()));
-    setLoading(false);
+
+      const seen = new Map<string, any>();
+      (dataResult.data || []).forEach((p: any) => {
+        if (!seen.has(p.email)) {
+          seen.set(p.email, { ...p, paymentCount: 1 });
+        } else {
+          seen.get(p.email).paymentCount++;
+        }
+      });
+
+      setTotalCount(countResult.count || 0);
+      setCustomers(Array.from(seen.values()));
+    } catch (err) {
+      console.error("Customers fetch error:", err);
+      setCustomers([]);
+      setTotalCount(0);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const filtered = customers.filter(
@@ -117,8 +132,8 @@ const Customers = () => {
                       <TableCell className="text-muted-foreground">{c.promo_code || "—"}</TableCell>
                       <TableCell className="text-muted-foreground">{c.discount_applied ? `${c.discount_applied}%` : "—"}</TableCell>
                       <TableCell className="text-foreground">{c.paymentCount}</TableCell>
-                      <TableCell className="text-muted-foreground text-xs">
-                        {new Date(c.created_at).toLocaleDateString()}
+                      <TableCell className="text-muted-foreground text-xs whitespace-nowrap">
+                        {new Date(c.created_at).toLocaleString()}
                       </TableCell>
                     </TableRow>
                   ))
@@ -128,15 +143,14 @@ const Customers = () => {
           </CardContent>
         </Card>
 
-        {/* Pagination */}
         {totalCount > 0 && (
           <div className="flex items-center justify-between text-sm text-muted-foreground">
             <p>Showing {showingStart}–{showingEnd} of {totalCount} records</p>
             <div className="flex gap-2">
-              <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage(p => p - 1)} className="border-border text-foreground gap-1">
+              <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage((p) => p - 1)} className="border-border text-foreground gap-1">
                 <ChevronLeft size={14} /> Previous
               </Button>
-              <Button variant="outline" size="sm" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)} className="border-border text-foreground gap-1">
+              <Button variant="outline" size="sm" disabled={page >= totalPages - 1} onClick={() => setPage((p) => p + 1)} className="border-border text-foreground gap-1">
                 Next <ChevronRight size={14} />
               </Button>
             </div>
