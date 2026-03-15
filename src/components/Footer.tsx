@@ -17,7 +17,7 @@ const privacyContent = [
   { heading: "2. How We Use Your Information", text: "Your information is used exclusively to process your payment and provide access. We do not sell or share your data." },
   { heading: "3. Data Security", text: "We implement appropriate security measures. Payment processing is handled by trusted Mobile Money providers." },
   { heading: "4. Cookies", text: "Our website may use cookies for analytics purposes to improve user experience." },
-  { heading: "5. Contact", text: "If you have any concerns about your privacy, contact us at onlineplagiarismremover@gmail.com." },
+  { heading: "5. Contact", text: "If you have any concerns about your privacy, contact us at shuvaegonera@gmail.com." },
 ];
 
 const LegalDialog = ({ title, content, fullPageLink }: { title: string; content: typeof termsContent; fullPageLink: string }) => (
