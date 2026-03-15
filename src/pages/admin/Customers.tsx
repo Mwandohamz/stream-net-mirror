@@ -2,25 +2,44 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
-import { Search } from "lucide-react";
+import { Search, ChevronLeft, ChevronRight } from "lucide-react";
+
+const PAGE_SIZE = 100;
 
 const Customers = () => {
   const [customers, setCustomers] = useState<any[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(0);
+  const [totalCount, setTotalCount] = useState(0);
 
   useEffect(() => {
     fetchCustomers();
-  }, []);
+  }, [page]);
+
+  useEffect(() => {
+    setPage(0);
+  }, [search]);
 
   const fetchCustomers = async () => {
+    setLoading(true);
+
+    // Get total completed payment count
+    const { count } = await supabase
+      .from("payments")
+      .select("*", { count: "exact", head: true })
+      .eq("status", "completed");
+    setTotalCount(count || 0);
+
     const { data } = await supabase
       .from("payments")
       .select("*")
       .eq("status", "completed")
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false })
+      .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
 
     const seen = new Map<string, any>();
     (data || []).forEach((p: any) => {
@@ -40,6 +59,10 @@ const Customers = () => {
       c.email?.toLowerCase().includes(search.toLowerCase()) ||
       c.phone?.includes(search)
   );
+
+  const totalPages = Math.ceil(totalCount / PAGE_SIZE);
+  const showingStart = page * PAGE_SIZE + 1;
+  const showingEnd = Math.min((page + 1) * PAGE_SIZE, totalCount);
 
   return (
     <AdminLayout>
@@ -104,6 +127,21 @@ const Customers = () => {
             </Table>
           </CardContent>
         </Card>
+
+        {/* Pagination */}
+        {totalCount > 0 && (
+          <div className="flex items-center justify-between text-sm text-muted-foreground">
+            <p>Showing {showingStart}–{showingEnd} of {totalCount} records</p>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage(p => p - 1)} className="border-border text-foreground gap-1">
+                <ChevronLeft size={14} /> Previous
+              </Button>
+              <Button variant="outline" size="sm" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)} className="border-border text-foreground gap-1">
+                Next <ChevronRight size={14} />
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
     </AdminLayout>
   );

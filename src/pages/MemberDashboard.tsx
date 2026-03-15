@@ -63,14 +63,12 @@ const MemberDashboard = () => {
   const [ticketLoading, setTicketLoading] = useState(false);
   const [showBackupLinks, setShowBackupLinks] = useState(false);
 
-  // Tickets & chat
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [ticketMessages, setTicketMessages] = useState<Record<string, TicketMessage[]>>({});
   const [expandedTicket, setExpandedTicket] = useState<string | null>(null);
   const [replyText, setReplyText] = useState("");
   const [replySending, setReplySending] = useState(false);
 
-  // Payment receipt
   const [paymentReceipt, setPaymentReceipt] = useState<any>(null);
   const [userEmail, setUserEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -84,24 +82,39 @@ const MemberDashboard = () => {
   const streamingLink3 = settings.streaming_link_3 || "";
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session?.user) {
         setUserName(session.user.user_metadata?.full_name || session.user.email || "");
         setUserEmail(session.user.email || "");
         fetchTickets(session.user.id);
-        // Fetch payment receipt
-        const userEmail = session.user.email;
-        if (userEmail) {
-          supabase
+
+        // Fetch payment receipt via subscriber's payment_id FK
+        const { data: subscriber } = await supabase
+          .from("subscribers")
+          .select("payment_id")
+          .eq("user_id", session.user.id)
+          .maybeSingle();
+
+        if (subscriber?.payment_id) {
+          const { data: payment } = await supabase
             .from("payments")
             .select("*")
-            .eq("email", userEmail)
-            .eq("status", "completed")
-            .order("created_at", { ascending: false })
-            .limit(1)
-            .then(({ data }) => {
-              if (data && data.length > 0) setPaymentReceipt(data[0]);
-            });
+            .eq("id", subscriber.payment_id)
+            .single();
+          if (payment) setPaymentReceipt(payment);
+        } else {
+          // Fallback to email query for manually created accounts
+          const email = session.user.email;
+          if (email) {
+            const { data } = await supabase
+              .from("payments")
+              .select("*")
+              .eq("email", email)
+              .eq("status", "completed")
+              .order("created_at", { ascending: false })
+              .limit(1);
+            if (data && data.length > 0) setPaymentReceipt(data[0]);
+          }
         }
       }
     });
@@ -281,7 +294,7 @@ const MemberDashboard = () => {
             </CardContent>
           </Card>
 
-          {/* Official Backup Links - Hidden behind toggle */}
+          {/* Official Backup Links */}
           {(streamingLink1 || streamingLink2 || streamingLink3) && (
             <Card className="bg-card border-border">
               <CardContent className="p-4">
@@ -388,7 +401,7 @@ const MemberDashboard = () => {
             </CardContent>
           </Card>
 
-          {/* Download Section - APK first for Android, WebView for iPhone */}
+          {/* Download Section */}
           <Card className="bg-card border-border">
             <CardHeader>
               <CardTitle className="netflix-title text-lg text-foreground">DOWNLOAD & ACCESS</CardTitle>
@@ -396,7 +409,6 @@ const MemberDashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                {/* Android APK - Recommended */}
                 <div className="bg-secondary rounded-lg p-4 text-center border-2 border-primary/30 relative">
                   <Badge className="absolute -top-2 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-[9px]">
                     RECOMMENDED FOR ANDROID
@@ -422,7 +434,6 @@ const MemberDashboard = () => {
                   )}
                 </div>
 
-                {/* Web Browser / Laptop - Recommended for iPhone */}
                 <div className="bg-secondary rounded-lg p-4 text-center border-2 border-accent/30 relative">
                   <Badge variant="secondary" className="absolute -top-2 left-1/2 -translate-x-1/2 text-[9px]">
                     RECOMMENDED FOR iPHONE / LAPTOP
@@ -437,7 +448,6 @@ const MemberDashboard = () => {
                   </a>
                 </div>
 
-                {/* iOS WebView */}
                 <div className="bg-secondary rounded-lg p-4 text-center">
                   <Monitor size={24} className="text-primary mx-auto mb-2" />
                   <p className="text-foreground font-medium text-sm">iOS WebView</p>
@@ -574,7 +584,6 @@ const MemberDashboard = () => {
                 </Button>
               </div>
 
-              {/* My Tickets */}
               {tickets.length > 0 && (
                 <div className="border-t border-border pt-4 space-y-3">
                   <h4 className="text-sm font-semibold text-foreground">My Tickets</h4>
@@ -598,13 +607,11 @@ const MemberDashboard = () => {
 
                         {expandedTicket === ticket.id && (
                           <div className="border-t border-border p-3 space-y-3">
-                            {/* Original message */}
                             <div className="bg-background rounded p-2">
                               <p className="text-[10px] text-muted-foreground mb-1">You (original message):</p>
                               <p className="text-xs text-foreground">{ticket.message}</p>
                             </div>
 
-                            {/* Chat messages */}
                             {(ticketMessages[ticket.id] || []).map((msg) => (
                               <div
                                 key={msg.id}
@@ -617,7 +624,6 @@ const MemberDashboard = () => {
                               </div>
                             ))}
 
-                            {/* Reply if open */}
                             {ticket.status !== "closed" && (
                               <div className="flex gap-2">
                                 <Input

@@ -10,12 +10,16 @@ import { toast } from "sonner";
 
 interface Ticket {
   id: string;
-  user_id: string;
+  user_id: string | null;
   subject: string;
   message: string;
   status: string;
   created_at: string;
   updated_at?: string;
+  guest_name?: string | null;
+  guest_email?: string | null;
+  guest_phone?: string | null;
+  payment_ref?: string | null;
 }
 
 interface TicketMessage {
@@ -27,9 +31,10 @@ interface TicketMessage {
 }
 
 interface UserGroup {
-  user_id: string;
+  groupKey: string;
   userName: string;
   userEmail: string;
+  isGuest: boolean;
   tickets: Ticket[];
 }
 
@@ -42,7 +47,6 @@ const SupportTickets = () => {
   const [replySending, setReplySending] = useState(false);
   const [userInfo, setUserInfo] = useState<Record<string, { name: string; email: string }>>({});
 
-  // Grant access state
   const [grantingAccess, setGrantingAccess] = useState<string | null>(null);
   const [grantResult, setGrantResult] = useState<Record<string, { password: string; email: string }>>({});
 
@@ -59,8 +63,8 @@ const SupportTickets = () => {
     const tix = (data || []) as unknown as Ticket[];
     setTickets(tix);
 
-    // Fetch user info from subscribers
-    const userIds = [...new Set(tix.map(t => t.user_id))];
+    // Fetch user info from subscribers for non-guest tickets
+    const userIds = [...new Set(tix.filter(t => t.user_id).map(t => t.user_id!))];
     if (userIds.length > 0) {
       const { data: subs } = await supabase
         .from("subscribers")
@@ -71,19 +75,6 @@ const SupportTickets = () => {
         info[s.user_id] = { name: s.name, email: s.email };
       });
       setUserInfo(info);
-    }
-
-    // For guest tickets (00000000-...), extract email from message
-    for (const t of tix) {
-      if (t.user_id === "00000000-0000-0000-0000-000000000000" && !userInfo[t.user_id]) {
-        const match = t.message.match(/\[Guest: (.+?) \| (.+?)[\]|]/);
-        if (match) {
-          setUserInfo(prev => ({
-            ...prev,
-            [t.user_id + "_" + t.id]: { name: match[1], email: match[2] },
-          }));
-        }
-      }
     }
 
     setLoading(false);
@@ -135,8 +126,8 @@ const SupportTickets = () => {
     toast.success(`Ticket ${newStatus}`);
   };
 
-  const handleGrantAccess = async (email: string, userId: string) => {
-    setGrantingAccess(userId);
+  const handleGrantAccess = async (email: string, groupKey: string) => {
+    setGrantingAccess(groupKey);
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
@@ -159,42 +150,48 @@ const SupportTickets = () => {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to grant access");
 
-      setGrantResult(prev => ({ ...prev, [userId]: { password: data.tempPassword, email } }));
+      setGrantResult(prev => ({ ...prev, [groupKey]: { password: data.tempPassword, email } }));
       toast.success(`Access granted for ${email}`);
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to grant access";
+      toast.error(msg);
     } finally {
       setGrantingAccess(null);
     }
   };
 
-  const getGuestInfo = (ticket: Ticket) => {
-    const match = ticket.message.match(/\[Guest: (.+?) \| (.+?)(?:\s*\|.*?)?\]\n/);
-    if (match) return { name: match[1], email: match[2] };
-    return null;
-  };
-
-  // Group by user
+  // Group by user_id or by guest_email for guest tickets
   const grouped: UserGroup[] = [];
-  const userMap = new Map<string, Ticket[]>();
+  const groupMap = new Map<string, Ticket[]>();
+
   for (const t of tickets) {
-    if (!userMap.has(t.user_id)) userMap.set(t.user_id, []);
-    userMap.get(t.user_id)!.push(t);
-  }
-  userMap.forEach((tix, uid) => {
-    const info = userInfo[uid];
-    // For guest tickets, try to extract from first ticket
-    let userName = info?.name || "Unknown";
-    let userEmail = info?.email || uid.slice(0, 8) + "...";
-    if (uid === "00000000-0000-0000-0000-000000000000") {
-      const guestInfo = getGuestInfo(tix[0]);
-      if (guestInfo) {
-        userName = guestInfo.name;
-        userEmail = guestInfo.email;
-      }
-      userName = `🔓 ${userName} (Guest)`;
+    let key: string;
+    if (!t.user_id) {
+      // Guest ticket — group by guest_email
+      key = `guest_${t.guest_email || t.id}`;
+    } else {
+      key = t.user_id;
     }
-    grouped.push({ user_id: uid, userName, userEmail, tickets: tix });
+    if (!groupMap.has(key)) groupMap.set(key, []);
+    groupMap.get(key)!.push(t);
+  }
+
+  groupMap.forEach((tix, key) => {
+    const isGuest = key.startsWith("guest_");
+    const firstTicket = tix[0];
+    let userName: string;
+    let userEmail: string;
+
+    if (isGuest) {
+      userName = firstTicket.guest_name || "Unknown Guest";
+      userEmail = firstTicket.guest_email || "unknown";
+    } else {
+      const info = userInfo[key];
+      userName = info?.name || "Unknown";
+      userEmail = info?.email || key.slice(0, 8) + "...";
+    }
+
+    grouped.push({ groupKey: key, userName, userEmail, isGuest, tickets: tix });
   });
 
   return (
@@ -213,28 +210,36 @@ const SupportTickets = () => {
         ) : (
           <div className="space-y-4">
             {grouped.map((group) => (
-              <Card key={group.user_id} className="bg-card border-border">
+              <Card key={group.groupKey} className="bg-card border-border">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm text-foreground flex items-center justify-between flex-wrap gap-2">
-                    <span>
+                    <span className="flex items-center gap-2">
+                      {group.isGuest && (
+                        <Badge variant="outline" className="text-[10px] border-yellow-500/30 text-yellow-500">Guest</Badge>
+                      )}
                       {group.userName} <span className="text-muted-foreground font-normal text-xs">({group.userEmail})</span>
-                      <span className="text-muted-foreground font-normal text-xs ml-2">· {group.tickets.length} ticket{group.tickets.length > 1 ? "s" : ""}</span>
+                      <span className="text-muted-foreground font-normal text-xs">· {group.tickets.length} ticket{group.tickets.length > 1 ? "s" : ""}</span>
+                      {group.isGuest && group.tickets[0]?.payment_ref && (
+                        <span className="text-muted-foreground font-normal text-[10px]">· Ref: {group.tickets[0].payment_ref}</span>
+                      )}
+                      {group.isGuest && group.tickets[0]?.guest_phone && (
+                        <span className="text-muted-foreground font-normal text-[10px]">· {group.tickets[0].guest_phone}</span>
+                      )}
                     </span>
-                    {/* Grant Access Button */}
-                    {group.userEmail && group.userEmail !== "Unknown" && !group.userEmail.endsWith("...") && (
+                    {group.userEmail && group.userEmail !== "unknown" && (
                       <div className="flex items-center gap-2">
-                        {grantResult[group.user_id] ? (
+                        {grantResult[group.groupKey] ? (
                           <div className="flex items-center gap-2 bg-green-500/10 border border-green-500/20 rounded-lg px-3 py-1.5">
                             <CheckCircle2 size={14} className="text-green-500" />
                             <div className="text-xs">
                               <p className="text-foreground font-medium">Access Granted</p>
-                              <p className="text-muted-foreground">Temp password: <code className="text-primary">{grantResult[group.user_id].password}</code></p>
+                              <p className="text-muted-foreground">Temp password: <code className="text-primary">{grantResult[group.groupKey].password}</code></p>
                             </div>
                             <Button
                               size="sm"
                               variant="ghost"
                               onClick={() => {
-                                navigator.clipboard.writeText(grantResult[group.user_id].password);
+                                navigator.clipboard.writeText(grantResult[group.groupKey].password);
                                 toast.success("Password copied!");
                               }}
                             >
@@ -245,12 +250,12 @@ const SupportTickets = () => {
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => handleGrantAccess(group.userEmail, group.user_id)}
-                            disabled={grantingAccess === group.user_id}
+                            onClick={() => handleGrantAccess(group.userEmail, group.groupKey)}
+                            disabled={grantingAccess === group.groupKey}
                             className="border-primary/30 text-primary gap-1 text-xs"
                           >
                             <UserPlus size={14} />
-                            {grantingAccess === group.user_id ? "Granting..." : "Grant Access"}
+                            {grantingAccess === group.groupKey ? "Granting..." : "Grant Access"}
                           </Button>
                         )}
                       </div>
@@ -281,7 +286,9 @@ const SupportTickets = () => {
                       {expandedTicket === ticket.id && (
                         <div className="border-t border-border p-3 space-y-3">
                           <div className="bg-background rounded p-2">
-                            <p className="text-[10px] text-muted-foreground mb-1">User (original):</p>
+                            <p className="text-[10px] text-muted-foreground mb-1">
+                              {ticket.user_id ? "User" : "Guest"} (original):
+                            </p>
                             <p className="text-xs text-foreground whitespace-pre-wrap">{ticket.message}</p>
                           </div>
 

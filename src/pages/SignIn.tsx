@@ -7,17 +7,20 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { motion } from "framer-motion";
 import { ArrowLeft, Mail, Lock, AlertCircle } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
 const SignIn = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showResendVerification, setShowResendVerification] = useState(false);
+  const [resending, setResending] = useState(false);
 
-  // If already logged in and subscriber, redirect
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session?.user) {
@@ -31,7 +34,6 @@ const SignIn = () => {
           navigate("/dashboard", { replace: true });
           return;
         }
-        // Admin bypass
         try {
           const { data: adminData } = await supabase.functions.invoke("validate-admin-email", {
             body: { email: session.user.email },
@@ -45,8 +47,25 @@ const SignIn = () => {
     });
   }, [navigate]);
 
+  const handleResendVerification = async () => {
+    setResending(true);
+    try {
+      const { error } = await supabase.auth.resend({ type: "signup", email: email.trim().toLowerCase() });
+      if (error) {
+        toast({ title: "Error", description: error.message, variant: "destructive" });
+      } else {
+        toast({ title: "Verification email sent", description: "Check your inbox for the verification link." });
+      }
+    } catch {
+      toast({ title: "Error", description: "Failed to resend verification email", variant: "destructive" });
+    } finally {
+      setResending(false);
+    }
+  };
+
   const handleSignIn = async () => {
     setError("");
+    setShowResendVerification(false);
     setLoading(true);
 
     try {
@@ -57,12 +76,14 @@ const SignIn = () => {
 
       if (authError) {
         setError(authError.message);
+        if (authError.message.toLowerCase().includes("email not confirmed")) {
+          setShowResendVerification(true);
+        }
         setLoading(false);
         return;
       }
 
       if (data.user) {
-        // Check subscriber status
         const { data: sub } = await supabase
           .from("subscribers")
           .select("id, status")
@@ -75,7 +96,6 @@ const SignIn = () => {
           return;
         }
 
-        // Admin bypass - check whitelisted email
         try {
           const { data: adminData } = await supabase.functions.invoke("validate-admin-email", {
             body: { email: data.user.email },
@@ -89,8 +109,9 @@ const SignIn = () => {
         setError("No active subscription found. Please complete payment first, then create your account.");
         await supabase.auth.signOut();
       }
-    } catch (e: any) {
-      setError(e.message || "Something went wrong");
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "Something went wrong";
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -117,7 +138,23 @@ const SignIn = () => {
               {error && (
                 <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3 flex items-start gap-2">
                   <AlertCircle size={16} className="text-destructive mt-0.5 shrink-0" />
-                  <p className="text-xs text-destructive">{error}</p>
+                  <div className="space-y-1">
+                    <p className="text-xs text-destructive">{error}</p>
+                    {showResendVerification && (
+                      <div className="pt-1">
+                        <p className="text-xs text-muted-foreground mb-1">Your email isn't verified yet.</p>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={handleResendVerification}
+                          disabled={resending}
+                          className="text-xs border-destructive/30 text-destructive hover:bg-destructive/10"
+                        >
+                          {resending ? "Sending..." : "Resend verification email"}
+                        </Button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
 
@@ -141,6 +178,11 @@ const SignIn = () => {
                     type="password"
                     onKeyDown={(e) => e.key === "Enter" && handleSignIn()}
                   />
+                </div>
+                <div className="text-right">
+                  <button onClick={() => navigate("/forgot-password")} className="text-xs text-primary hover:underline">
+                    Forgot your password?
+                  </button>
                 </div>
               </div>
 

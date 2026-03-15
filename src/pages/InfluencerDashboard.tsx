@@ -10,6 +10,7 @@ import { motion } from "framer-motion";
 import { Lock, DollarSign, TrendingUp, CreditCard } from "lucide-react";
 import StatCard from "@/components/admin/StatCard";
 import PhoneInput from "react-phone-number-input";
+import { parsePhoneNumber } from "react-phone-number-input";
 import "react-phone-number-input/style.css";
 
 interface Payment {
@@ -20,6 +21,14 @@ interface Payment {
   created_at: string;
   status: string;
 }
+
+const normalizePhone = (phone: string): string => {
+  try {
+    return parsePhoneNumber(phone)?.format("E.164") || phone;
+  } catch {
+    return phone;
+  }
+};
 
 const InfluencerDashboard = () => {
   const { promoCode } = useParams<{ promoCode: string }>();
@@ -52,11 +61,15 @@ const InfluencerDashboard = () => {
       return;
     }
 
-    // Compare phone with country code
-    if (inf.phone && phone && inf.phone !== phone.trim()) {
-      setError("Phone number doesn't match our records.");
-      setLoading(false);
-      return;
+    // Compare phone numbers with E.164 normalization
+    if (inf.phone && phone) {
+      const storedNormalized = normalizePhone(inf.phone);
+      const inputNormalized = normalizePhone(phone.trim());
+      if (storedNormalized !== inputNormalized) {
+        setError("Phone number doesn't match our records.");
+        setLoading(false);
+        return;
+      }
     }
 
     setInfluencer(inf);
