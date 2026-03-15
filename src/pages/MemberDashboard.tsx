@@ -11,7 +11,7 @@ import { motion } from "framer-motion";
 import {
   ExternalLink, Download, Globe, Smartphone, Monitor,
   MessageCircle, Send, LogOut, Shield, Play, ChevronRight,
-  AlertTriangle, CheckCircle2, Info, RefreshCw, Laptop
+  AlertTriangle, CheckCircle2, Info, RefreshCw, Laptop, Lock, Eye, EyeOff, Settings
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -72,6 +72,12 @@ const MemberDashboard = () => {
 
   // Payment receipt
   const [paymentReceipt, setPaymentReceipt] = useState<any>(null);
+  const [userEmail, setUserEmail] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmNewPassword, setConfirmNewPassword] = useState("");
+  const [passwordLoading, setPasswordLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showAccountSettings, setShowAccountSettings] = useState(false);
 
   const streamingLink1 = settings.streaming_link_1 || "";
   const streamingLink2 = settings.streaming_link_2 || "";
@@ -81,6 +87,7 @@ const MemberDashboard = () => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
         setUserName(session.user.user_metadata?.full_name || session.user.email || "");
+        setUserEmail(session.user.email || "");
         fetchTickets(session.user.id);
         // Fetch payment receipt
         const userEmail = session.user.email;
@@ -166,6 +173,28 @@ const MemberDashboard = () => {
 
   const handleWhatsApp = () => {
     toast({ title: "Coming Soon", description: "WhatsApp support is not available at the moment." });
+  };
+
+  const handlePasswordChange = async () => {
+    if (newPassword.length < 6) {
+      toast({ title: "Error", description: "Password must be at least 6 characters", variant: "destructive" });
+      return;
+    }
+    if (newPassword !== confirmNewPassword) {
+      toast({ title: "Error", description: "Passwords don't match", variant: "destructive" });
+      return;
+    }
+    setPasswordLoading(true);
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Password updated!", description: "Your password has been changed successfully." });
+      setNewPassword("");
+      setConfirmNewPassword("");
+      setShowAccountSettings(false);
+    }
+    setPasswordLoading(false);
   };
 
   return (
@@ -420,6 +449,72 @@ const MemberDashboard = () => {
                   </a>
                 </div>
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Account Settings */}
+          <Card className="bg-card border-border">
+            <CardContent className="p-4">
+              <Button
+                variant="outline"
+                onClick={() => setShowAccountSettings(!showAccountSettings)}
+                className="w-full border-border text-foreground gap-2"
+              >
+                <Settings size={16} className="text-primary" />
+                {showAccountSettings ? "Hide" : "Show"} Account Settings
+                <ChevronRight size={16} className={`ml-auto transition-transform ${showAccountSettings ? "rotate-90" : ""}`} />
+              </Button>
+              {showAccountSettings && (
+                <div className="mt-4 space-y-4">
+                  <div className="space-y-2">
+                    <Label className="text-foreground text-sm">Email (read-only)</Label>
+                    <Input value={userEmail} readOnly className="bg-secondary border-border text-muted-foreground" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-foreground text-sm">New Password</Label>
+                    <div className="relative">
+                      <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                      <Input
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        placeholder="Min 6 characters"
+                        className="pl-9 pr-10 bg-secondary border-border text-foreground"
+                        type={showPassword ? "text" : "password"}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      >
+                        {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-foreground text-sm">Confirm New Password</Label>
+                    <div className="relative">
+                      <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                      <Input
+                        value={confirmNewPassword}
+                        onChange={(e) => setConfirmNewPassword(e.target.value)}
+                        placeholder="Confirm password"
+                        className="pl-9 bg-secondary border-border text-foreground"
+                        type={showPassword ? "text" : "password"}
+                      />
+                    </div>
+                    {confirmNewPassword && newPassword !== confirmNewPassword && (
+                      <p className="text-xs text-destructive">Passwords don't match</p>
+                    )}
+                  </div>
+                  <Button
+                    onClick={handlePasswordChange}
+                    disabled={passwordLoading || newPassword.length < 6 || newPassword !== confirmNewPassword}
+                    className="bg-primary text-primary-foreground hover:bg-primary/80"
+                  >
+                    {passwordLoading ? "Updating..." : "Update Password"}
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
 

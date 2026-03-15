@@ -2,3 +2,18 @@ project_id = "rhobeyejmrnnreepacmr"
 
 [functions.pawapay-callback]
 verify_jwt = false
+
+[functions.pawapay-proxy]
+verify_jwt = false
+
+[functions.validate-admin-email]
+verify_jwt = false
+
+[functions.assign-admin-role]
+verify_jwt = false
+
+[functions.public-support-ticket]
+verify_jwt = false
+
+[functions.admin-grant-access]
+verify_jwt = false

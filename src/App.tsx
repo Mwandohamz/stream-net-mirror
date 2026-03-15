@@ -27,6 +27,7 @@ import AdminSettings from "./pages/admin/Settings.tsx";
 import SupportTickets from "./pages/admin/SupportTickets.tsx";
 import Influencers from "./pages/admin/Influencers.tsx";
 import InfluencerDashboard from "./pages/InfluencerDashboard.tsx";
+import Support from "./pages/Support.tsx";
 
 const queryClient = new QueryClient();
 
@@ -61,6 +62,7 @@ const AnimatedRoutes = () => {
         <Route path="/admin/support" element={<AdminRoute><SupportTickets /></AdminRoute>} />
         <Route path="/admin/influencers" element={<AdminRoute><Influencers /></AdminRoute>} />
         <Route path="/influencer/:promoCode" element={<InfluencerDashboard />} />
+        <Route path="/support" element={<PageTransition><Support /></PageTransition>} />
         <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
       </Routes>
     </AnimatePresence>

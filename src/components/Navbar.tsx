@@ -21,6 +21,7 @@ const Navbar = () => {
     { label: "Movies", href: "/#trending" },
     { label: "TV Series", href: "/#trending" },
     { label: "Download App", href: "/#download" },
+    { label: "Need Help?", href: "/support" },
   ];
 
   return (

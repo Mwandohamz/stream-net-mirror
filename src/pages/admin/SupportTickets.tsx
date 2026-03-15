@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Send, ChevronDown, ChevronRight } from "lucide-react";
+import { Send, ChevronDown, ChevronRight, UserPlus, Copy, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 
 interface Ticket {
@@ -42,6 +42,10 @@ const SupportTickets = () => {
   const [replySending, setReplySending] = useState(false);
   const [userInfo, setUserInfo] = useState<Record<string, { name: string; email: string }>>({});
 
+  // Grant access state
+  const [grantingAccess, setGrantingAccess] = useState<string | null>(null);
+  const [grantResult, setGrantResult] = useState<Record<string, { password: string; email: string }>>({});
+
   useEffect(() => {
     fetchTickets();
   }, []);
@@ -67,6 +71,19 @@ const SupportTickets = () => {
         info[s.user_id] = { name: s.name, email: s.email };
       });
       setUserInfo(info);
+    }
+
+    // For guest tickets (00000000-...), extract email from message
+    for (const t of tix) {
+      if (t.user_id === "00000000-0000-0000-0000-000000000000" && !userInfo[t.user_id]) {
+        const match = t.message.match(/\[Guest: (.+?) \| (.+?)[\]|]/);
+        if (match) {
+          setUserInfo(prev => ({
+            ...prev,
+            [t.user_id + "_" + t.id]: { name: match[1], email: match[2] },
+          }));
+        }
+      }
     }
 
     setLoading(false);
@@ -118,6 +135,45 @@ const SupportTickets = () => {
     toast.success(`Ticket ${newStatus}`);
   };
 
+  const handleGrantAccess = async (email: string, userId: string) => {
+    setGrantingAccess(userId);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error("Not authenticated");
+        return;
+      }
+
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-grant-access`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session.access_token}`,
+            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          },
+          body: JSON.stringify({ email }),
+        }
+      );
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to grant access");
+
+      setGrantResult(prev => ({ ...prev, [userId]: { password: data.tempPassword, email } }));
+      toast.success(`Access granted for ${email}`);
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setGrantingAccess(null);
+    }
+  };
+
+  const getGuestInfo = (ticket: Ticket) => {
+    const match = ticket.message.match(/\[Guest: (.+?) \| (.+?)(?:\s*\|.*?)?\]\n/);
+    if (match) return { name: match[1], email: match[2] };
+    return null;
+  };
+
   // Group by user
   const grouped: UserGroup[] = [];
   const userMap = new Map<string, Ticket[]>();
@@ -127,12 +183,18 @@ const SupportTickets = () => {
   }
   userMap.forEach((tix, uid) => {
     const info = userInfo[uid];
-    grouped.push({
-      user_id: uid,
-      userName: info?.name || "Unknown",
-      userEmail: info?.email || uid.slice(0, 8) + "...",
-      tickets: tix,
-    });
+    // For guest tickets, try to extract from first ticket
+    let userName = info?.name || "Unknown";
+    let userEmail = info?.email || uid.slice(0, 8) + "...";
+    if (uid === "00000000-0000-0000-0000-000000000000") {
+      const guestInfo = getGuestInfo(tix[0]);
+      if (guestInfo) {
+        userName = guestInfo.name;
+        userEmail = guestInfo.email;
+      }
+      userName = `🔓 ${userName} (Guest)`;
+    }
+    grouped.push({ user_id: uid, userName, userEmail, tickets: tix });
   });
 
   return (
@@ -153,9 +215,46 @@ const SupportTickets = () => {
             {grouped.map((group) => (
               <Card key={group.user_id} className="bg-card border-border">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm text-foreground">
-                    {group.userName} <span className="text-muted-foreground font-normal text-xs">({group.userEmail})</span>
-                    <span className="text-muted-foreground font-normal text-xs ml-2">· {group.tickets.length} ticket{group.tickets.length > 1 ? "s" : ""}</span>
+                  <CardTitle className="text-sm text-foreground flex items-center justify-between flex-wrap gap-2">
+                    <span>
+                      {group.userName} <span className="text-muted-foreground font-normal text-xs">({group.userEmail})</span>
+                      <span className="text-muted-foreground font-normal text-xs ml-2">· {group.tickets.length} ticket{group.tickets.length > 1 ? "s" : ""}</span>
+                    </span>
+                    {/* Grant Access Button */}
+                    {group.userEmail && group.userEmail !== "Unknown" && !group.userEmail.endsWith("...") && (
+                      <div className="flex items-center gap-2">
+                        {grantResult[group.user_id] ? (
+                          <div className="flex items-center gap-2 bg-green-500/10 border border-green-500/20 rounded-lg px-3 py-1.5">
+                            <CheckCircle2 size={14} className="text-green-500" />
+                            <div className="text-xs">
+                              <p className="text-foreground font-medium">Access Granted</p>
+                              <p className="text-muted-foreground">Temp password: <code className="text-primary">{grantResult[group.user_id].password}</code></p>
+                            </div>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => {
+                                navigator.clipboard.writeText(grantResult[group.user_id].password);
+                                toast.success("Password copied!");
+                              }}
+                            >
+                              <Copy size={12} />
+                            </Button>
+                          </div>
+                        ) : (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleGrantAccess(group.userEmail, group.user_id)}
+                            disabled={grantingAccess === group.user_id}
+                            className="border-primary/30 text-primary gap-1 text-xs"
+                          >
+                            <UserPlus size={14} />
+                            {grantingAccess === group.user_id ? "Granting..." : "Grant Access"}
+                          </Button>
+                        )}
+                      </div>
+                    )}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2 pt-0">
@@ -183,7 +282,7 @@ const SupportTickets = () => {
                         <div className="border-t border-border p-3 space-y-3">
                           <div className="bg-background rounded p-2">
                             <p className="text-[10px] text-muted-foreground mb-1">User (original):</p>
-                            <p className="text-xs text-foreground">{ticket.message}</p>
+                            <p className="text-xs text-foreground whitespace-pre-wrap">{ticket.message}</p>
                           </div>
 
                           {(ticketMessages[ticket.id] || []).map((msg) => (
