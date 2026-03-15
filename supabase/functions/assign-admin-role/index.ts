@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 serve(async (req) => {
@@ -13,52 +13,62 @@ serve(async (req) => {
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, serviceRoleKey);
 
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
+    if (!authHeader?.startsWith("Bearer ")) {
       return new Response(
         JSON.stringify({ error: "No authorization header" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Get user from token
+    // Use anon client with user's auth header to validate the token via getClaims
+    const userClient = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
+
     const token = authHeader.replace("Bearer ", "");
-    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
-    
-    if (userError || !user) {
+    const { data: claimsData, error: claimsError } = await userClient.auth.getClaims(token);
+
+    if (claimsError || !claimsData?.claims) {
       return new Response(
         JSON.stringify({ error: "Invalid token" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
+    const userId = claimsData.claims.sub as string;
+    const userEmail = (claimsData.claims.email as string) || "";
+
     // Check if email is in ADMIN_EMAILS
     const adminEmailsRaw = Deno.env.get("ADMIN_EMAILS") || "";
     const adminEmails = adminEmailsRaw.split(",").map((e: string) => e.trim().toLowerCase());
-    
-    if (!adminEmails.includes(user.email?.toLowerCase() || "")) {
+
+    if (!adminEmails.includes(userEmail.toLowerCase())) {
       return new Response(
         JSON.stringify({ error: "Not an authorized admin email" }),
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
+    // Use service role client for DB operations
+    const adminClient = createClient(supabaseUrl, serviceRoleKey);
+
     // Check if role already exists
-    const { data: existing } = await supabase
+    const { data: existing } = await adminClient
       .from("user_roles")
       .select("id")
-      .eq("user_id", user.id)
+      .eq("user_id", userId)
       .eq("role", "admin")
       .maybeSingle();
 
     if (!existing) {
-      const { error: insertError } = await supabase
+      const { error: insertError } = await adminClient
         .from("user_roles")
-        .insert({ user_id: user.id, role: "admin" });
-      
+        .insert({ user_id: userId, role: "admin" });
+
       if (insertError) {
         return new Response(
           JSON.stringify({ error: "Failed to assign admin role" }),
