@@ -61,7 +61,7 @@ const Footer = () => {
             { title: "Support", items: [
               { label: "FAQ", href: "#faq" },
               { label: "Help Center", href: "#" },
-              { label: "Contact Us", href: "mailto:onlineplagiarismremover@gmail.com" },
+              { label: "Contact Us", href: "mailto:shuvaegonera@gmail.com" },
               { label: "My Account", href: "/signin" },
             ]},
             { title: "Stream", items: [
