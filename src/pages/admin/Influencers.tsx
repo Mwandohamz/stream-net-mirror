@@ -9,6 +9,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Trash2, Copy, ToggleLeft, ToggleRight, DollarSign, Users, TrendingUp } from "lucide-react";
 import StatCard from "@/components/admin/StatCard";
+import PhoneInput, { isValidPhoneNumber, parsePhoneNumber } from "react-phone-number-input";
+import "react-phone-number-input/style.css";
 
 interface Influencer {
   id: string;
@@ -34,10 +36,10 @@ const Influencers = () => {
   const [stats, setStats] = useState<Record<string, InfluencerStats>>({});
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ full_name: "", email: "", phone: "", discount_percent: "10", revenue_share_percent: "20" });
+  const [form, setForm] = useState({ full_name: "", email: "", phone: "" as string | undefined, discount_percent: "10", revenue_share_percent: "20" });
   const [saving, setSaving] = useState(false);
+  const [phoneError, setPhoneError] = useState("");
 
-  // Aggregate stats
   const [totalInfluencerRevenue, setTotalInfluencerRevenue] = useState(0);
   const [totalOrganicRevenue, setTotalOrganicRevenue] = useState(0);
 
@@ -49,13 +51,11 @@ const Influencers = () => {
     const influencerList = (inf || []) as unknown as Influencer[];
     setInfluencers(influencerList);
 
-    // Fetch all completed payments
     const { data: payments } = await supabase.from("payments").select("amount, promo_code, discount_applied, status").eq("status", "completed");
     const allPayments = payments || [];
 
     const statsMap: Record<string, InfluencerStats> = {};
     let infRev = 0;
-    let orgRev = 0;
 
     for (const inf of influencerList) {
       const matching = allPayments.filter((p: any) => p.promo_code === inf.promo_code);
@@ -65,7 +65,7 @@ const Influencers = () => {
       infRev += revenue;
     }
 
-    orgRev = allPayments.filter((p: any) => !p.promo_code).reduce((s: number, p: any) => s + Number(p.amount), 0);
+    const orgRev = allPayments.filter((p: any) => !p.promo_code).reduce((s: number, p: any) => s + Number(p.amount), 0);
     setStats(statsMap);
     setTotalInfluencerRevenue(infRev);
     setTotalOrganicRevenue(orgRev);
@@ -78,13 +78,24 @@ const Influencers = () => {
 
   const handleAdd = async () => {
     if (!form.full_name.trim() || !form.email.trim()) return;
+    setPhoneError("");
+
+    let normalizedPhone: string | null = null;
+    if (form.phone) {
+      if (!isValidPhoneNumber(form.phone)) {
+        setPhoneError("Please enter a valid phone number including country code");
+        return;
+      }
+      normalizedPhone = parsePhoneNumber(form.phone)?.format("E.164") || form.phone;
+    }
+
     setSaving(true);
     const promoCode = generatePromoCode(form.full_name);
 
     const { error } = await supabase.from("influencers" as any).insert({
       full_name: form.full_name.trim(),
       email: form.email.trim().toLowerCase(),
-      phone: form.phone.trim() || null,
+      phone: normalizedPhone,
       promo_code: promoCode,
       discount_percent: parseFloat(form.discount_percent) || 10,
       revenue_share_percent: parseFloat(form.revenue_share_percent) || 20,
@@ -129,14 +140,12 @@ const Influencers = () => {
           </Button>
         </div>
 
-        {/* Aggregate stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <StatCard title="Total Influencers" value={influencers.length} icon={Users} description="Active & inactive" />
           <StatCard title="Influencer Revenue" value={`ZMW ${Math.round(totalInfluencerRevenue)}`} icon={TrendingUp} description="From promo codes" />
           <StatCard title="Organic Revenue" value={`ZMW ${Math.round(totalOrganicRevenue)}`} icon={DollarSign} description="No promo code" />
         </div>
 
-        {/* Add form */}
         {showForm && (
           <Card className="bg-card border-border">
             <CardHeader><CardTitle className="text-foreground text-lg">New Influencer</CardTitle></CardHeader>
@@ -153,7 +162,14 @@ const Influencers = () => {
                 </div>
                 <div className="space-y-1">
                   <Label className="text-foreground text-sm">Phone</Label>
-                  <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="+260..." className="bg-secondary border-border text-foreground" />
+                  <PhoneInput
+                    international
+                    defaultCountry="ZM"
+                    value={form.phone}
+                    onChange={(val) => { setForm({ ...form, phone: val }); setPhoneError(""); }}
+                    className="phone-input-dark"
+                  />
+                  {phoneError && <p className="text-xs text-destructive">{phoneError}</p>}
                 </div>
                 <div className="space-y-1">
                   <Label className="text-foreground text-sm">Discount %</Label>
@@ -171,7 +187,6 @@ const Influencers = () => {
           </Card>
         )}
 
-        {/* Table */}
         <Card className="bg-card border-border">
           <CardContent className="p-0">
             <Table>

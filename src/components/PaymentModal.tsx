@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,9 +24,9 @@ interface PaymentModalProps {
   discountPercent?: number;
 }
 
-type Step = 1 | 2 | 3 | 4 | 5;
+type Step = 1 | 2 | 3;
 
-const STEP_LABELS = ["Amount", "Country", "Provider", "Phone", "Payment"];
+const STEP_LABELS = ["Country & Price", "Phone & Pay", "Payment"];
 
 export default function PaymentModal({ isOpen, onClose, onSuccess, onFailure, userName, userEmail, promoCode, discountPercent = 0 }: PaymentModalProps) {
   const [step, setStep] = useState<Step>(1);
@@ -39,15 +39,20 @@ export default function PaymentModal({ isOpen, onClose, onSuccess, onFailure, us
   const [countryDropdownOpen, setCountryDropdownOpen] = useState(false);
   const [showRevival, setShowRevival] = useState(false);
 
-  const { settings: appSettings, loading: settingsLoading } = useAppSettings();
+  // Auto-detect provider state
+  const [detecting, setDetecting] = useState(false);
+  const [detectionFailed, setDetectionFailed] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const { settings: appSettings } = useAppSettings();
   const baseAmountZMW = (() => {
     const raw = parseFloat(appSettings.base_price_zmw || "49") || 49;
     return discountPercent > 0 ? Math.round(raw * (1 - discountPercent / 100)) : raw;
   })();
 
-  const { getUSDEquivalent, convertFromZMW, loading: ratesLoading, error: ratesError } = useExchangeRate();
-  const { providers, loading: providersLoading, error: providersError } = useActiveConf(step >= 3 ? country.iso3 : "");
-  const paymentResult = usePaymentStatus(step === 5 ? depositId : null);
+  const { getUSDEquivalent, convertFromZMW, loading: ratesLoading } = useExchangeRate();
+  const { providers, loading: providersLoading } = useActiveConf(step >= 2 ? country.iso3 : "");
+  const paymentResult = usePaymentStatus(step === 3 ? depositId : null);
 
   const usdAmount = getUSDEquivalent(baseAmountZMW);
   const localAmount = country.currency === "ZMW" ? baseAmountZMW : convertFromZMW(baseAmountZMW, country.currency);
@@ -56,14 +61,12 @@ export default function PaymentModal({ isOpen, onClose, onSuccess, onFailure, us
   useEffect(() => {
     if (paymentResult.status === "COMPLETED") {
       onSuccess(depositId!);
-    } else if (paymentResult.status === "FAILED" || paymentResult.status === "TIMEOUT") {
-      // stay on step 5 to show result
     }
   }, [paymentResult.status]);
 
   // Revival timer
   useEffect(() => {
-    if (step === 5 && selectedProvider?.pinPromptRevivable) {
+    if (step === 3 && selectedProvider?.pinPromptRevivable) {
       const t = setTimeout(() => setShowRevival(true), 12000);
       return () => clearTimeout(t);
     }
@@ -78,24 +81,45 @@ export default function PaymentModal({ isOpen, onClose, onSuccess, onFailure, us
     setDepositId(null);
     setDepositError(null);
     setShowRevival(false);
+    setDetecting(false);
+    setDetectionFailed(false);
   };
 
-  const handlePhoneBlur = async () => {
-    if (phoneNumber.length < 6) return;
-    const fullNumber = country.prefix.replace("+", "") + phoneNumber;
-    try {
-      const result = await predictProvider(fullNumber);
-      if (result?.correspondent) {
-        const match = providers.find((p) => p.correspondentId === result.correspondent);
-        if (match && match.status === "OPERATIONAL") {
-          setSelectedProvider(match);
+  // Debounced auto-detect provider
+  const handlePhoneChange = useCallback((value: string) => {
+    const digits = value.replace(/\D/g, "");
+    setPhoneNumber(digits);
+    setPhoneError("");
+    setSelectedProvider(null);
+    setDetectionFailed(false);
+
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+
+    if (digits.length >= 4) {
+      setDetecting(true);
+      debounceRef.current = setTimeout(async () => {
+        const fullNumber = country.prefix.replace("+", "") + digits;
+        try {
+          const result = await predictProvider(fullNumber);
+          if (result?.correspondent) {
+            const match = providers.find((p) => p.correspondentId === result.correspondent);
+            if (match && match.status === "OPERATIONAL") {
+              setSelectedProvider(match);
+              setDetecting(false);
+              return;
+            }
+          }
+          setDetectionFailed(true);
+          setDetecting(false);
+        } catch {
+          setDetectionFailed(true);
+          setDetecting(false);
         }
-      }
-      setPhoneError("");
-    } catch {
-      // don't block user
+      }, 500);
+    } else {
+      setDetecting(false);
     }
-  };
+  }, [country.prefix, providers]);
 
   const handlePay = async () => {
     if (!selectedProvider || !localAmount) return;
@@ -103,12 +127,11 @@ export default function PaymentModal({ isOpen, onClose, onSuccess, onFailure, us
     const id = crypto.randomUUID();
     setDepositId(id);
     setDepositError(null);
-    setStep(5);
+    setStep(3);
 
     const fullPhone = country.prefix.replace("+", "") + phoneNumber;
     const amount = roundForCurrency(localAmount, country.currency);
 
-    // Validate min/max
     const numAmount = parseFloat(amount);
     const min = parseFloat(selectedProvider.minAmount);
     const max = parseFloat(selectedProvider.maxAmount);
@@ -136,12 +159,11 @@ export default function PaymentModal({ isOpen, onClose, onSuccess, onFailure, us
       } else if (result?.status === "DUPLICATE_IGNORED") {
         setDepositError("This payment reference was already used. Please close and try again.");
       }
-    } catch (e: any) {
-      setDepositError(e.message ?? "An error occurred. Please try again.");
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "An error occurred. Please try again.";
+      setDepositError(msg);
     }
   };
-
-  const isFinalState = paymentResult.status === "COMPLETED" || paymentResult.status === "FAILED" || paymentResult.status === "TIMEOUT" || !!depositError;
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => { if (!open) { resetModal(); onClose(); } }}>
@@ -158,7 +180,7 @@ export default function PaymentModal({ isOpen, onClose, onSuccess, onFailure, us
 
         <div className="p-6 pt-4">
           <AnimatePresence mode="wait">
-            {/* STEP 1: Amount */}
+            {/* STEP 1: Country + Price */}
             {step === 1 && (
               <motion.div key="s1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
                 <div className="text-center space-y-2">
@@ -173,18 +195,8 @@ export default function PaymentModal({ isOpen, onClose, onSuccess, onFailure, us
                   )}
                   <p className="text-xs text-muted-foreground">One-time payment · Unlimited streaming access</p>
                 </div>
-                <Button onClick={() => setStep(2)} className="w-full h-11 bg-primary text-primary-foreground hover:bg-primary/80 font-semibold">
-                  Continue
-                </Button>
-              </motion.div>
-            )}
 
-            {/* STEP 2: Country */}
-            {step === 2 && (
-              <motion.div key="s2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
-                <button onClick={() => setStep(1)} className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
-                  <ArrowLeft size={14} /> Back
-                </button>
+                {/* Country selector */}
                 <div>
                   <Label className="text-foreground text-sm mb-2 block">Select Your Country</Label>
                   <div className="relative">
@@ -211,98 +223,16 @@ export default function PaymentModal({ isOpen, onClose, onSuccess, onFailure, us
                   </div>
                 </div>
 
-                {/* Updated amount preview */}
-                <div className="bg-muted/30 rounded-lg p-3 text-center">
-                  <p className="text-xs text-muted-foreground mb-1">
-                    {usdAmount ? `≈ $${usdAmount.toFixed(2)} USD` : ""}
-                  </p>
-                  <p className="text-2xl font-bold text-foreground">
-                    {localAmount !== null ? formatCurrencyAmount(localAmount, country.currency) : "ZMW 49.00"}
-                  </p>
-                  {country.currency !== "ZMW" && (
-                    <p className="text-[10px] text-muted-foreground mt-1">Converted from ZMW {baseAmountZMW} at live exchange rate</p>
-                  )}
-                </div>
-
-                <Button onClick={() => setStep(3)} className="w-full h-11 bg-primary text-primary-foreground hover:bg-primary/80 font-semibold">
+                <Button onClick={() => setStep(2)} className="w-full h-11 bg-primary text-primary-foreground hover:bg-primary/80 font-semibold">
                   Continue
                 </Button>
               </motion.div>
             )}
 
-            {/* STEP 3: Provider */}
-            {step === 3 && (
-              <motion.div key="s3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
-                <button onClick={() => setStep(2)} className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
-                  <ArrowLeft size={14} /> Back
-                </button>
-                <Label className="text-foreground text-sm block">Select Your Mobile Money Provider</Label>
-
-                {providersLoading && (
-                  <div className="flex items-center justify-center py-8">
-                    <Loader2 className="animate-spin text-primary" size={24} />
-                    <span className="ml-2 text-sm text-muted-foreground">Loading providers...</span>
-                  </div>
-                )}
-
-                {providersError && (
-                  <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3 text-sm text-destructive">
-                    {providersError}
-                  </div>
-                )}
-
-                {!providersLoading && !providersError && providers.length === 0 && (
-                  <p className="text-sm text-muted-foreground text-center py-4">No providers available for this country. The pawaPay API token may not be configured yet.</p>
-                )}
-
-                <div className="grid gap-2">
-                  {providers.map((p) => {
-                    const disabled = p.status === "CLOSED";
-                    const selected = selectedProvider?.correspondentId === p.correspondentId;
-                    return (
-                      <button
-                        key={p.correspondentId}
-                        disabled={disabled}
-                        onClick={() => setSelectedProvider(p)}
-                        className={`flex items-center gap-3 p-3 rounded-lg border-2 transition-all text-left ${
-                          disabled
-                            ? "border-border bg-muted/30 opacity-50 cursor-not-allowed"
-                            : selected
-                            ? "border-primary bg-primary/10"
-                            : "border-border bg-secondary hover:border-muted-foreground/30"
-                        }`}
-                      >
-                        {p.logo ? (
-                          <img src={p.logo} alt={p.displayName} className="w-8 h-8 rounded object-contain bg-white p-0.5" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
-                        ) : (
-                          <div className="w-8 h-8 rounded bg-muted flex items-center justify-center text-xs font-bold text-muted-foreground">
-                            {p.displayName.charAt(0)}
-                          </div>
-                        )}
-                        <div className="flex-1">
-                          <p className="text-sm font-medium text-foreground">{p.displayName}</p>
-                          {disabled && <p className="text-[10px] text-muted-foreground">Currently unavailable</p>}
-                        </div>
-                        {selected && <Check size={16} className="text-primary" />}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                <Button
-                  onClick={() => setStep(4)}
-                  disabled={!selectedProvider}
-                  className="w-full h-11 bg-primary text-primary-foreground hover:bg-primary/80 font-semibold"
-                >
-                  Continue
-                </Button>
-              </motion.div>
-            )}
-
-            {/* STEP 4: Phone */}
-            {step === 4 && (
-              <motion.div key="s4" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
-                <button onClick={() => setStep(3)} className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
+            {/* STEP 2: Phone + Provider */}
+            {step === 2 && (
+              <motion.div key="s2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
+                <button onClick={() => { setStep(1); setSelectedProvider(null); setPhoneNumber(""); setDetectionFailed(false); }} className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
                   <ArrowLeft size={14} /> Back
                 </button>
 
@@ -317,8 +247,7 @@ export default function PaymentModal({ isOpen, onClose, onSuccess, onFailure, us
                       <Phone size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                       <Input
                         value={phoneNumber}
-                        onChange={(e) => { setPhoneNumber(e.target.value.replace(/\D/g, "")); setPhoneError(""); }}
-                        onBlur={handlePhoneBlur}
+                        onChange={(e) => handlePhoneChange(e.target.value)}
                         placeholder="Phone number"
                         className="pl-9 bg-secondary border-border text-foreground"
                         type="tel"
@@ -328,6 +257,68 @@ export default function PaymentModal({ isOpen, onClose, onSuccess, onFailure, us
                   {phoneError && <p className="text-xs text-destructive mt-1">{phoneError}</p>}
                 </div>
 
+                {/* Provider detection status */}
+                {detecting && (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Loader2 size={14} className="animate-spin text-primary" />
+                    <span>Detecting provider...</span>
+                  </div>
+                )}
+
+                {selectedProvider && !detecting && (
+                  <div className="flex items-center gap-2 bg-green-500/10 border border-green-500/20 rounded-lg p-3">
+                    <Check size={16} className="text-green-500" />
+                    {selectedProvider.logo && (
+                      <img src={selectedProvider.logo} alt={selectedProvider.displayName} className="w-6 h-6 rounded object-contain bg-white p-0.5" />
+                    )}
+                    <span className="text-sm text-foreground font-medium">{selectedProvider.displayName}</span>
+                  </div>
+                )}
+
+                {/* Fallback provider dropdown */}
+                {detectionFailed && !detecting && !selectedProvider && (
+                  <div className="space-y-2">
+                    <Label className="text-foreground text-xs">Select your provider manually</Label>
+                    {providersLoading ? (
+                      <div className="flex items-center gap-2 py-2">
+                        <Loader2 size={14} className="animate-spin text-primary" />
+                        <span className="text-xs text-muted-foreground">Loading providers...</span>
+                      </div>
+                    ) : (
+                      <div className="grid gap-2">
+                        {providers.map((p) => {
+                          const disabled = p.status === "CLOSED";
+                          const selected = selectedProvider?.correspondentId === p.correspondentId;
+                          return (
+                            <button
+                              key={p.correspondentId}
+                              disabled={disabled}
+                              onClick={() => setSelectedProvider(p)}
+                              className={`flex items-center gap-3 p-2.5 rounded-lg border-2 transition-all text-left ${
+                                disabled
+                                  ? "border-border bg-muted/30 opacity-50 cursor-not-allowed"
+                                  : selected
+                                  ? "border-primary bg-primary/10"
+                                  : "border-border bg-secondary hover:border-muted-foreground/30"
+                              }`}
+                            >
+                              {p.logo ? (
+                                <img src={p.logo} alt={p.displayName} className="w-6 h-6 rounded object-contain bg-white p-0.5" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                              ) : (
+                                <div className="w-6 h-6 rounded bg-muted flex items-center justify-center text-[10px] font-bold text-muted-foreground">
+                                  {p.displayName.charAt(0)}
+                                </div>
+                              )}
+                              <span className="text-sm text-foreground">{p.displayName}</span>
+                              {selected && <Check size={14} className="text-primary ml-auto" />}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {/* Summary */}
                 <div className="bg-muted/30 rounded-lg p-3 space-y-1.5">
                   <div className="flex justify-between text-sm">
@@ -335,18 +326,20 @@ export default function PaymentModal({ isOpen, onClose, onSuccess, onFailure, us
                     <span className="text-foreground font-medium">{localAmount !== null ? formatCurrencyAmount(localAmount, country.currency) : "ZMW 49.00"}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Provider</span>
-                    <span className="text-foreground font-medium">{selectedProvider?.displayName}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Country</span>
                     <span className="text-foreground font-medium">{country.flag} {country.name}</span>
                   </div>
+                  {selectedProvider && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Provider</span>
+                      <span className="text-foreground font-medium">{selectedProvider.displayName}</span>
+                    </div>
+                  )}
                 </div>
 
                 <Button
                   onClick={handlePay}
-                  disabled={phoneNumber.length < 6}
+                  disabled={phoneNumber.length < 6 || !selectedProvider}
                   className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/80 font-semibold text-base"
                 >
                   Pay {localAmount !== null ? formatCurrencyAmount(localAmount, country.currency) : "ZMW 49"} Now
@@ -354,9 +347,9 @@ export default function PaymentModal({ isOpen, onClose, onSuccess, onFailure, us
               </motion.div>
             )}
 
-            {/* STEP 5: Processing / Result */}
-            {step === 5 && (
-              <motion.div key="s5" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="space-y-4 text-center">
+            {/* STEP 3: Processing / Result */}
+            {step === 3 && (
+              <motion.div key="s3" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="space-y-4 text-center">
                 {/* SUCCESS */}
                 {paymentResult.status === "COMPLETED" && (
                   <>
@@ -386,7 +379,7 @@ export default function PaymentModal({ isOpen, onClose, onSuccess, onFailure, us
                     <p className="text-sm text-muted-foreground">
                       {depositError ?? paymentResult.error ?? "Something went wrong."}
                     </p>
-                    <Button onClick={() => { setStep(3); setDepositId(null); setDepositError(null); }} variant="outline" className="w-full">
+                    <Button onClick={() => { setStep(2); setDepositId(null); setDepositError(null); }} variant="outline" className="w-full">
                       Try Again
                     </Button>
                   </>

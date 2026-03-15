@@ -5,22 +5,40 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { Card, CardContent } from "@/components/ui/card";
-import { Search, Download } from "lucide-react";
+import { Search, Download, ChevronLeft, ChevronRight } from "lucide-react";
+
+const PAGE_SIZE = 100;
 
 const Payments = () => {
   const [payments, setPayments] = useState<any[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(0);
+  const [totalCount, setTotalCount] = useState(0);
 
   useEffect(() => {
     fetchPayments();
-  }, []);
+  }, [page]);
+
+  useEffect(() => {
+    setPage(0);
+  }, [search]);
 
   const fetchPayments = async () => {
+    setLoading(true);
+
+    // Fetch count
+    const { count } = await supabase
+      .from("payments")
+      .select("*", { count: "exact", head: true });
+    setTotalCount(count || 0);
+
+    // Fetch page
     const { data } = await supabase
       .from("payments")
       .select("*")
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false })
+      .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
     setPayments(data || []);
     setLoading(false);
   };
@@ -33,13 +51,20 @@ const Payments = () => {
       p.transaction_id?.includes(search)
   );
 
-  const exportCSV = () => {
+  const exportCSV = async () => {
+    // Export ALL records
+    const { data: allData } = await supabase
+      .from("payments")
+      .select("*")
+      .order("created_at", { ascending: false });
+    const all = allData || [];
+
     const headers = ["Name", "Email", "Phone", "Provider", "Amount", "Currency", "Status", "Promo Code", "Discount", "Transaction ID", "Date"];
-    const rows = filtered.map((p) => [
+    const rows = all.map((p: any) => [
       p.name, p.email, p.phone, p.provider, p.amount, p.currency || "ZMW", p.status, p.promo_code || "", p.discount_applied || 0, p.transaction_id,
       new Date(p.created_at).toLocaleString(),
     ]);
-    const csv = [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
+    const csv = [headers.join(","), ...rows.map((r: any) => r.join(","))].join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -47,6 +72,10 @@ const Payments = () => {
     a.download = `payments-${new Date().toISOString().split("T")[0]}.csv`;
     a.click();
   };
+
+  const totalPages = Math.ceil(totalCount / PAGE_SIZE);
+  const showingStart = page * PAGE_SIZE + 1;
+  const showingEnd = Math.min((page + 1) * PAGE_SIZE, totalCount);
 
   return (
     <AdminLayout>
@@ -126,6 +155,21 @@ const Payments = () => {
             </Table>
           </CardContent>
         </Card>
+
+        {/* Pagination */}
+        {totalCount > 0 && (
+          <div className="flex items-center justify-between text-sm text-muted-foreground">
+            <p>Showing {showingStart}–{showingEnd} of {totalCount} records</p>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage(p => p - 1)} className="border-border text-foreground gap-1">
+                <ChevronLeft size={14} /> Previous
+              </Button>
+              <Button variant="outline" size="sm" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)} className="border-border text-foreground gap-1">
+                Next <ChevronRight size={14} />
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
     </AdminLayout>
   );

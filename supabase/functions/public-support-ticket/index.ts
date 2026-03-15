@@ -25,16 +25,16 @@ serve(async (req) => {
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-    // Use a placeholder UUID for guest tickets (no auth user)
-    const guestUserId = "00000000-0000-0000-0000-000000000000";
-
-    // Create support ticket
     const { data: ticket, error: ticketError } = await supabase
       .from("support_tickets")
       .insert({
-        user_id: guestUserId,
+        user_id: null,
+        guest_name: name.trim(),
+        guest_email: email.trim().toLowerCase(),
+        guest_phone: phone?.trim() || null,
+        payment_ref: paymentRef?.trim() || null,
         subject: subject.trim(),
-        message: `[Guest: ${name} | ${email}${phone ? ` | Phone: ${phone}` : ""}${paymentRef ? ` | Payment Ref: ${paymentRef}` : ""}]\n\n${message.trim()}`,
+        message: message.trim(),
         status: "open",
       })
       .select("id")
