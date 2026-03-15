@@ -72,6 +72,12 @@ const MemberDashboard = () => {
 
   // Payment receipt
   const [paymentReceipt, setPaymentReceipt] = useState<any>(null);
+  const [userEmail, setUserEmail] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmNewPassword, setConfirmNewPassword] = useState("");
+  const [passwordLoading, setPasswordLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showAccountSettings, setShowAccountSettings] = useState(false);
 
   const streamingLink1 = settings.streaming_link_1 || "";
   const streamingLink2 = settings.streaming_link_2 || "";
