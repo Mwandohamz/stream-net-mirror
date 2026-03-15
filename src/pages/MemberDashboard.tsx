@@ -11,7 +11,7 @@ import { motion } from "framer-motion";
 import {
   ExternalLink, Download, Globe, Smartphone, Monitor,
   MessageCircle, Send, LogOut, Shield, Play, ChevronRight,
-  AlertTriangle, CheckCircle2, Info, RefreshCw, Laptop
+  AlertTriangle, CheckCircle2, Info, RefreshCw, Laptop, Lock, Eye, EyeOff, Settings
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
