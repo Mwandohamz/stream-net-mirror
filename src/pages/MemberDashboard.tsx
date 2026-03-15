@@ -87,6 +87,7 @@ const MemberDashboard = () => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
         setUserName(session.user.user_metadata?.full_name || session.user.email || "");
+        setUserEmail(session.user.email || "");
         fetchTickets(session.user.id);
         // Fetch payment receipt
         const userEmail = session.user.email;
