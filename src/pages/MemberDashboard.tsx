@@ -82,6 +82,20 @@ const MemberDashboard = () => {
       if (session?.user) {
         setUserName(session.user.user_metadata?.full_name || session.user.email || "");
         fetchTickets(session.user.id);
+        // Fetch payment receipt
+        const userEmail = session.user.email;
+        if (userEmail) {
+          supabase
+            .from("payments")
+            .select("*")
+            .eq("email", userEmail)
+            .eq("status", "completed")
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .then(({ data }) => {
+              if (data && data.length > 0) setPaymentReceipt(data[0]);
+            });
+        }
       }
     });
   }, []);
