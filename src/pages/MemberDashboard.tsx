@@ -11,7 +11,8 @@ import { motion } from "framer-motion";
 import {
   ExternalLink, Download, Globe, Smartphone, Monitor,
   MessageCircle, Send, LogOut, Shield, Play, ChevronRight,
-  AlertTriangle, CheckCircle2, Info, RefreshCw, Laptop, Lock, Eye, EyeOff, Settings
+  AlertTriangle, CheckCircle2, Info, RefreshCw, Laptop, Lock, Eye, EyeOff, Settings,
+  Copy, Share2
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -62,6 +63,7 @@ const MemberDashboard = () => {
   const [ticketMessage, setTicketMessage] = useState("");
   const [ticketLoading, setTicketLoading] = useState(false);
   const [showBackupLinks, setShowBackupLinks] = useState(false);
+  const [showTempPasswordBanner, setShowTempPasswordBanner] = useState(false);
 
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [ticketMessages, setTicketMessages] = useState<Record<string, TicketMessage[]>>({});
@@ -86,6 +88,10 @@ const MemberDashboard = () => {
       if (session?.user) {
         setUserName(session.user.user_metadata?.full_name || session.user.email || "");
         setUserEmail(session.user.email || "");
+        // Check if user was granted access with temp password
+        if (session.user.user_metadata?.temp_password) {
+          setShowTempPasswordBanner(true);
+        }
         fetchTickets(session.user.id);
 
         // Fetch payment receipt via subscriber's payment_id FK
@@ -216,17 +222,65 @@ const MemberDashboard = () => {
       <div className="pt-24 pb-16 container mx-auto px-4">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-3xl mx-auto space-y-6">
           {/* Header */}
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-2">
             <div>
               <h1 className="netflix-title text-2xl md:text-4xl text-foreground">
                 WELCOME, {userName.toUpperCase()}!
               </h1>
               <p className="text-sm text-muted-foreground">Your StreamNetMirror membership is active</p>
             </div>
-            <Button variant="ghost" size="sm" onClick={handleSignOut} className="text-muted-foreground hover:text-foreground">
-              <LogOut size={16} className="mr-1" /> Sign Out
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-border text-foreground gap-1"
+                onClick={() => {
+                  navigator.clipboard.writeText(window.location.origin + "/dashboard");
+                  toast({ title: "Link copied!", description: "Dashboard link copied to clipboard." });
+                }}
+              >
+                <Copy size={14} /> Copy Link
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-border text-foreground gap-1"
+                onClick={() => {
+                  const text = encodeURIComponent(`Check out StreamNetMirror - Lifetime streaming access! ${window.location.origin}`);
+                  window.open(`https://wa.me/?text=${text}`, "_blank");
+                }}
+              >
+                <Share2 size={14} /> WhatsApp
+              </Button>
+              <Button variant="ghost" size="sm" onClick={handleSignOut} className="text-muted-foreground hover:text-foreground">
+                <LogOut size={16} className="mr-1" /> Sign Out
+              </Button>
+            </div>
           </div>
+
+          {/* Temp Password Banner */}
+          {showTempPasswordBanner && (
+            <Card className="bg-primary/10 border-primary/30 border-2">
+              <CardContent className="p-4 flex items-center gap-3">
+                <AlertTriangle size={20} className="text-primary shrink-0" />
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-foreground">You're using a temporary password</p>
+                  <p className="text-xs text-muted-foreground">Please change your password in Account Settings below for security.</p>
+                </div>
+                <Button
+                  size="sm"
+                  className="bg-primary text-primary-foreground shrink-0"
+                  onClick={() => {
+                    setShowAccountSettings(true);
+                    setShowTempPasswordBanner(false);
+                    document.getElementById("account-settings")?.scrollIntoView({ behavior: "smooth" });
+                  }}
+                >
+                  Change Now
+                </Button>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Important Notice */}
           <Card className="bg-accent/10 border-accent/30 border-2">
@@ -463,7 +517,7 @@ const MemberDashboard = () => {
           </Card>
 
           {/* Account Settings */}
-          <Card className="bg-card border-border">
+          <Card id="account-settings" className="bg-card border-border">
             <CardContent className="p-4">
               <Button
                 variant="outline"

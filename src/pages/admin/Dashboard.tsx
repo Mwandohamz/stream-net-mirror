@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import AdminLayout from "@/components/admin/AdminLayout";
 import StatCard from "@/components/admin/StatCard";
-import { DollarSign, CreditCard, Users, TrendingUp, Eye, BarChart3, HelpCircle, ChevronDown, ChevronRight, RefreshCw } from "lucide-react";
+import { DollarSign, CreditCard, Users, TrendingUp, Eye, BarChart3, HelpCircle, ChevronDown, ChevronRight, RefreshCw, MessageSquare, UserPlus } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts";
 import { Button } from "@/components/ui/button";
@@ -22,6 +22,8 @@ const Dashboard = () => {
     totalPageViews: 0,
     uniqueSessions: 0,
     conversionRate: 0,
+    totalSubscribers: 0,
+    openTickets: 0,
   });
   const [revenueData, setRevenueData] = useState<any[]>([]);
   const [viewsData, setViewsData] = useState<any[]>([]);
@@ -36,32 +38,25 @@ const Dashboard = () => {
     const today = new Date().toISOString().split("T")[0];
 
     try {
-      // Fetch payments - use separate queries for robustness
-      const { data: allPayments, error: paymentsErr } = await supabase
-        .from("payments")
-        .select("*")
-        .order("created_at", { ascending: false });
+      const [
+        { data: allPayments, error: paymentsErr },
+        { data: todayData, error: todayErr },
+        { data: viewsData2, error: viewsErr },
+        { count: subscriberCount },
+        { count: openTicketCount },
+      ] = await Promise.all([
+        supabase.from("payments").select("*").order("created_at", { ascending: false }),
+        supabase.from("payments").select("id").gte("created_at", today),
+        supabase.from("page_views").select("created_at, session_id"),
+        supabase.from("subscribers").select("*", { count: "exact", head: true }),
+        supabase.from("support_tickets").select("*", { count: "exact", head: true }).eq("status", "open"),
+      ]);
 
-      if (paymentsErr) {
-        console.error("Dashboard payments query error:", paymentsErr);
-      }
-
-      const payments = allPayments || [];
-      console.log("Dashboard: fetched", payments.length, "payments");
-
-      const { data: todayData, error: todayErr } = await supabase
-        .from("payments")
-        .select("id")
-        .gte("created_at", today);
-
+      if (paymentsErr) console.error("Dashboard payments query error:", paymentsErr);
       if (todayErr) console.error("Dashboard today payments error:", todayErr);
-
-      const { data: viewsData2, error: viewsErr } = await supabase
-        .from("page_views")
-        .select("created_at, session_id");
-
       if (viewsErr) console.error("Dashboard page_views error:", viewsErr);
 
+      const payments = allPayments || [];
       const viewsArr = viewsData2 || [];
       const totalViews = viewsArr.length;
       const uniqueSessions = new Set(viewsArr.map((v: any) => v.session_id)).size;
@@ -82,12 +77,12 @@ const Dashboard = () => {
         totalPageViews: totalViews,
         uniqueSessions,
         conversionRate: Math.round(conversionRate * 10) / 10,
+        totalSubscribers: subscriberCount || 0,
+        openTickets: openTicketCount || 0,
       });
 
-      // Recent payments for table
       setRecentPayments(payments.slice(0, 10));
 
-      // Build revenue chart data (last 7 days)
       const last7 = Array.from({ length: 7 }, (_, i) => {
         const d = new Date();
         d.setDate(d.getDate() - (6 - i));
@@ -101,7 +96,6 @@ const Dashboard = () => {
       });
       setRevenueData(last7);
 
-      // Build views chart data (last 7 days)
       const viewsLast7 = Array.from({ length: 7 }, (_, i) => {
         const d = new Date();
         d.setDate(d.getDate() - (6 - i));
@@ -171,10 +165,10 @@ const Dashboard = () => {
                 <h3 className="text-foreground font-semibold mb-1">🎫 Support Tickets</h3>
                 <ul className="list-disc list-inside space-y-1">
                   <li>Go to <strong className="text-foreground">Support</strong> in the sidebar to view all tickets</li>
-                  <li>Tickets from <strong>Guest users</strong> (not logged in) show a yellow "Guest" badge with their name, email, phone, and payment reference</li>
+                  <li>Tickets from <strong>Guest users</strong> (not logged in) show a yellow "Guest" badge</li>
                   <li>Tickets from <strong>logged-in subscribers</strong> show their account info</li>
                   <li>Click a ticket to expand it, view the conversation, and reply</li>
-                  <li>Use <strong className="text-primary">"Grant Access"</strong> button next to any user to manually create an account with a temporary password — useful when a paid user can't sign up on their own</li>
+                  <li>Use <strong className="text-primary">"Grant Access"</strong> button to manually create an account with a temporary password</li>
                   <li>Copy the temp password and send it to the user (e.g. via WhatsApp or email)</li>
                   <li>Close tickets when resolved; reopen if needed</li>
                 </ul>
@@ -183,10 +177,10 @@ const Dashboard = () => {
               <div>
                 <h3 className="text-foreground font-semibold mb-1">💰 Payments</h3>
                 <ul className="list-disc list-inside space-y-1">
-                  <li>Go to <strong className="text-foreground">Payments</strong> to see all payment records (completed, pending, failed)</li>
+                  <li>Go to <strong className="text-foreground">Payments</strong> to see all payment records</li>
                   <li>Search by name, email, phone, or transaction ID</li>
                   <li>Use <strong>"Export CSV"</strong> to download all payment data</li>
-                  <li>Payment statuses: <span className="text-green-500">completed</span> = successful, <span className="text-yellow-500">pending</span> = awaiting confirmation, <span className="text-destructive">failed</span> = rejected</li>
+                  <li>Payment statuses: <span className="text-green-500">completed</span> = successful, <span className="text-yellow-500">pending</span> = awaiting, <span className="text-destructive">failed</span> = rejected</li>
                 </ul>
               </div>
 
@@ -211,43 +205,34 @@ const Dashboard = () => {
                 <ul className="list-disc list-inside space-y-1">
                   <li>Create influencer promo codes with custom discount % and revenue share %</li>
                   <li>Influencers log in at <code className="text-primary">/influencer/PROMO_CODE</code> to see their stats</li>
-                  <li>Revenue from promo codes is tracked automatically in payments</li>
                 </ul>
               </div>
 
               <div>
                 <h3 className="text-foreground font-semibold mb-1">⚙️ Settings</h3>
                 <ul className="list-disc list-inside space-y-1">
-                  <li><strong>Pricing:</strong> Change the base price in ZMW (auto-converts for other countries)</li>
-                  <li><strong>Portal URL:</strong> Update the main streaming portal link subscribers see</li>
+                  <li><strong>Pricing:</strong> Change the base price in ZMW</li>
+                  <li><strong>Portal URL:</strong> Update the main streaming portal link</li>
                   <li><strong>Official Links:</strong> Set up to 3 backup streaming links</li>
-                  <li><strong>APK:</strong> Upload the Android app file for subscriber downloads</li>
-                  <li><strong>Password:</strong> Change your admin password</li>
-                </ul>
-              </div>
-
-              <div>
-                <h3 className="text-foreground font-semibold mb-1">🔐 Password Reset</h3>
-                <ul className="list-disc list-inside space-y-1">
-                  <li>Users can reset their password at <code className="text-primary">/forgot-password</code></li>
-                  <li>A reset link is sent to their email, leading to <code className="text-primary">/reset-password</code></li>
-                  <li>On the sign-in page, if email is unverified, they can resend the verification email</li>
+                  <li><strong>APK:</strong> Upload the Android app file</li>
                 </ul>
               </div>
             </CardContent>
           </Card>
         )}
 
-        {/* Stat Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
-          <StatCard title="Total Revenue" value={`ZMW ${stats.totalRevenue}`} icon={DollarSign} description="Completed payments" />
+        {/* Stat Cards - 2 rows of 4 */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <StatCard title="Total Revenue" value={`ZMW ${stats.totalRevenue}`} icon={DollarSign} description="All completed" />
           <StatCard title="Organic Revenue" value={`ZMW ${stats.organicRevenue}`} icon={DollarSign} description="No promo code" />
           <StatCard title="Promo Revenue" value={`ZMW ${stats.influencerRevenue}`} icon={TrendingUp} description="Via influencers" />
           <StatCard title="Total Payments" value={stats.totalPayments} icon={CreditCard} description="All statuses" />
-          <StatCard title="Today" value={stats.todayPayments} icon={TrendingUp} description="Payments today" />
-          <StatCard title="Page Views" value={stats.totalPageViews} icon={Eye} description="All time" />
-          <StatCard title="Sessions" value={stats.uniqueSessions} icon={Users} description="Unique visitors" />
-          <StatCard title="Conversion" value={`${stats.conversionRate}%`} icon={BarChart3} description="Visitors → Customers" />
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <StatCard title="Today's Payments" value={stats.todayPayments} icon={TrendingUp} description="Payments today" />
+          <StatCard title="Subscribers" value={stats.totalSubscribers} icon={UserPlus} description="Active accounts" />
+          <StatCard title="Open Tickets" value={stats.openTickets} icon={MessageSquare} description="Need attention" />
+          <StatCard title="Conversion" value={`${stats.conversionRate}%`} icon={BarChart3} description="Visitors → Paid" />
         </div>
 
         {/* Charts */}
@@ -299,16 +284,17 @@ const Dashboard = () => {
                 <TableRow>
                   <TableHead>Name</TableHead>
                   <TableHead>Email</TableHead>
+                  <TableHead>Phone</TableHead>
                   <TableHead>Amount</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Date</TableHead>
+                  <TableHead>Date & Time</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {recentPayments.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center text-muted-foreground py-6">
-                      {refreshing ? "Loading..." : "No payments found. Payment data will appear here once users make payments."}
+                    <TableCell colSpan={6} className="text-center text-muted-foreground py-6">
+                      {refreshing ? "Loading..." : "No payments found."}
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -316,6 +302,7 @@ const Dashboard = () => {
                     <TableRow key={p.id}>
                       <TableCell className="font-medium text-foreground">{p.name}</TableCell>
                       <TableCell className="text-muted-foreground text-sm">{p.email}</TableCell>
+                      <TableCell className="text-muted-foreground text-sm">{p.phone}</TableCell>
                       <TableCell className="text-foreground font-medium">{p.currency || "ZMW"} {p.amount}</TableCell>
                       <TableCell>
                         <Badge variant={p.status === "completed" ? "default" : "secondary"}
@@ -328,8 +315,8 @@ const Dashboard = () => {
                           {p.status}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-muted-foreground text-xs">
-                        {new Date(p.created_at).toLocaleDateString()}
+                      <TableCell className="text-muted-foreground text-xs whitespace-nowrap">
+                        {new Date(p.created_at).toLocaleString()}
                       </TableCell>
                     </TableRow>
                   ))
