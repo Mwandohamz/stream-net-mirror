@@ -22,7 +22,6 @@ const Customers = () => {
       .eq("status", "completed")
       .order("created_at", { ascending: false });
 
-    // Deduplicate by email, keep latest payment
     const seen = new Map<string, any>();
     (data || []).forEach((p: any) => {
       if (!seen.has(p.email)) {
@@ -58,7 +57,7 @@ const Customers = () => {
         </div>
 
         <Card className="bg-card border-border">
-          <CardContent className="p-0">
+          <CardContent className="p-0 overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -66,6 +65,10 @@ const Customers = () => {
                   <TableHead>Email</TableHead>
                   <TableHead>Phone</TableHead>
                   <TableHead>Provider</TableHead>
+                  <TableHead>Country</TableHead>
+                  <TableHead>Currency</TableHead>
+                  <TableHead>Promo Code</TableHead>
+                  <TableHead>Discount</TableHead>
                   <TableHead>Payments</TableHead>
                   <TableHead>Joined</TableHead>
                 </TableRow>
@@ -73,11 +76,11 @@ const Customers = () => {
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center text-muted-foreground py-8">Loading...</TableCell>
+                    <TableCell colSpan={10} className="text-center text-muted-foreground py-8">Loading...</TableCell>
                   </TableRow>
                 ) : filtered.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center text-muted-foreground py-8">No customers found</TableCell>
+                    <TableCell colSpan={10} className="text-center text-muted-foreground py-8">No customers found</TableCell>
                   </TableRow>
                 ) : (
                   filtered.map((c) => (
@@ -86,6 +89,10 @@ const Customers = () => {
                       <TableCell className="text-muted-foreground">{c.email}</TableCell>
                       <TableCell className="text-muted-foreground">{c.phone}</TableCell>
                       <TableCell className="capitalize text-muted-foreground">{c.provider}</TableCell>
+                      <TableCell className="text-muted-foreground">{c.country || "—"}</TableCell>
+                      <TableCell className="text-muted-foreground">{c.currency || "ZMW"}</TableCell>
+                      <TableCell className="text-muted-foreground">{c.promo_code || "—"}</TableCell>
+                      <TableCell className="text-muted-foreground">{c.discount_applied ? `${c.discount_applied}%` : "—"}</TableCell>
                       <TableCell className="text-foreground">{c.paymentCount}</TableCell>
                       <TableCell className="text-muted-foreground text-xs">
                         {new Date(c.created_at).toLocaleDateString()}

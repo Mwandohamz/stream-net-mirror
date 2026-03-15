@@ -26,9 +26,10 @@ interface TicketMessage {
   created_at: string;
 }
 
-// Group tickets by user_id
 interface UserGroup {
   user_id: string;
+  userName: string;
+  userEmail: string;
   tickets: Ticket[];
 }
 
@@ -39,6 +40,7 @@ const SupportTickets = () => {
   const [expandedTicket, setExpandedTicket] = useState<string | null>(null);
   const [replyText, setReplyText] = useState("");
   const [replySending, setReplySending] = useState(false);
+  const [userInfo, setUserInfo] = useState<Record<string, { name: string; email: string }>>({});
 
   useEffect(() => {
     fetchTickets();
@@ -50,7 +52,23 @@ const SupportTickets = () => {
       .from("support_tickets" as any)
       .select("*")
       .order("updated_at", { ascending: false });
-    setTickets((data || []) as unknown as Ticket[]);
+    const tix = (data || []) as unknown as Ticket[];
+    setTickets(tix);
+
+    // Fetch user info from subscribers
+    const userIds = [...new Set(tix.map(t => t.user_id))];
+    if (userIds.length > 0) {
+      const { data: subs } = await supabase
+        .from("subscribers")
+        .select("user_id, name, email")
+        .in("user_id", userIds);
+      const info: Record<string, { name: string; email: string }> = {};
+      (subs || []).forEach((s: any) => {
+        info[s.user_id] = { name: s.name, email: s.email };
+      });
+      setUserInfo(info);
+    }
+
     setLoading(false);
   };
 
@@ -107,7 +125,15 @@ const SupportTickets = () => {
     if (!userMap.has(t.user_id)) userMap.set(t.user_id, []);
     userMap.get(t.user_id)!.push(t);
   }
-  userMap.forEach((tix, uid) => grouped.push({ user_id: uid, tickets: tix }));
+  userMap.forEach((tix, uid) => {
+    const info = userInfo[uid];
+    grouped.push({
+      user_id: uid,
+      userName: info?.name || "Unknown",
+      userEmail: info?.email || uid.slice(0, 8) + "...",
+      tickets: tix,
+    });
+  });
 
   return (
     <AdminLayout>
@@ -127,8 +153,9 @@ const SupportTickets = () => {
             {grouped.map((group) => (
               <Card key={group.user_id} className="bg-card border-border">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm text-muted-foreground font-mono">
-                    User: {group.user_id.slice(0, 8)}... ({group.tickets.length} ticket{group.tickets.length > 1 ? "s" : ""})
+                  <CardTitle className="text-sm text-foreground">
+                    {group.userName} <span className="text-muted-foreground font-normal text-xs">({group.userEmail})</span>
+                    <span className="text-muted-foreground font-normal text-xs ml-2">· {group.tickets.length} ticket{group.tickets.length > 1 ? "s" : ""}</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2 pt-0">
@@ -154,13 +181,11 @@ const SupportTickets = () => {
 
                       {expandedTicket === ticket.id && (
                         <div className="border-t border-border p-3 space-y-3">
-                          {/* Original message */}
                           <div className="bg-background rounded p-2">
                             <p className="text-[10px] text-muted-foreground mb-1">User (original):</p>
                             <p className="text-xs text-foreground">{ticket.message}</p>
                           </div>
 
-                          {/* Chat thread */}
                           {(ticketMessages[ticket.id] || []).map((msg) => (
                             <div
                               key={msg.id}
@@ -173,7 +198,6 @@ const SupportTickets = () => {
                             </div>
                           ))}
 
-                          {/* Reply + close/reopen */}
                           <div className="flex gap-2">
                             <Input
                               value={replyText}

@@ -61,6 +61,7 @@ const MemberDashboard = () => {
   const [ticketSubject, setTicketSubject] = useState("");
   const [ticketMessage, setTicketMessage] = useState("");
   const [ticketLoading, setTicketLoading] = useState(false);
+  const [showBackupLinks, setShowBackupLinks] = useState(false);
 
   // Tickets & chat
   const [tickets, setTickets] = useState<Ticket[]>([]);
@@ -68,6 +69,9 @@ const MemberDashboard = () => {
   const [expandedTicket, setExpandedTicket] = useState<string | null>(null);
   const [replyText, setReplyText] = useState("");
   const [replySending, setReplySending] = useState(false);
+
+  // Payment receipt
+  const [paymentReceipt, setPaymentReceipt] = useState<any>(null);
 
   const streamingLink1 = settings.streaming_link_1 || "";
   const streamingLink2 = settings.streaming_link_2 || "";
@@ -78,6 +82,20 @@ const MemberDashboard = () => {
       if (session?.user) {
         setUserName(session.user.user_metadata?.full_name || session.user.email || "");
         fetchTickets(session.user.id);
+        // Fetch payment receipt
+        const userEmail = session.user.email;
+        if (userEmail) {
+          supabase
+            .from("payments")
+            .select("*")
+            .eq("email", userEmail)
+            .eq("status", "completed")
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .then(({ data }) => {
+              if (data && data.length > 0) setPaymentReceipt(data[0]);
+            });
+        }
       }
     });
   }, []);
@@ -234,30 +252,89 @@ const MemberDashboard = () => {
             </CardContent>
           </Card>
 
-          {/* Official Backup Links */}
+          {/* Official Backup Links - Hidden behind toggle */}
           {(streamingLink1 || streamingLink2 || streamingLink3) && (
+            <Card className="bg-card border-border">
+              <CardContent className="p-4">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowBackupLinks(!showBackupLinks)}
+                  className="w-full border-border text-foreground gap-2"
+                >
+                  <Globe size={16} className="text-primary" />
+                  {showBackupLinks ? "Hide" : "Show"} Official Backup Links
+                  <ChevronRight size={16} className={`ml-auto transition-transform ${showBackupLinks ? "rotate-90" : ""}`} />
+                </Button>
+                {showBackupLinks && (
+                  <div className="mt-3 space-y-2">
+                    <p className="text-xs text-muted-foreground">If the main portal is down, try these official backup links:</p>
+                    {[
+                      { label: "Official Link 1", url: streamingLink1 },
+                      { label: "Official Link 2", url: streamingLink2 },
+                      { label: "Official Link 3", url: streamingLink3 },
+                    ].filter(l => l.url).map((link, i) => (
+                      <a key={i} href={link.url} target="_blank" rel="noopener noreferrer" className="block">
+                        <Button variant="outline" size="sm" className="w-full border-border text-foreground gap-2 justify-start">
+                          <ExternalLink size={14} className="text-primary" />
+                          {link.label}
+                          <span className="text-xs text-muted-foreground ml-auto truncate max-w-[200px]">{link.url}</span>
+                        </Button>
+                      </a>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Payment Receipt */}
+          {paymentReceipt && (
             <Card className="bg-card border-border">
               <CardHeader>
                 <CardTitle className="netflix-title text-lg text-foreground flex items-center gap-2">
-                  <Globe size={18} className="text-primary" />
-                  OFFICIAL NETMIRROR WEBSITES
+                  <CheckCircle2 size={18} className="text-green-500" />
+                  PAYMENT RECEIPT
                 </CardTitle>
-                <p className="text-xs text-muted-foreground">If the main portal is down, try these official backup links:</p>
               </CardHeader>
-              <CardContent className="space-y-3">
-                {[
-                  { label: "Official Link 1", url: streamingLink1 },
-                  { label: "Official Link 2", url: streamingLink2 },
-                  { label: "Official Link 3", url: streamingLink3 },
-                ].filter(l => l.url).map((link, i) => (
-                  <a key={i} href={link.url} target="_blank" rel="noopener noreferrer" className="block">
-                    <Button variant="outline" className="w-full border-border text-foreground gap-2 justify-start">
-                      <ExternalLink size={16} className="text-primary" />
-                      {link.label}
-                      <span className="text-xs text-muted-foreground ml-auto truncate max-w-[200px]">{link.url}</span>
-                    </Button>
-                  </a>
-                ))}
+              <CardContent>
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <p className="text-[10px] text-muted-foreground">Name</p>
+                    <p className="text-foreground font-medium">{paymentReceipt.name}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-muted-foreground">Email</p>
+                    <p className="text-foreground font-medium">{paymentReceipt.email}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-muted-foreground">Amount</p>
+                    <p className="text-foreground font-medium">{paymentReceipt.currency || "ZMW"} {paymentReceipt.amount}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-muted-foreground">Provider</p>
+                    <p className="text-foreground font-medium capitalize">{paymentReceipt.provider}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-muted-foreground">Status</p>
+                    <Badge className="bg-green-500/20 text-green-500 text-[10px]">{paymentReceipt.status}</Badge>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-muted-foreground">Date</p>
+                    <p className="text-foreground font-medium">{new Date(paymentReceipt.created_at).toLocaleDateString()}</p>
+                  </div>
+                  {paymentReceipt.transaction_id && (
+                    <div className="col-span-2">
+                      <p className="text-[10px] text-muted-foreground">Transaction ID</p>
+                      <p className="text-foreground font-mono text-xs">{paymentReceipt.transaction_id}</p>
+                    </div>
+                  )}
+                  {paymentReceipt.promo_code && (
+                    <div className="col-span-2">
+                      <p className="text-[10px] text-muted-foreground">Promo Code Applied</p>
+                      <p className="text-primary font-medium">{paymentReceipt.promo_code} ({paymentReceipt.discount_applied}% off)</p>
+                    </div>
+                  )}
+                </div>
               </CardContent>
             </Card>
           )}

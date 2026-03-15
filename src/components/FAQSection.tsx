@@ -17,7 +17,7 @@ const FAQSection = () => {
     { q: "How do I access the streaming service after payment?", a: "After successful payment, you'll be prompted to create an account using your payment email. Once verified, sign in to access the StreamNetMirror member dashboard with the streaming portal link and setup instructions." },
     { q: "Can I download the app?", a: "Yes! The StreamNetMirror APK is available for Android devices through the member dashboard. iOS users can access it via WebView tools. You can also stream directly through any web browser." },
     { q: "What devices are supported?", a: "StreamNetMirror works on Android phones & tablets, iOS devices (via WebView), Smart TVs, web browsers on PC/Mac, and even gaming consoles via web browser." },
-    { q: "Is there a refund policy?", a: "Refunds are available within 7 days of purchase. Contact us at onlineplagiarismremover@gmail.com with your transaction details to request a refund." },
+    { q: "Is there a refund policy?", a: "Refunds are available within 7 days of purchase. Contact us at shuvaegonera@gmail.com with your transaction details to request a refund." },
     { q: "Is my payment information safe?", a: "Yes, all payments are processed securely through Mobile Money providers (Airtel Money / MTN MoMo). We do not store any sensitive payment information on our servers." },
     { q: "What happens after I pay?", a: "After payment, you'll create an account using your payment email. You'll then receive login details and instructions via email. Sign in anytime to access the streaming portal, download the app, or contact support." },
   ];

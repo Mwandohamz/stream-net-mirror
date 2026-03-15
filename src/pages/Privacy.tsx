@@ -27,7 +27,7 @@ const Privacy = () => {
           <h3 className="font-display text-xl text-foreground">5. Third-Party Links</h3>
           <p>Our website may contain links to third-party websites. We are not responsible for their privacy practices.</p>
           <h3 className="font-display text-xl text-foreground">6. Contact</h3>
-          <p>Contact us at <a href="mailto:onlineplagiarismremover@gmail.com" className="text-primary hover:underline">onlineplagiarismremover@gmail.com</a>.</p>
+          <p>Contact us at <a href="mailto:shuvaegonera@gmail.com" className="text-primary hover:underline">shuvaegonera@gmail.com</a>.</p>
         </div>
       </div>
       <Footer />
