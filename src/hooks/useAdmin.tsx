@@ -19,12 +19,26 @@ const validateAdminEmail = async (email: string): Promise<boolean> => {
   }
 };
 
-const syncAdminRole = async () => {
+const hasAdminRole = async (userId: string): Promise<boolean> => {
+  const { data, error } = await supabase
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId)
+    .eq("role", "admin")
+    .maybeSingle();
+
+  if (error) return false;
+  return !!data;
+};
+
+const ensureAdminRole = async (userId: string): Promise<boolean> => {
   try {
     await supabase.functions.invoke("assign-admin-role");
   } catch {
-    // best-effort sync
+    // continue; we'll verify role directly below
   }
+
+  return hasAdminRole(userId);
 };
 
 export const useAdmin = () => {
@@ -46,25 +60,17 @@ export const useAdmin = () => {
         return;
       }
 
-      // Primary check: ADMIN_EMAILS whitelist
-      const valid = await validateAdminEmail(sessionUser.email);
-      if (valid) {
-        // Sync role to DB for RLS policies (idempotent)
-        await syncAdminRole();
-        setIsAdmin(true);
+      const validAdminEmail = await validateAdminEmail(sessionUser.email);
+
+      if (validAdminEmail) {
+        const roleReady = await ensureAdminRole(sessionUser.id);
+        setIsAdmin(roleReady);
+        setAuthError(!roleReady);
         return;
       }
 
-      // Fallback: check user_roles table directly
-      const { data, error } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", sessionUser.id)
-        .eq("role", "admin")
-        .maybeSingle();
-
-      if (error) throw error;
-      setIsAdmin(!!data);
+      const roleFallback = await hasAdminRole(sessionUser.id);
+      setIsAdmin(roleFallback);
     } catch {
       setIsAdmin(false);
       if (sessionUser) {
@@ -80,7 +86,6 @@ export const useAdmin = () => {
   useEffect(() => {
     let mounted = true;
 
-    // Safety timeout to prevent endless loading
     const timeout = setTimeout(() => {
       if (!mounted) return;
       setLoading((prev) => {
@@ -89,7 +94,6 @@ export const useAdmin = () => {
       });
     }, LOADING_TIMEOUT_MS);
 
-    // Set up auth listener FIRST. Keep callback non-blocking to avoid auth deadlocks.
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -101,7 +105,6 @@ export const useAdmin = () => {
       }, 0);
     });
 
-    // Then bootstrap from current session
     supabase.auth
       .getSession()
       .then(({ data: { session } }) => {
@@ -156,5 +159,4 @@ export const useAdmin = () => {
   };
 };
 
-// Export the helper for reuse
 export { validateAdminEmail };

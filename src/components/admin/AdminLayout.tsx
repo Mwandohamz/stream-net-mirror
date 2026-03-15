@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
+import { useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import {
   SidebarProvider,
@@ -25,40 +26,95 @@ const navItems = [
   { title: "Support", url: "/admin/support", icon: MessageSquare, badgeKey: "tickets" },
   { title: "Influencers", url: "/admin/influencers", icon: Megaphone, badgeKey: null },
   { title: "Settings", url: "/admin/settings", icon: Settings, badgeKey: null },
-];
+] as const;
+
+const SUCCESS_PAYMENT_STATUSES = ["completed", "success", "succeeded"];
+
+const SEEN_KEYS = {
+  payments: "admin_seen_payments_at",
+  customers: "admin_seen_customers_at",
+  tickets: "admin_seen_tickets_at",
+} as const;
+
+const getSeenAt = (key: string) => {
+  if (typeof window === "undefined") return new Date(0).toISOString();
+  return localStorage.getItem(key) || new Date(0).toISOString();
+};
 
 const AdminSidebar = () => {
   const { state } = useSidebar();
+  const location = useLocation();
   const collapsed = state === "collapsed";
   const [badges, setBadges] = useState<Record<string, number>>({});
 
-  useEffect(() => {
-    fetchBadges();
-    const interval = setInterval(fetchBadges, 30000); // refresh every 30s
-    return () => clearInterval(interval);
+  const markSeenForCurrentPage = useCallback((pathname: string) => {
+    if (typeof window === "undefined") return;
+
+    const now = new Date().toISOString();
+
+    if (pathname.startsWith("/admin/payments")) {
+      localStorage.setItem(SEEN_KEYS.payments, now);
+      setBadges((prev) => ({ ...prev, payments: 0 }));
+    }
+
+    if (pathname.startsWith("/admin/customers")) {
+      localStorage.setItem(SEEN_KEYS.customers, now);
+      setBadges((prev) => ({ ...prev, customers: 0 }));
+    }
+
+    if (pathname.startsWith("/admin/support")) {
+      localStorage.setItem(SEEN_KEYS.tickets, now);
+      setBadges((prev) => ({ ...prev, tickets: 0 }));
+    }
   }, []);
 
-  const fetchBadges = async () => {
+  const fetchBadges = useCallback(async () => {
     try {
-      const today = new Date().toISOString().split("T")[0];
       const [
-        { count: todayPayments },
-        { count: openTickets },
-        { count: totalCustomers },
+        { count: newPayments, error: paymentsErr },
+        { count: newTickets, error: ticketsErr },
+        { count: newCustomers, error: customersErr },
       ] = await Promise.all([
-        supabase.from("payments").select("*", { count: "exact", head: true }).gte("created_at", today),
-        supabase.from("support_tickets").select("*", { count: "exact", head: true }).eq("status", "open"),
-        supabase.from("subscribers").select("*", { count: "exact", head: true }),
+        supabase
+          .from("payments")
+          .select("id", { count: "exact", head: true })
+          .in("status", SUCCESS_PAYMENT_STATUSES)
+          .gt("created_at", getSeenAt(SEEN_KEYS.payments)),
+        supabase
+          .from("support_tickets")
+          .select("id", { count: "exact", head: true })
+          .eq("status", "open")
+          .gt("created_at", getSeenAt(SEEN_KEYS.tickets)),
+        supabase
+          .from("subscribers")
+          .select("id", { count: "exact", head: true })
+          .gt("created_at", getSeenAt(SEEN_KEYS.customers)),
       ]);
+
+      if (paymentsErr || ticketsErr || customersErr) {
+        console.error("Badge fetch error:", paymentsErr || ticketsErr || customersErr);
+      }
+
       setBadges({
-        payments: todayPayments || 0,
-        tickets: openTickets || 0,
-        customers: totalCustomers || 0,
+        payments: newPayments || 0,
+        tickets: newTickets || 0,
+        customers: newCustomers || 0,
       });
     } catch (err) {
       console.error("Badge fetch error:", err);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    markSeenForCurrentPage(location.pathname);
+    void fetchBadges();
+  }, [location.pathname, markSeenForCurrentPage, fetchBadges]);
+
+  useEffect(() => {
+    void fetchBadges();
+    const interval = setInterval(fetchBadges, 30000);
+    return () => clearInterval(interval);
+  }, [fetchBadges]);
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
