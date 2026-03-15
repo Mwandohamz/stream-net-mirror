@@ -452,6 +452,72 @@ const MemberDashboard = () => {
             </CardContent>
           </Card>
 
+          {/* Account Settings */}
+          <Card className="bg-card border-border">
+            <CardContent className="p-4">
+              <Button
+                variant="outline"
+                onClick={() => setShowAccountSettings(!showAccountSettings)}
+                className="w-full border-border text-foreground gap-2"
+              >
+                <Settings size={16} className="text-primary" />
+                {showAccountSettings ? "Hide" : "Show"} Account Settings
+                <ChevronRight size={16} className={`ml-auto transition-transform ${showAccountSettings ? "rotate-90" : ""}`} />
+              </Button>
+              {showAccountSettings && (
+                <div className="mt-4 space-y-4">
+                  <div className="space-y-2">
+                    <Label className="text-foreground text-sm">Email (read-only)</Label>
+                    <Input value={userEmail} readOnly className="bg-secondary border-border text-muted-foreground" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-foreground text-sm">New Password</Label>
+                    <div className="relative">
+                      <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                      <Input
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        placeholder="Min 6 characters"
+                        className="pl-9 pr-10 bg-secondary border-border text-foreground"
+                        type={showPassword ? "text" : "password"}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      >
+                        {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-foreground text-sm">Confirm New Password</Label>
+                    <div className="relative">
+                      <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                      <Input
+                        value={confirmNewPassword}
+                        onChange={(e) => setConfirmNewPassword(e.target.value)}
+                        placeholder="Confirm password"
+                        className="pl-9 bg-secondary border-border text-foreground"
+                        type={showPassword ? "text" : "password"}
+                      />
+                    </div>
+                    {confirmNewPassword && newPassword !== confirmNewPassword && (
+                      <p className="text-xs text-destructive">Passwords don't match</p>
+                    )}
+                  </div>
+                  <Button
+                    onClick={handlePasswordChange}
+                    disabled={passwordLoading || newPassword.length < 6 || newPassword !== confirmNewPassword}
+                    className="bg-primary text-primary-foreground hover:bg-primary/80"
+                  >
+                    {passwordLoading ? "Updating..." : "Update Password"}
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
           {/* Customer Support */}
           <Card className="bg-card border-border">
             <CardHeader>
