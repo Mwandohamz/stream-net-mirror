@@ -63,6 +63,7 @@ const MemberDashboard = () => {
   const [ticketMessage, setTicketMessage] = useState("");
   const [ticketLoading, setTicketLoading] = useState(false);
   const [showBackupLinks, setShowBackupLinks] = useState(false);
+  const [showTempPasswordBanner, setShowTempPasswordBanner] = useState(false);
 
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [ticketMessages, setTicketMessages] = useState<Record<string, TicketMessage[]>>({});
