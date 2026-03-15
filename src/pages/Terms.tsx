@@ -27,7 +27,7 @@ const Terms = () => {
           <h3 className="netflix-title text-xl text-foreground">5. Disclaimer</h3>
           <p>This website is intended strictly for educational and informational purposes. We do not encourage or promote piracy.</p>
           <h3 className="netflix-title text-xl text-foreground">6. Contact</h3>
-          <p>For questions, contact <a href="mailto:onlineplagiarismremover@gmail.com" className="text-primary hover:underline">onlineplagiarismremover@gmail.com</a>.</p>
+          <p>For questions, contact <a href="mailto:shuvaegonera@gmail.com" className="text-primary hover:underline">shuvaegonera@gmail.com</a>.</p>
         </div>
       </div>
       <Footer />

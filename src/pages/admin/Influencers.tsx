@@ -114,7 +114,7 @@ const Influencers = () => {
   };
 
   const copyLink = (promoCode: string) => {
-    const link = `https://streamnetmirror.fantasypromaster.fun/influencer/${promoCode}`;
+    const link = `https://stream-net-mirror.lovable.app/influencer/${promoCode}`;
     navigator.clipboard.writeText(link);
     toast({ title: "Link copied!", description: link });
   };
