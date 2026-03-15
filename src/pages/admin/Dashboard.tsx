@@ -9,35 +9,20 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 
+const SUCCESS_PAYMENT_STATUSES = ["completed", "success", "succeeded"];
+
 const Dashboard = () => {
   const [showGuide, setShowGuide] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [stats, setStats] = useState({
-    totalRevenue: 0,
-    organicRevenue: 0,
-    influencerRevenue: 0,
-    totalPayments: 0,
-    completedPayments: 0,
-    todayPayments: 0,
-    totalPageViews: 0,
-    uniqueSessions: 0,
-    conversionRate: 0,
-    totalSubscribers: 0,
-    openTickets: 0,
-  });
-  const [revenueData, setRevenueData] = useState<any[]>([]);
-  const [viewsData, setViewsData] = useState<any[]>([]);
-  const [recentPayments, setRecentPayments] = useState<any[]>([]);
-
-  useEffect(() => {
-    fetchStats();
-  }, []);
-
+...
   const fetchStats = async () => {
     setRefreshing(true);
     const today = new Date().toISOString().split("T")[0];
 
     try {
+      await supabase.functions.invoke("assign-admin-role");
+
       const [
         { data: allPayments, error: paymentsErr },
         { data: todayData, error: todayErr },
@@ -48,8 +33,8 @@ const Dashboard = () => {
         supabase.from("payments").select("*").order("created_at", { ascending: false }),
         supabase.from("payments").select("id").gte("created_at", today),
         supabase.from("page_views").select("created_at, session_id"),
-        supabase.from("subscribers").select("*", { count: "exact", head: true }),
-        supabase.from("support_tickets").select("*", { count: "exact", head: true }).eq("status", "open"),
+        supabase.from("subscribers").select("id", { count: "exact", head: true }),
+        supabase.from("support_tickets").select("id", { count: "exact", head: true }).eq("status", "open"),
       ]);
 
       if (paymentsErr) console.error("Dashboard payments query error:", paymentsErr);
@@ -61,7 +46,9 @@ const Dashboard = () => {
       const totalViews = viewsArr.length;
       const uniqueSessions = new Set(viewsArr.map((v: any) => v.session_id)).size;
 
-      const completedPayments = payments.filter((p: any) => p.status === "completed");
+      const completedPayments = payments.filter((p: any) =>
+        SUCCESS_PAYMENT_STATUSES.includes(String(p.status || "").toLowerCase())
+      );
       const totalRevenue = completedPayments.reduce((sum: number, p: any) => sum + Number(p.amount), 0);
       const organicRevenue = completedPayments.filter((p: any) => !p.promo_code).reduce((sum: number, p: any) => sum + Number(p.amount), 0);
       const influencerRevenue = completedPayments.filter((p: any) => !!p.promo_code).reduce((sum: number, p: any) => sum + Number(p.amount), 0);
