@@ -61,6 +61,7 @@ const MemberDashboard = () => {
   const [ticketSubject, setTicketSubject] = useState("");
   const [ticketMessage, setTicketMessage] = useState("");
   const [ticketLoading, setTicketLoading] = useState(false);
+  const [showBackupLinks, setShowBackupLinks] = useState(false);
 
   // Tickets & chat
   const [tickets, setTickets] = useState<Ticket[]>([]);
@@ -68,6 +69,9 @@ const MemberDashboard = () => {
   const [expandedTicket, setExpandedTicket] = useState<string | null>(null);
   const [replyText, setReplyText] = useState("");
   const [replySending, setReplySending] = useState(false);
+
+  // Payment receipt
+  const [paymentReceipt, setPaymentReceipt] = useState<any>(null);
 
   const streamingLink1 = settings.streaming_link_1 || "";
   const streamingLink2 = settings.streaming_link_2 || "";
