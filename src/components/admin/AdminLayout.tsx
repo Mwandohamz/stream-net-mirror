@@ -1,4 +1,4 @@
-import { Link, useLocation } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   SidebarProvider,
@@ -18,18 +18,47 @@ import { LayoutDashboard, CreditCard, BarChart3, Users, Settings, LogOut, Megaph
 import { Button } from "@/components/ui/button";
 
 const navItems = [
-  { title: "Overview", url: "/admin", icon: LayoutDashboard },
-  { title: "Payments", url: "/admin/payments", icon: CreditCard },
-  { title: "Analytics", url: "/admin/analytics", icon: BarChart3 },
-  { title: "Customers", url: "/admin/customers", icon: Users },
-  { title: "Support", url: "/admin/support", icon: MessageSquare },
-  { title: "Influencers", url: "/admin/influencers", icon: Megaphone },
-  { title: "Settings", url: "/admin/settings", icon: Settings },
+  { title: "Overview", url: "/admin", icon: LayoutDashboard, badgeKey: null },
+  { title: "Payments", url: "/admin/payments", icon: CreditCard, badgeKey: "payments" },
+  { title: "Analytics", url: "/admin/analytics", icon: BarChart3, badgeKey: null },
+  { title: "Customers", url: "/admin/customers", icon: Users, badgeKey: "customers" },
+  { title: "Support", url: "/admin/support", icon: MessageSquare, badgeKey: "tickets" },
+  { title: "Influencers", url: "/admin/influencers", icon: Megaphone, badgeKey: null },
+  { title: "Settings", url: "/admin/settings", icon: Settings, badgeKey: null },
 ];
 
 const AdminSidebar = () => {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
+  const [badges, setBadges] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    fetchBadges();
+    const interval = setInterval(fetchBadges, 30000); // refresh every 30s
+    return () => clearInterval(interval);
+  }, []);
+
+  const fetchBadges = async () => {
+    try {
+      const today = new Date().toISOString().split("T")[0];
+      const [
+        { count: todayPayments },
+        { count: openTickets },
+        { count: totalCustomers },
+      ] = await Promise.all([
+        supabase.from("payments").select("*", { count: "exact", head: true }).gte("created_at", today),
+        supabase.from("support_tickets").select("*", { count: "exact", head: true }).eq("status", "open"),
+        supabase.from("subscribers").select("*", { count: "exact", head: true }),
+      ]);
+      setBadges({
+        payments: todayPayments || 0,
+        tickets: openTickets || 0,
+        customers: totalCustomers || 0,
+      });
+    } catch (err) {
+      console.error("Badge fetch error:", err);
+    }
+  };
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -50,11 +79,16 @@ const AdminSidebar = () => {
                     <NavLink
                       to={item.url}
                       end={item.url === "/admin"}
-                      className="hover:bg-muted/50"
+                      className="hover:bg-muted/50 relative"
                       activeClassName="bg-muted text-primary font-medium"
                     >
                       <item.icon className="mr-2 h-4 w-4" />
                       {!collapsed && <span>{item.title}</span>}
+                      {item.badgeKey && badges[item.badgeKey] > 0 && (
+                        <span className="ml-auto inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold">
+                          {badges[item.badgeKey]}
+                        </span>
+                      )}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

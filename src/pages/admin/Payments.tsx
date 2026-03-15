@@ -145,8 +145,8 @@ const Payments = () => {
                           {p.status}
                         </span>
                       </TableCell>
-                      <TableCell className="text-muted-foreground text-xs">
-                        {new Date(p.created_at).toLocaleDateString()}
+                      <TableCell className="text-muted-foreground text-xs whitespace-nowrap">
+                        {new Date(p.created_at).toLocaleString()}
                       </TableCell>
                     </TableRow>
                   ))
