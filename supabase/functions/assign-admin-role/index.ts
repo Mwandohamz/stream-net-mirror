@@ -24,23 +24,23 @@ serve(async (req) => {
       );
     }
 
-    // Use anon client with user's auth header to validate the token via getClaims
+    // Use anon client with user's auth header to validate the token
     const userClient = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: authHeader } },
     });
 
-    const token = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: claimsError } = await userClient.auth.getClaims(token);
+    const { data: { user }, error: userError } = await userClient.auth.getUser();
 
-    if (claimsError || !claimsData?.claims) {
+    if (userError || !user) {
+      console.error("getUser error:", userError);
       return new Response(
         JSON.stringify({ error: "Invalid token" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const userId = claimsData.claims.sub as string;
-    const userEmail = (claimsData.claims.email as string) || "";
+    const userId = user.id;
+    const userEmail = user.email || "";
 
     // Check if email is in ADMIN_EMAILS
     const adminEmailsRaw = Deno.env.get("ADMIN_EMAILS") || "";
@@ -70,6 +70,7 @@ serve(async (req) => {
         .insert({ user_id: userId, role: "admin" });
 
       if (insertError) {
+        console.error("Insert role error:", insertError);
         return new Response(
           JSON.stringify({ error: "Failed to assign admin role" }),
           { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -82,6 +83,7 @@ serve(async (req) => {
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
+    console.error("assign-admin-role error:", error);
     return new Response(
       JSON.stringify({ error: "Internal error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
