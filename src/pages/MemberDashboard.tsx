@@ -461,8 +461,9 @@ const MemberDashboard = () => {
               <CardTitle className="netflix-title text-lg text-foreground">DOWNLOAD & ACCESS</CardTitle>
               <p className="text-xs text-muted-foreground">Choose the best option for your device</p>
             </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Android Phone APK */}
                 <div className="bg-secondary rounded-lg p-4 text-center border-2 border-primary/30 relative">
                   <Badge className="absolute -top-2 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-[9px]">
                     RECOMMENDED FOR ANDROID
@@ -488,9 +489,10 @@ const MemberDashboard = () => {
                   )}
                 </div>
 
+                {/* Web Browser */}
                 <div className="bg-secondary rounded-lg p-4 text-center border-2 border-accent/30 relative">
                   <Badge variant="secondary" className="absolute -top-2 left-1/2 -translate-x-1/2 text-[9px]">
-                    RECOMMENDED FOR iPHONE / LAPTOP
+                    FOR LAPTOP / COMPUTER
                   </Badge>
                   <Laptop size={24} className="text-primary mx-auto mb-2 mt-2" />
                   <p className="text-foreground font-medium text-sm">Web Browser</p>
@@ -501,17 +503,84 @@ const MemberDashboard = () => {
                     </Button>
                   </a>
                 </div>
+              </div>
 
-                <div className="bg-secondary rounded-lg p-4 text-center">
-                  <Monitor size={24} className="text-primary mx-auto mb-2" />
-                  <p className="text-foreground font-medium text-sm">iOS WebView</p>
-                  <p className="text-xs text-muted-foreground mb-3">Via DODO / iOSMirror</p>
-                  <a href={portalUrl} target="_blank" rel="noopener noreferrer">
-                    <Button size="sm" variant="outline" className="w-full border-border text-foreground gap-1">
-                      <ExternalLink size={14} /> Learn More
+              {/* iOS DODO WebView Instructions */}
+              <div className="bg-secondary rounded-lg p-4 border-2 border-blue-500/20">
+                <div className="flex items-center gap-2 mb-3">
+                  <Smartphone size={20} className="text-blue-400" />
+                  <h3 className="text-foreground font-semibold text-sm">How to Stream on iPhone (iOS)</h3>
+                </div>
+                <ol className="space-y-2.5 text-xs md:text-sm text-muted-foreground list-decimal list-inside">
+                  <li>
+                    Search <span className="text-foreground font-semibold">"DODO Webview"</span> on the <span className="text-blue-400 font-semibold">Apple App Store</span> and install it
+                  </li>
+                  <li>
+                    Open the app and type this URL: <span className="text-primary font-mono font-semibold bg-primary/10 px-1.5 py-0.5 rounded text-[11px]">{portalUrl}</span>
+                  </li>
+                  <li>
+                    Turn <span className="text-foreground font-semibold">ON</span> all 3 buttons:
+                    <div className="flex flex-wrap gap-1.5 mt-1.5 ml-4">
+                      <Badge variant="outline" className="text-[9px] border-primary/30 text-primary">✓ Full Screen</Badge>
+                      <Badge variant="outline" className="text-[9px] border-primary/30 text-primary">✓ Auto Rotation</Badge>
+                      <Badge variant="outline" className="text-[9px] border-primary/30 text-primary">✓ HTTPS</Badge>
+                    </div>
+                  </li>
+                  <li>
+                    Click <span className="text-primary font-semibold">"Open WebView"</span> and start streaming!
+                  </li>
+                </ol>
+                <div className="mt-3 p-2 bg-background/50 rounded border border-border">
+                  <p className="text-[10px] text-muted-foreground leading-relaxed">
+                    <AlertTriangle size={10} className="inline text-primary mr-1" />
+                    <strong className="text-foreground">Note:</strong> DODO WebView is a third-party app — we have no control over it. It's simply a webview app on which we open our site, just like a browser.
+                  </p>
+                </div>
+                <a href="https://apps.apple.com/app/dodo-web-browser/id6504139801" target="_blank" rel="noopener noreferrer" className="block mt-3">
+                  <Button size="sm" variant="outline" className="w-full border-blue-500/30 text-foreground gap-1 hover:bg-blue-500/10">
+                    <ExternalLink size={14} className="text-blue-400" /> Download DODO from App Store
+                  </Button>
+                </a>
+              </div>
+
+              {/* Android TV Instructions */}
+              <div className="bg-secondary rounded-lg p-4 border-2 border-green-500/20">
+                <div className="flex items-center gap-2 mb-3">
+                  <Monitor size={20} className="text-green-400" />
+                  <h3 className="text-foreground font-semibold text-sm">How to Stream on Android TV / Google TV</h3>
+                </div>
+                <div className="space-y-2 text-xs md:text-sm text-muted-foreground">
+                  <p>We tested and support <span className="text-foreground font-semibold">Android TV</span> and <span className="text-foreground font-semibold">Google TV</span> devices.</p>
+                  <ol className="space-y-2 list-decimal list-inside">
+                    <li>Download the <span className="text-foreground font-semibold">Android TV APK</span> using the button below</li>
+                    <li>Transfer the APK to your TV via USB drive, Google Drive, or a file manager app like <span className="text-foreground font-semibold">Send Files to TV</span></li>
+                    <li>Open the APK on your TV and install it (enable "Install from unknown sources" in Settings if needed)</li>
+                    <li>Launch the app and sign in with <span className="text-primary font-semibold">Google Authentication</span></li>
+                  </ol>
+                </div>
+                <div className="mt-3 p-2 bg-background/50 rounded border border-border">
+                  <p className="text-[10px] text-muted-foreground leading-relaxed">
+                    <Info size={10} className="inline text-green-400 mr-1" />
+                    <strong className="text-foreground">Tip:</strong> You can also use the TV's built-in browser to visit the portal URL directly if APK installation isn't possible.
+                  </p>
+                </div>
+                {settings.apk_file_name ? (
+                  <a
+                    href={supabase.storage.from("app-files").getPublicUrl(settings.apk_file_name).data.publicUrl}
+                    download
+                    className="block mt-3"
+                  >
+                    <Button size="sm" variant="outline" className="w-full border-green-500/30 text-foreground gap-1 hover:bg-green-500/10">
+                      <Download size={14} className="text-green-400" /> Download TV APK
                     </Button>
                   </a>
-                </div>
+                ) : (
+                  <a href={portalUrl} target="_blank" rel="noopener noreferrer" className="block mt-3">
+                    <Button size="sm" variant="outline" className="w-full border-green-500/30 text-foreground gap-1 hover:bg-green-500/10">
+                      <Globe size={14} className="text-green-400" /> Open Portal on TV Browser
+                    </Button>
+                  </a>
+                )}
               </div>
             </CardContent>
           </Card>

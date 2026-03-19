@@ -21,7 +21,6 @@ const Payment = () => {
   const [promoValid, setPromoValid] = useState<null | boolean>(null);
   const [promoDiscount, setPromoDiscount] = useState(0);
   const [promoChecking, setPromoChecking] = useState(false);
-  const [showPromo, setShowPromo] = useState(false);
 
   const { settings, loading } = useAppSettings();
   const currentPrice = parseFloat(settings.base_price_zmw || "49") || 49;
@@ -113,36 +112,33 @@ const Payment = () => {
                 </div>
               </div>
 
-              {/* Promo code */}
-              {!showPromo ? (
-                <button onClick={() => setShowPromo(true)} className="text-xs text-primary hover:underline flex items-center gap-1">
-                  <Tag size={12} /> Have a promo code?
-                </button>
-              ) : (
-                <div className="space-y-2">
-                  <Label className="text-foreground text-sm">Promo Code (optional)</Label>
-                  <div className="flex gap-2">
-                    <div className="relative flex-1">
-                      <Tag size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                      <Input
-                        value={promoCode}
-                        onChange={(e) => { setPromoCode(e.target.value.toUpperCase()); setPromoValid(null); }}
-                        placeholder="PROMO-CODE"
-                        className="pl-9 bg-secondary border-border text-foreground uppercase"
-                      />
-                    </div>
-                    <Button variant="outline" onClick={validatePromo} disabled={promoChecking || !promoCode.trim()} className="border-border text-foreground">
-                      {promoChecking ? "..." : "Apply"}
-                    </Button>
-                  </div>
-                  {promoValid === true && (
-                    <p className="text-xs text-primary flex items-center gap-1"><Check size={12} /> {promoDiscount}% discount applied!</p>
-                  )}
-                  {promoValid === false && (
-                    <p className="text-xs text-destructive">Invalid or expired promo code</p>
-                  )}
+              {/* Promo code - always visible */}
+              <div className="bg-primary/5 border border-primary/20 rounded-lg p-3 space-y-2">
+                <div className="flex items-center gap-1.5">
+                  <Tag size={14} className="text-primary" />
+                  <Label className="text-foreground text-sm font-semibold">Have a promo code? Enter it below for a discount!</Label>
                 </div>
-              )}
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <Tag size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      value={promoCode}
+                      onChange={(e) => { setPromoCode(e.target.value.toUpperCase()); setPromoValid(null); }}
+                      placeholder="PROMO-CODE"
+                      className="pl-9 bg-secondary border-border text-foreground uppercase"
+                    />
+                  </div>
+                  <Button variant="outline" onClick={validatePromo} disabled={promoChecking || !promoCode.trim()} className="border-primary/30 text-foreground hover:bg-primary/10">
+                    {promoChecking ? "..." : "Apply"}
+                  </Button>
+                </div>
+                {promoValid === true && (
+                  <p className="text-xs text-primary flex items-center gap-1"><Check size={12} /> {promoDiscount}% discount applied!</p>
+                )}
+                {promoValid === false && (
+                  <p className="text-xs text-destructive">Invalid or expired promo code</p>
+                )}
+              </div>
 
               <Button
                 onClick={() => setModalOpen(true)}

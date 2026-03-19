@@ -29,17 +29,17 @@ serve(async (req) => {
       global: { headers: { Authorization: authHeader } },
     });
 
-    const token = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: claimsError } = await userClient.auth.getClaims(token);
+    const { data: { user }, error: userError } = await userClient.auth.getUser();
 
-    if (claimsError || !claimsData?.claims) {
+    if (userError || !user) {
+      console.error("getUser error:", userError);
       return new Response(
         JSON.stringify({ error: "Invalid token" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const callerEmail = (claimsData.claims.email as string) || "";
+    const callerEmail = user.email || "";
     const adminEmailsRaw = Deno.env.get("ADMIN_EMAILS") || "";
     const adminEmails = adminEmailsRaw.split(",").map((e: string) => e.trim().toLowerCase());
 
@@ -91,7 +91,6 @@ serve(async (req) => {
     let userId: string;
 
     if (existingUser) {
-      // Update password for existing user
       userId = existingUser.id;
       const { error: updateError } = await adminClient.auth.admin.updateUserById(userId, {
         password: tempPassword,
@@ -105,7 +104,6 @@ serve(async (req) => {
         );
       }
     } else {
-      // Create new user with confirmed email
       const { data: newUser, error: createError } = await adminClient.auth.admin.createUser({
         email: targetEmail,
         password: tempPassword,
