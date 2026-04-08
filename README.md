@@ -1,7 +1,7 @@
 Welcome to the StreamNet Mirror Project
 Project info
 
-Live URL: https://streamnetmirror.webcraftars.com
+Live URL: (https://streamnetmirror.fantasypromaster.fun/)
 
 How can I edit this code?
 
