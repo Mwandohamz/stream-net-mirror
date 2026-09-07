@@ -2,16 +2,16 @@ import { motion } from "framer-motion";
 import { UserPlus, CreditCard, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { useAppSettings } from "@/hooks/useAppSettings";
+import { usePricing } from "@/hooks/usePricing";
 
 const HowItWorks = () => {
   const navigate = useNavigate();
-  const { settings, loading } = useAppSettings();
-  const currentPrice = parseFloat(settings.base_price_zmw || "49") || 49;
+  const { plan, priceUsd, formatPrice, loading } = usePricing();
+  const priceLabel = priceUsd === null ? "..." : formatPrice(priceUsd);
 
   const steps = [
-    { icon: UserPlus, title: "Sign Up", desc: "Enter your details to create an account" },
-    { icon: CreditCard, title: `Pay ZMW ${currentPrice}`, desc: "One-time payment via Airtel Money or MTN MoMo" },
+    { icon: UserPlus, title: "Create Account", desc: "Enter your details, country and phone to create a free account" },
+    { icon: CreditCard, title: `Pay ${priceLabel}`, desc: "Pay in your own currency via mobile money" },
     { icon: Play, title: "Start Streaming", desc: "Get instant access to 50+ OTT platforms" },
   ];
 
@@ -47,9 +47,9 @@ const HowItWorks = () => {
         <Button
           size="lg"
           className="bg-primary text-primary-foreground hover:bg-primary/80 font-semibold px-6 md:px-10 text-sm md:text-base active:scale-95 transition-transform"
-          onClick={() => navigate("/payment")}
+          onClick={() => navigate(plan ? `/payment?plan=${plan.id}` : "/payment")}
         >
-          {loading ? "Loading..." : `Get Started Now — ZMW ${currentPrice}`}
+          {loading ? "Loading..." : `Get Started Now — ${priceLabel}`}
         </Button>
       </div>
     </section>
