@@ -71,12 +71,17 @@ const Dashboard = () => {
       const totalRevenue = completedPayments.reduce((sum: number, p: any) => sum + Number(p.amount), 0);
       const organicRevenue = completedPayments.filter((p: any) => !p.promo_code).reduce((sum: number, p: any) => sum + Number(p.amount), 0);
       const influencerRevenue = completedPayments.filter((p: any) => !!p.promo_code).reduce((sum: number, p: any) => sum + Number(p.amount), 0);
+      const usdOf = (p: any) =>
+        p.amount_usd ? Number(p.amount_usd) : p.fx_rate ? Number(p.amount) / Number(p.fx_rate) : 0;
+      const totalRevenueUsd = completedPayments.reduce((sum: number, p: any) => sum + usdOf(p), 0);
       const conversionRate = uniqueSessions > 0 ? ((completedPayments.length / uniqueSessions) * 100) : 0;
 
       setStats({
         totalRevenue,
+        totalRevenueUsd,
         organicRevenue,
         influencerRevenue,
+
         totalPayments: payments.length,
         completedPayments: completedPayments.length,
         todayPayments: (todayData || []).length,
