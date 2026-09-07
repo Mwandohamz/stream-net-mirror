@@ -46,41 +46,29 @@ const InfluencerDashboard = () => {
     setError("");
     setLoading(true);
 
-    const { data, error: fetchError } = await supabase
-      .from("influencers" as any)
-      .select("*")
-      .eq("promo_code", promoCode || "")
-      .eq("email", email.trim().toLowerCase())
-      .maybeSingle();
+    const { data, error: fetchError } = await supabase.rpc("influencer_login" as any, {
+      _promo_code: promoCode || "",
+      _email: email.trim().toLowerCase(),
+      _phone: (phone || "").trim(),
+    });
 
-    const inf = data as any;
+    const inf = Array.isArray(data) ? (data[0] as any) : null;
 
     if (fetchError || !inf) {
-      setError("Invalid credentials. Check your email and promo code.");
+      setError("Invalid credentials. Check your email, promo code and phone number.");
       setLoading(false);
       return;
     }
 
-    // Compare phone numbers with E.164 normalization
-    if (inf.phone && phone) {
-      const storedNormalized = normalizePhone(inf.phone);
-      const inputNormalized = normalizePhone(phone.trim());
-      if (storedNormalized !== inputNormalized) {
-        setError("Phone number doesn't match our records.");
-        setLoading(false);
-        return;
-      }
-    }
-
     setInfluencer(inf);
 
-    const { data: paymentData } = await supabase
-      .from("payments")
-      .select("name, email, amount, currency, created_at, status, promo_code")
-      .eq("status", "completed")
-      .order("created_at", { ascending: false });
+    const { data: paymentData } = await supabase.rpc("influencer_payments" as any, {
+      _promo_code: promoCode || "",
+      _email: email.trim().toLowerCase(),
+      _phone: (phone || "").trim(),
+    });
 
-    const pList = ((paymentData || []) as any[]).filter((p: any) => p.promo_code === (promoCode || "")) as unknown as Payment[];
+    const pList = ((paymentData || []) as any[]) as unknown as Payment[];
     setPayments(pList);
     const rev = pList.reduce((s, p) => s + Number(p.amount), 0);
     setTotalRevenue(rev);
