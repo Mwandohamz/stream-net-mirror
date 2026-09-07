@@ -7,10 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
-import { usePlans, planIntervalLabel } from "@/hooks/usePlans";
-import { useFxRates } from "@/hooks/useFxRates";
+import { planIntervalLabel } from "@/hooks/usePlans";
+import { usePricing } from "@/hooks/usePricing";
 import { useProfile } from "@/hooks/useProfile";
-import { formatCurrencyAmount } from "@/lib/currency";
+import CurrencySelector from "@/components/CurrencySelector";
 import type { SubscriptionRecord } from "@/hooks/useSubscriber";
 
 const perks = [
@@ -22,18 +22,14 @@ const perks = [
 
 const MembershipLocked = ({ subscription }: { subscription?: SubscriptionRecord | null }) => {
   const navigate = useNavigate();
-  const { plans, loading: plansLoading } = usePlans();
-  const { convertFromUSD, loading: fxLoading } = useFxRates();
+  const { plans, currency, formatPrice, formatUsd, loading: pricingLoading } = usePricing();
   const { profile } = useProfile();
 
-  const currency = profile?.currency || "USD";
+  const plansLoading = pricingLoading;
+  const fxLoading = pricingLoading;
   const expired = !!subscription;
 
-  const priceLabel = (priceUsd: number) => {
-    const local = convertFromUSD(priceUsd, currency);
-    if (currency === "USD" || local === null) return `USD ${priceUsd.toFixed(2)}`;
-    return formatCurrencyAmount(local, currency);
-  };
+  const priceLabel = (priceUsd: number) => formatPrice(priceUsd);
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -57,11 +53,13 @@ const MembershipLocked = ({ subscription }: { subscription?: SubscriptionRecord 
                 ? "Renew below to switch your streaming links back on. Your account and history stay exactly as they were."
                 : "Your account is ready. Pick a plan to unlock the streaming portal and app downloads."}
             </p>
-            {profile?.country_name && (
-              <p className="text-xs text-muted-foreground">
-                Prices shown for {profile.country_name} in {currency}
+            <div className="flex flex-col items-center gap-1">
+              <CurrencySelector />
+              <p className="text-[11px] text-muted-foreground">
+                Prices shown in {currency}
+                {profile?.country_name ? ` · your account country is ${profile.country_name}` : ""}
               </p>
-            )}
+            </div>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
@@ -92,7 +90,7 @@ const MembershipLocked = ({ subscription }: { subscription?: SubscriptionRecord 
                     <div>
                       <p className="text-3xl font-bold text-foreground">{priceLabel(Number(plan.price_usd))}</p>
                       {currency !== "USD" && (
-                        <p className="text-xs text-muted-foreground">≈ USD {Number(plan.price_usd).toFixed(2)}</p>
+                        <p className="text-xs text-muted-foreground">≈ {formatUsd(Number(plan.price_usd))}</p>
                       )}
                       {plan.description && <p className="text-sm text-muted-foreground mt-2">{plan.description}</p>}
                     </div>

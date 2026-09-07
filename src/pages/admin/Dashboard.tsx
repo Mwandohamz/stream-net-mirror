@@ -8,6 +8,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { formatCurrencyAmount, formatUsd } from "@/lib/currency";
 
 const SUCCESS_PAYMENT_STATUSES = ["completed", "success", "succeeded"];
 
@@ -235,9 +236,9 @@ const Dashboard = () => {
         )}
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <StatCard title="Total Revenue" value={`ZMW ${stats.totalRevenue.toLocaleString()}`} icon={DollarSign} description={`≈ $${stats.totalRevenueUsd.toFixed(2)} USD`} />
-          <StatCard title="Organic Revenue" value={`ZMW ${stats.organicRevenue}`} icon={DollarSign} description="No promo code" />
-          <StatCard title="Promo Revenue" value={`ZMW ${stats.influencerRevenue}`} icon={TrendingUp} description="Via influencers" />
+          <StatCard title="Total Revenue" value={formatCurrencyAmount(stats.totalRevenue, "ZMW")} icon={DollarSign} description={`≈ ${formatUsd(stats.totalRevenueUsd)}`} />
+          <StatCard title="Organic Revenue" value={formatCurrencyAmount(Number(stats.organicRevenue), "ZMW")} icon={DollarSign} description="No promo code" />
+          <StatCard title="Promo Revenue" value={formatCurrencyAmount(Number(stats.influencerRevenue), "ZMW")} icon={TrendingUp} description="Via influencers" />
           <StatCard title="Total Payments" value={stats.totalPayments} icon={CreditCard} description="All statuses" />
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">

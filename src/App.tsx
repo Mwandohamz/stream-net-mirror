@@ -4,9 +4,12 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AnimatePresence } from "framer-motion";
-import { useEffect } from "react";
+import { Suspense, lazy, useEffect } from "react";
+import ErrorBoundary from "@/components/ErrorBoundary";
 import { trackPageView } from "@/lib/analytics";
 import PageTransition from "@/components/PageTransition";
+import MembershipBanner from "@/components/MembershipBanner";
+import { CurrencyProvider } from "@/context/CurrencyContext";
 import AdminRoute from "@/components/admin/AdminRoute";
 import SubscriberRoute from "@/components/SubscriberRoute";
 import Index from "./pages/Index.tsx";
@@ -21,19 +24,20 @@ import ForgotPassword from "./pages/ForgotPassword.tsx";
 import ResetPassword from "./pages/ResetPassword.tsx";
 import MemberDashboard from "./pages/MemberDashboard.tsx";
 import AdminLogin from "./pages/admin/AdminLogin.tsx";
-import Dashboard from "./pages/admin/Dashboard.tsx";
-import AdminPayments from "./pages/admin/Payments.tsx";
-import Analytics from "./pages/admin/Analytics.tsx";
-import Customers from "./pages/admin/Customers.tsx";
-import AdminUsers from "./pages/admin/Users.tsx";
-import AdminPlans from "./pages/admin/Plans.tsx";
-import AdminEmails from "./pages/admin/Emails.tsx";
 
-
-import AdminSettings from "./pages/admin/Settings.tsx";
-import SupportTickets from "./pages/admin/SupportTickets.tsx";
-import Influencers from "./pages/admin/Influencers.tsx";
-import InfluencerDashboard from "./pages/InfluencerDashboard.tsx";
+// Admin and influencer screens are heavy (charts, tables) and only used by a
+// few people — load them on demand instead of in the visitor's first download.
+const Dashboard = lazy(() => import("./pages/admin/Dashboard.tsx"));
+const AdminPayments = lazy(() => import("./pages/admin/Payments.tsx"));
+const Analytics = lazy(() => import("./pages/admin/Analytics.tsx"));
+const Customers = lazy(() => import("./pages/admin/Customers.tsx"));
+const AdminUsers = lazy(() => import("./pages/admin/Users.tsx"));
+const AdminPlans = lazy(() => import("./pages/admin/Plans.tsx"));
+const AdminEmails = lazy(() => import("./pages/admin/Emails.tsx"));
+const AdminSettings = lazy(() => import("./pages/admin/Settings.tsx"));
+const SupportTickets = lazy(() => import("./pages/admin/SupportTickets.tsx"));
+const Influencers = lazy(() => import("./pages/admin/Influencers.tsx"));
+const InfluencerDashboard = lazy(() => import("./pages/InfluencerDashboard.tsx"));
 import Support from "./pages/Support.tsx";
 import OAuthConsent from "./pages/OAuthConsent.tsx";
 
@@ -51,6 +55,13 @@ const AnimatedRoutes = () => {
   const location = useLocation();
   return (
     <AnimatePresence mode="wait">
+      <Suspense
+        fallback={
+          <div className="min-h-screen bg-background flex items-center justify-center">
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+          </div>
+        }
+      >
       <Routes location={location} key={location.pathname}>
         <Route path="/" element={<PageTransition><Index /></PageTransition>} />
         <Route path="/payment" element={<PageTransition><Payment /></PageTransition>} />
@@ -81,21 +92,33 @@ const AnimatedRoutes = () => {
         <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
         <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
       </Routes>
+      </Suspense>
     </AnimatePresence>
   );
 };
 
+const StatusStrip = () => {
+  const location = useLocation();
+  if (location.pathname.startsWith("/admin") || location.pathname.startsWith("/influencer")) return null;
+  return <MembershipBanner />;
+};
+
 const App = () => (
+  <ErrorBoundary>
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <BrowserRouter>
-        <PageViewTracker />
-        <AnimatedRoutes />
-      </BrowserRouter>
+      <CurrencyProvider>
+        <BrowserRouter>
+          <PageViewTracker />
+          <StatusStrip />
+          <AnimatedRoutes />
+        </BrowserRouter>
+      </CurrencyProvider>
     </TooltipProvider>
   </QueryClientProvider>
+  </ErrorBoundary>
 );
 
 export default App;
