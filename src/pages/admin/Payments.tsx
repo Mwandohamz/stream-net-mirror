@@ -22,11 +22,53 @@ const STATUSES = ["completed", "pending", "failed", "refunded"];
 
 
 const Payments = () => {
+  const { toast } = useToast();
   const [payments, setPayments] = useState<any[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
+  const [editing, setEditing] = useState<any | null>(null);
+  const [editStatus, setEditStatus] = useState("completed");
+  const [editRef, setEditRef] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<any | null>(null);
+
+  const openEdit = (p: any) => {
+    setEditing(p);
+    setEditStatus(String(p.status || "completed").toLowerCase());
+    setEditRef(p.provider_transaction_id || "");
+  };
+
+  const saveEdit = async () => {
+    if (!editing) return;
+    setSaving(true);
+    const { error } = await supabase
+      .from("payments")
+      .update({ status: editStatus, provider_transaction_id: editRef || null })
+      .eq("id", editing.id);
+    setSaving(false);
+    if (error) {
+      toast({ title: "Could not save", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Payment updated" });
+    setEditing(null);
+    void fetchPayments();
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    const { error } = await supabase.from("payments").delete().eq("id", deleteTarget.id);
+    if (error) {
+      toast({ title: "Could not delete", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Payment deleted" });
+    setDeleteTarget(null);
+    void fetchPayments();
+  };
+
 
   useEffect(() => {
     void fetchPayments();
