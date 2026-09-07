@@ -8,6 +8,11 @@ export interface ActivationResult {
   userId?: string;
 }
 
+/** Escapes LIKE/ILIKE wildcards so user input cannot pattern-match other rows. */
+export function escapeLike(value: string): string {
+  return value.replace(/[\\%_]/g, (c) => `\\${c}`);
+}
+
 function addInterval(from: Date, interval: string, count: number): Date {
   const d = new Date(from);
   const n = count && count > 0 ? count : 1;
