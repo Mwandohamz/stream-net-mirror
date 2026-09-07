@@ -35,6 +35,42 @@ export type Database = {
         }
         Relationships: []
       }
+      email_log: {
+        Row: {
+          created_at: string
+          email_type: string
+          error: string | null
+          id: string
+          metadata: Json | null
+          recipient: string
+          status: string
+          subject: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          email_type: string
+          error?: string | null
+          id?: string
+          metadata?: Json | null
+          recipient: string
+          status?: string
+          subject?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          email_type?: string
+          error?: string | null
+          id?: string
+          metadata?: Json | null
+          recipient?: string
+          status?: string
+          subject?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       influencers: {
         Row: {
           created_at: string
@@ -101,6 +137,7 @@ export type Database = {
       payments: {
         Row: {
           amount: number
+          amount_usd: number | null
           country: string | null
           created_at: string
           currency: string | null
@@ -108,17 +145,22 @@ export type Database = {
           discount_applied: number | null
           email: string
           failure_reason: string | null
+          fx_rate: number | null
           id: string
           name: string
           phone: string
+          plan_id: string | null
           promo_code: string | null
           provider: string
           provider_transaction_id: string | null
           status: string
+          subscription_id: string | null
           transaction_id: string | null
+          user_id: string | null
         }
         Insert: {
           amount?: number
+          amount_usd?: number | null
           country?: string | null
           created_at?: string
           currency?: string | null
@@ -126,17 +168,22 @@ export type Database = {
           discount_applied?: number | null
           email: string
           failure_reason?: string | null
+          fx_rate?: number | null
           id?: string
           name: string
           phone: string
+          plan_id?: string | null
           promo_code?: string | null
           provider: string
           provider_transaction_id?: string | null
           status?: string
+          subscription_id?: string | null
           transaction_id?: string | null
+          user_id?: string | null
         }
         Update: {
           amount?: number
+          amount_usd?: number | null
           country?: string | null
           created_at?: string
           currency?: string | null
@@ -144,14 +191,108 @@ export type Database = {
           discount_applied?: number | null
           email?: string
           failure_reason?: string | null
+          fx_rate?: number | null
           id?: string
           name?: string
           phone?: string
+          plan_id?: string | null
           promo_code?: string | null
           provider?: string
           provider_transaction_id?: string | null
           status?: string
+          subscription_id?: string | null
           transaction_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plans: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          interval: string
+          interval_count: number
+          is_active: boolean
+          name: string
+          price_usd: number
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          interval?: string
+          interval_count?: number
+          is_active?: boolean
+          name: string
+          price_usd: number
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          interval?: string
+          interval_count?: number
+          is_active?: boolean
+          name?: string
+          price_usd?: number
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          country_iso3: string | null
+          country_name: string | null
+          created_at: string
+          currency: string | null
+          email: string
+          full_name: string
+          id: string
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          country_iso3?: string | null
+          country_name?: string | null
+          created_at?: string
+          currency?: string | null
+          email?: string
+          full_name?: string
+          id: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          country_iso3?: string | null
+          country_name?: string | null
+          created_at?: string
+          currency?: string | null
+          email?: string
+          full_name?: string
+          id?: string
+          phone?: string | null
+          updated_at?: string
         }
         Relationships: []
       }
@@ -192,6 +333,53 @@ export type Database = {
             columns: ["payment_id"]
             isOneToOne: false
             referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subscriptions: {
+        Row: {
+          cancel_at: string | null
+          created_at: string
+          current_period_end: string
+          current_period_start: string
+          grace_days: number
+          id: string
+          plan_id: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cancel_at?: string | null
+          created_at?: string
+          current_period_end: string
+          current_period_start?: string
+          grace_days?: number
+          id?: string
+          plan_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cancel_at?: string | null
+          created_at?: string
+          current_period_end?: string
+          current_period_start?: string
+          grace_days?: number
+          id?: string
+          plan_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscriptions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans"
             referencedColumns: ["id"]
           },
         ]

@@ -6,10 +6,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { motion } from "framer-motion";
-import { ArrowLeft, Mail, User, Lock, AlertCircle, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, Mail, User, Lock, AlertCircle, CheckCircle2, Globe } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { useToast } from "@/hooks/use-toast";
+import CountrySelect from "@/components/CountrySelect";
+import PhoneNumberField, { buildE164 } from "@/components/PhoneNumberField";
+import type { WorldCountry } from "@/data/allCountries";
 
 const SignUp = () => {
   const navigate = useNavigate();
@@ -18,6 +21,8 @@ const SignUp = () => {
 
   const [name, setName] = useState(searchParams.get("name") || "");
   const [email, setEmail] = useState(searchParams.get("email") || "");
+  const [country, setCountry] = useState<WorldCountry | null>(null);
+  const [localPhone, setLocalPhone] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -25,36 +30,32 @@ const SignUp = () => {
   const [success, setSuccess] = useState(false);
 
   const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  const isValid = name.trim().length >= 2 && emailValid && password.length >= 6 && password === confirmPassword;
+  const phoneE164 = buildE164(country?.iso3, localPhone);
+  const isValid =
+    name.trim().length >= 2 &&
+    emailValid &&
+    !!country &&
+    phoneE164.replace(/\D/g, "").length >= 8 &&
+    password.length >= 8 &&
+    password === confirmPassword;
 
   const handleSignUp = async () => {
     setError("");
     setLoading(true);
 
     try {
-      // Check if this email has a completed payment
-      const { data: payment, error: paymentError } = await supabase
-        .from("payments")
-        .select("id, status, email, name, phone")
-        .eq("email", email.trim().toLowerCase())
-        .eq("status", "completed")
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (paymentError || !payment) {
-        setError("No completed payment found for this email. Please complete payment first.");
-        setLoading(false);
-        return;
-      }
-
-      // Create auth account
-      const { data: authData, error: authError } = await supabase.auth.signUp({
+      const { error: authError } = await supabase.auth.signUp({
         email: email.trim().toLowerCase(),
         password,
         options: {
-          data: { full_name: name.trim() },
-          emailRedirectTo: window.location.origin + "/dashboard",
+          data: {
+            full_name: name.trim(),
+            phone: phoneE164,
+            country_iso3: country?.iso3,
+            country_name: country?.name,
+            currency: country?.currency,
+          },
+          emailRedirectTo: `${window.location.origin}/dashboard`,
         },
       });
 
@@ -64,22 +65,10 @@ const SignUp = () => {
         return;
       }
 
-      if (authData.user) {
-        // Insert subscriber record
-        await supabase.from("subscribers" as any).insert({
-          user_id: authData.user.id,
-          email: email.trim().toLowerCase(),
-          phone: payment.phone,
-          name: name.trim(),
-          payment_id: payment.id,
-          status: "active",
-        } as any);
-      }
-
       setSuccess(true);
       toast({
         title: "Account created!",
-        description: "Please check your email to verify your account, then sign in.",
+        description: "Check your email to verify your account, then sign in.",
       });
     } catch (e: any) {
       setError(e.message || "Something went wrong");
@@ -105,7 +94,8 @@ const SignUp = () => {
                 </div>
                 <h2 className="netflix-title text-2xl text-foreground">ACCOUNT CREATED!</h2>
                 <p className="text-sm text-muted-foreground">
-                  Please check your email to verify your account. Once verified, you can sign in to access the streaming portal.
+                  We sent a verification link to <span className="text-foreground">{email}</span>. Verify your email,
+                  sign in, then choose your plan to unlock streaming.
                 </p>
                 <Button onClick={() => navigate("/signin")} className="w-full bg-primary text-primary-foreground hover:bg-primary/80">
                   Go to Sign In
@@ -118,7 +108,7 @@ const SignUp = () => {
                 <img src="/logo-hexagon.png" alt="StreamNetMirror" className="h-12 w-12 mx-auto mb-2" />
                 <CardTitle className="netflix-title text-2xl text-foreground">CREATE ACCOUNT</CardTitle>
                 <CardDescription className="text-muted-foreground">
-                  Use the email you paid with to create your account
+                  Free to join. Choose your plan after signing in.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -130,34 +120,63 @@ const SignUp = () => {
                 )}
 
                 <div className="space-y-2">
-                  <Label className="text-foreground text-sm">Full Name</Label>
+                  <Label htmlFor="su-name" className="text-foreground text-sm">Full Name</Label>
                   <div className="relative">
                     <User size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                    <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Your full name" className="pl-9 bg-secondary border-border text-foreground" />
+                    <Input id="su-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Your full name" className="pl-9 bg-secondary border-border text-foreground" />
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-foreground text-sm">Email (used for payment)</Label>
+                  <Label htmlFor="su-email" className="text-foreground text-sm">Email</Label>
                   <div className="relative">
                     <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                    <Input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="your@email.com" className="pl-9 bg-secondary border-border text-foreground" type="email" />
+                    <Input id="su-email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="your@email.com" className="pl-9 bg-secondary border-border text-foreground" type="email" />
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-foreground text-sm">Password</Label>
+                  <Label htmlFor="su-country" className="text-foreground text-sm flex items-center gap-1.5">
+                    <Globe size={14} /> Country
+                  </Label>
+                  <CountrySelect
+                    id="su-country"
+                    value={country?.iso3}
+                    onChange={(c) => setCountry(c)}
+                  />
+                  {country && (
+                    <p className="text-xs text-muted-foreground">
+                      Prices will be shown in {country.currency}.
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="su-phone" className="text-foreground text-sm">Phone Number</Label>
+                  <PhoneNumberField
+                    id="su-phone"
+                    countryIso={country?.iso3}
+                    value={localPhone}
+                    onChange={setLocalPhone}
+                  />
+                  {country && localPhone && (
+                    <p className="text-xs text-muted-foreground">Saved as {phoneE164}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="su-password" className="text-foreground text-sm">Password</Label>
                   <div className="relative">
                     <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                    <Input value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Min 6 characters" className="pl-9 bg-secondary border-border text-foreground" type="password" />
+                    <Input id="su-password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Min 8 characters" className="pl-9 bg-secondary border-border text-foreground" type="password" />
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-foreground text-sm">Confirm Password</Label>
+                  <Label htmlFor="su-confirm" className="text-foreground text-sm">Confirm Password</Label>
                   <div className="relative">
                     <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                    <Input value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Confirm password" className="pl-9 bg-secondary border-border text-foreground" type="password" />
+                    <Input id="su-confirm" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Re-enter password" className="pl-9 bg-secondary border-border text-foreground" type="password" />
                   </div>
                   {confirmPassword && password !== confirmPassword && (
                     <p className="text-xs text-destructive">Passwords don't match</p>
