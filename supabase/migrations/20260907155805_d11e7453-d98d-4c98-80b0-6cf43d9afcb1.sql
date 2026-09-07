@@ -1,0 +1,11 @@
+CREATE INDEX IF NOT EXISTS payments_deposit_id_idx ON public.payments (deposit_id);
+CREATE INDEX IF NOT EXISTS payments_email_lower_idx ON public.payments (lower(email));
+CREATE INDEX IF NOT EXISTS payments_created_at_idx ON public.payments (created_at DESC);
+CREATE INDEX IF NOT EXISTS payments_promo_code_idx ON public.payments (upper(promo_code));
+CREATE INDEX IF NOT EXISTS profiles_email_lower_idx ON public.profiles (lower(email));
+CREATE INDEX IF NOT EXISTS support_tickets_user_id_idx ON public.support_tickets (user_id);
+CREATE INDEX IF NOT EXISTS support_tickets_created_at_idx ON public.support_tickets (created_at DESC);
+CREATE INDEX IF NOT EXISTS ticket_messages_ticket_id_idx ON public.ticket_messages (ticket_id);
+CREATE INDEX IF NOT EXISTS page_views_created_at_idx ON public.page_views (created_at DESC);
+CREATE INDEX IF NOT EXISTS email_log_user_id_idx ON public.email_log (user_id);
+CREATE INDEX IF NOT EXISTS subscriptions_period_end_idx ON public.subscriptions (current_period_end);
