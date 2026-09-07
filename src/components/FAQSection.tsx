@@ -4,22 +4,22 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { useAppSettings } from "@/hooks/useAppSettings";
+import { usePricing } from "@/hooks/usePricing";
 
 const FAQSection = () => {
-  const { settings } = useAppSettings();
-  const price = parseFloat(settings.base_price_zmw || "49") || 49;
+  const { priceUsd, formatPrice, intervalLabel } = usePricing();
+  const priceLabel = priceUsd === null ? "the listed price" : formatPrice(priceUsd);
 
   const faqs = [
-    { q: "What is StreamNetMirror?", a: `StreamNetMirror is your gateway to accessing premium content from 50+ OTT platforms including Netflix, Disney+, Prime Video, HBO Max and more — all with a single one-time payment of ZMW ${price}.` },
-    { q: "How much does it cost?", a: `StreamNetMirror costs a one-time payment of ZMW ${price}. There are no recurring fees or hidden charges. Pay once and get lifetime access.` },
+    { q: "What is StreamNetMirror?", a: `StreamNetMirror is your gateway to accessing premium content from 50+ OTT platforms including Netflix, Disney+, Prime Video, HBO Max and more — all for ${priceLabel} ${intervalLabel}.` },
+    { q: "How much does it cost?", a: `StreamNetMirror costs ${priceLabel} ${intervalLabel}, shown in your own currency at today's exchange rate. No hidden charges — cancel any time.` },
     { q: "What payment methods are accepted?", a: "We accept Mobile Money payments through Airtel Money and MTN MoMo. Simply enter your phone number and provider to complete the payment." },
-    { q: "How do I access the streaming service after payment?", a: "After successful payment, you'll be prompted to create an account using your payment email. Once verified, sign in to access the StreamNetMirror member dashboard with the streaming portal link and setup instructions." },
+    { q: "How do I access the streaming service after payment?", a: "Create your free account first (name, email, country and phone), then pay. Access unlocks automatically the moment your payment is confirmed." },
     { q: "Can I download the app?", a: "Yes! The StreamNetMirror APK is available for Android devices through the member dashboard. iOS users can access it via WebView tools. You can also stream directly through any web browser." },
     { q: "What devices are supported?", a: "StreamNetMirror works on Android phones & tablets, iOS devices (via WebView), Smart TVs, web browsers on PC/Mac, and even gaming consoles via web browser." },
     { q: "Is there a refund policy?", a: "Refunds are available within 7 days of purchase. Contact us at shuvaegonera@gmail.com with your transaction details to request a refund." },
     { q: "Is my payment information safe?", a: "Yes, all payments are processed securely through Mobile Money providers (Airtel Money / MTN MoMo). We do not store any sensitive payment information on our servers." },
-    { q: "What happens after I pay?", a: "After payment, you'll create an account using your payment email. You'll then receive login details and instructions via email. Sign in anytime to access the streaming portal, download the app, or contact support." },
+    { q: "What happens after I pay?", a: "Your membership activates instantly and your dashboard shows the streaming portal, the app download and your next renewal date." },
   ];
 
   return (

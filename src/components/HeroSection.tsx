@@ -52,8 +52,8 @@ const HeroSection = () => {
             {loading ? "Loading..." : (
               <>
                 Starting at just{" "}
-                <span className="line-through text-muted-foreground/60">ZMW {oldPrice}</span>{" "}
-                <span className="text-primary font-bold">ZMW {currentPrice}</span>
+                <span className="line-through text-muted-foreground/60">{oldPriceLabel}</span>{" "}
+                <span className="text-primary font-bold">{priceLabel}</span> <span className="text-muted-foreground text-xs">{intervalLabel}</span>
                 {" "}— single payment, lifetime access.
               </>
             )}
@@ -67,7 +67,7 @@ const HeroSection = () => {
             <Button
               size="lg"
               className="w-full sm:w-auto h-11 md:h-12 bg-primary text-primary-foreground hover:bg-primary/80 font-semibold gap-1 px-6 md:px-8 active:scale-95 transition-transform"
-              onClick={() => navigate("/payment")}
+              onClick={() => navigate(plan ? `/payment?plan=${plan.id}` : "/payment")}
             >
               Get Started <ChevronRight size={18} />
             </Button>
