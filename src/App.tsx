@@ -55,6 +55,13 @@ const AnimatedRoutes = () => {
   const location = useLocation();
   return (
     <AnimatePresence mode="wait">
+      <Suspense
+        fallback={
+          <div className="min-h-screen bg-background flex items-center justify-center">
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+          </div>
+        }
+      >
       <Routes location={location} key={location.pathname}>
         <Route path="/" element={<PageTransition><Index /></PageTransition>} />
         <Route path="/payment" element={<PageTransition><Payment /></PageTransition>} />
