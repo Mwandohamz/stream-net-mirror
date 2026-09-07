@@ -4,13 +4,13 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Play, ChevronRight } from "lucide-react";
 import LogoShowcase from "@/components/LogoShowcase";
-import { useAppSettings } from "@/hooks/useAppSettings";
+import { usePricing } from "@/hooks/usePricing";
 
 const HeroSection = () => {
   const navigate = useNavigate();
-  const { settings, loading } = useAppSettings();
-  const currentPrice = parseFloat(settings.base_price_zmw || "49") || 49;
-  const oldPrice = Math.round(currentPrice / 0.30);
+  const { plan, priceUsd, formatPrice, intervalLabel, loading } = usePricing();
+  const priceLabel = priceUsd === null ? "..." : formatPrice(priceUsd);
+  const oldPriceLabel = priceUsd === null ? "..." : formatPrice(priceUsd / 0.3);
 
   return (
     <section className="relative min-h-[70vh] md:min-h-[90vh] flex items-center justify-center overflow-hidden">
