@@ -118,6 +118,7 @@ const App = () => (
       </CurrencyProvider>
     </TooltipProvider>
   </QueryClientProvider>
+  </ErrorBoundary>
 );
 
 export default App;
