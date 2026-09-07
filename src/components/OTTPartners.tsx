@@ -25,7 +25,7 @@ const OTTPartners = () => {
         <p className="text-xs md:text-base text-muted-foreground mb-6 md:mb-10">Access 50+ OTT platforms with a single payment</p>
 
         <div className="relative mb-6 md:mb-8 max-w-3xl mx-auto overflow-hidden rounded-xl">
-          <img src="/ott-brands.jpg" alt="OTT Platforms" className="w-full object-cover rounded-xl opacity-70" />
+          <img src="/ott-brands.jpg" alt="OTT Platforms" loading="lazy" decoding="async" className="w-full object-cover rounded-xl opacity-70" />
           <div className="absolute inset-0 bg-gradient-to-t from-background to-transparent" />
         </div>
 

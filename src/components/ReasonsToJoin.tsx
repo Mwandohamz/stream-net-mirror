@@ -27,7 +27,7 @@ const ReasonsToJoin = () => {
                 <p className="text-xs md:text-lg text-muted-foreground">{r.desc}</p>
               </div>
               <div className="flex-1">
-                <img src={r.img} alt={r.title} className="rounded-xl w-full max-w-xs md:max-w-md mx-auto object-cover shadow-lg" />
+                <img src={r.img} alt={r.title} loading="lazy" decoding="async" className="rounded-xl w-full max-w-xs md:max-w-md mx-auto object-cover shadow-lg" />
               </div>
             </motion.div>
           ))}

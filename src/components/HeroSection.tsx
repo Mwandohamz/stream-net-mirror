@@ -16,7 +16,7 @@ const HeroSection = () => {
     <section className="relative min-h-[70vh] md:min-h-[90vh] flex items-center justify-center overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0">
-        <img src="/hero-bg.jpg" alt="" className="w-full h-full object-cover opacity-40" />
+        <img src="/hero-bg.jpg" alt="" fetchPriority="high" decoding="async" className="w-full h-full object-cover opacity-40" />
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-background/30" />
         <div className="absolute inset-0 bg-gradient-to-r from-background/80 to-transparent" />
       </div>
