@@ -7,6 +7,8 @@ import { AnimatePresence } from "framer-motion";
 import { useEffect } from "react";
 import { trackPageView } from "@/lib/analytics";
 import PageTransition from "@/components/PageTransition";
+import MembershipBanner from "@/components/MembershipBanner";
+import { CurrencyProvider } from "@/context/CurrencyContext";
 import AdminRoute from "@/components/admin/AdminRoute";
 import SubscriberRoute from "@/components/SubscriberRoute";
 import Index from "./pages/Index.tsx";
@@ -85,15 +87,24 @@ const AnimatedRoutes = () => {
   );
 };
 
+const StatusStrip = () => {
+  const location = useLocation();
+  if (location.pathname.startsWith("/admin") || location.pathname.startsWith("/influencer")) return null;
+  return <MembershipBanner />;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <BrowserRouter>
-        <PageViewTracker />
-        <AnimatedRoutes />
-      </BrowserRouter>
+      <CurrencyProvider>
+        <BrowserRouter>
+          <PageViewTracker />
+          <StatusStrip />
+          <AnimatedRoutes />
+        </BrowserRouter>
+      </CurrencyProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );

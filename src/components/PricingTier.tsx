@@ -3,6 +3,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Check, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { usePricing } from "@/hooks/usePricing";
+import { useMembership } from "@/hooks/useMembership";
+import CurrencySelector from "@/components/CurrencySelector";
 import { motion } from "framer-motion";
 
 import netflixLogo from "@/assets/ott/netflix.jpg";
@@ -33,9 +35,18 @@ const planFeatures = [
 
 const PricingTier = () => {
   const navigate = useNavigate();
-  const { plan, priceUsd, formatPrice, intervalLabel, loading } = usePricing();
+  const { plan, priceUsd, formatPrice, formatUsd, showsConversion, intervalLabel, loading } = usePricing();
+  const { state, isMember, ctaLabel, ctaHref } = useMembership();
   const priceLabel = priceUsd === null ? "..." : formatPrice(priceUsd);
   const oldPriceLabel = priceUsd === null ? "..." : formatPrice(priceUsd / 0.3);
+  const usdLabel = priceUsd === null ? "..." : formatUsd(priceUsd);
+  const payHref = plan ? `/payment?plan=${plan.id}` : "/payment";
+  const primaryLabel = isMember
+    ? "Manage membership"
+    : state === "guest"
+      ? `Get Started — ${loading ? "..." : priceLabel}`
+      : `${ctaLabel} — ${loading ? "..." : priceLabel}`;
+  const primaryHref = isMember ? ctaHref : payHref;
 
   return (
     <section className="py-8 md:py-16">
@@ -74,8 +85,15 @@ const PricingTier = () => {
                     </span>
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">
-                    {loading ? "" : intervalLabel} · <span className="text-primary font-semibold">Priced in your local currency</span>
+                    {loading ? "" : intervalLabel}
+                    {showsConversion && !loading && (
+                      <> · <span className="text-foreground font-semibold">{usdLabel}</span> converted at today&apos;s rate</>
+                    )}
                   </p>
+                  <div className="mt-3">
+                    <CurrencySelector />
+                    <p className="text-[10px] text-muted-foreground mt-1">Pick your country to see what you would pay.</p>
+                  </div>
                 </div>
 
                 {/* Comparison note */}
@@ -120,10 +138,10 @@ const PricingTier = () => {
 
                 {/* CTA */}
                 <Button
-                  onClick={() => navigate(plan ? `/payment?plan=${plan.id}` : "/payment")}
+                  onClick={() => navigate(primaryHref)}
                   className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/80 font-semibold text-base active:scale-95 transition-transform"
                 >
-                  Get Started — {loading ? "..." : priceLabel}
+                  {primaryLabel}
                 </Button>
 
                 <p className="text-[9px] md:text-[10px] text-muted-foreground text-center">

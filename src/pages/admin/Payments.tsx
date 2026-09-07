@@ -16,6 +16,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { formatCurrencyAmount, formatUsd } from "@/lib/currency";
 
 const PAGE_SIZE = 100;
 const STATUSES = ["completed", "pending", "failed", "refunded"];
@@ -213,9 +214,9 @@ const Payments = () => {
                         <TableCell className="text-muted-foreground">{p.email}</TableCell>
                         <TableCell className="text-muted-foreground">{p.phone}</TableCell>
                         <TableCell className="capitalize text-muted-foreground">{p.provider}</TableCell>
-                        <TableCell className="text-foreground font-medium">{p.amount}</TableCell>
+                        <TableCell className="text-foreground font-medium">{formatCurrencyAmount(Number(p.amount), p.currency || "ZMW").replace(`${p.currency || "ZMW"} `, "")}</TableCell>
                         <TableCell className="text-muted-foreground">{p.currency || "ZMW"}</TableCell>
-                        <TableCell className="text-muted-foreground">{usd !== null ? `$${usd.toFixed(2)}` : "—"}</TableCell>
+                        <TableCell className="text-muted-foreground">{usd !== null ? formatUsd(usd) : "—"}</TableCell>
                         <TableCell className="text-muted-foreground">{p.promo_code || "—"}</TableCell>
                         <TableCell className="text-muted-foreground">{p.discount_applied ? `${p.discount_applied}%` : "—"}</TableCell>
                         <TableCell>

@@ -12,6 +12,9 @@ import PaymentModal from "@/components/PaymentModal";
 import { usePricing } from "@/hooks/usePricing";
 import { usePlans, planIntervalLabel } from "@/hooks/usePlans";
 import { useProfile } from "@/hooks/useProfile";
+import { useMembership } from "@/hooks/useMembership";
+import CurrencySelector from "@/components/CurrencySelector";
+import { formatUsd } from "@/lib/currency";
 import { supabase } from "@/integrations/supabase/client";
 
 const Payment = () => {
@@ -30,6 +33,7 @@ const Payment = () => {
   const { profile } = useProfile();
   const { plans } = usePlans();
   const { plan: defaultPlan, currency, formatPrice, loading } = usePricing();
+  const { isMember, renewsOn } = useMembership();
 
   const plan = (planIdParam && plans.find((p) => p.id === planIdParam)) || defaultPlan;
   const priceUsd = plan ? Number(plan.price_usd) : null;
@@ -99,13 +103,28 @@ const Payment = () => {
                   </span>
                 </div>
                 {discountedUsd !== null && currency !== "USD" && (
-                  <p className="text-xs text-muted-foreground mt-1">≈ USD {discountedUsd.toFixed(2)}</p>
+                  <p className="text-xs text-muted-foreground mt-1">≈ {formatUsd(discountedUsd)} charged at today&apos;s rate</p>
                 )}
                 <p className="text-xs text-muted-foreground mt-1">
                   {plan ? planIntervalLabel(plan) : ""}
                   {promoValid ? <span className="text-primary font-semibold"> · {promoDiscount}% promo applied</span> : null}
                 </p>
+                <div className="mt-3 flex justify-center">
+                  <CurrencySelector />
+                </div>
               </div>
+
+              {isMember && (
+                <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs text-foreground">
+                  Your membership is active
+                  {renewsOn ? ` until ${renewsOn.toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })}` : ""}.
+                  Paying now extends it — or{" "}
+                  <button type="button" onClick={() => navigate("/dashboard")} className="underline font-semibold">
+                    go to your dashboard
+                  </button>
+                  .
+                </div>
+              )}
 
               {/* Name */}
               <div className="space-y-2">

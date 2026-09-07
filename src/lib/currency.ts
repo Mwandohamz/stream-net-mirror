@@ -23,3 +23,17 @@ export function roundForCurrency(amount: number, currency: string): string {
 export function isZeroDecimal(currency: string): boolean {
   return ZERO_DECIMAL_CURRENCIES.has(currency);
 }
+
+/** Always two decimals — used for the admin's base USD price. */
+export function formatUsd(amount: number): string {
+  return `USD ${amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+/**
+ * Single money formatter for the whole app: converts once from the USD base
+ * price and rounds once, at display time.
+ */
+export function formatMoney(amountUsd: number, currency: string, rate: number | null): string {
+  if (currency === "USD" || rate === null) return formatUsd(amountUsd);
+  return formatCurrencyAmount(amountUsd * rate, currency);
+}
