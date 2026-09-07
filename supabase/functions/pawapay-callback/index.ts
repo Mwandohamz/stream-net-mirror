@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { activateSubscriptionForPayment } from "../_shared/subscription.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -48,6 +49,8 @@ serve(async (req) => {
         console.error("Failed to update payment to completed:", updateError);
       } else {
         console.log("Payment updated to completed:", JSON.stringify(updateResult));
+        const activation = await activateSubscriptionForPayment(supabase, depositId);
+        console.log("Activation result:", JSON.stringify(activation));
       }
     } else if (status === "FAILED") {
       const reason = body.failureReason?.failureMessage ?? "Payment failed";

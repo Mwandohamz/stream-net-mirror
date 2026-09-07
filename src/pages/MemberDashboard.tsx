@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import AccountOverviewCard from "@/components/member/AccountOverviewCard";
 import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
 import {
@@ -258,6 +259,9 @@ const MemberDashboard = () => {
             </div>
           </div>
 
+          {/* Account & subscription overview */}
+          <AccountOverviewCard />
+
           {/* Temp Password Banner */}
           {showTempPasswordBanner && (
             <Card className="bg-primary/10 border-primary/30 border-2">
@@ -291,7 +295,7 @@ const MemberDashboard = () => {
               </div>
               <div className="space-y-2 text-xs md:text-sm text-muted-foreground leading-relaxed">
                 <p>
-                  <strong className="text-foreground">StreamNetMirror</strong> facilitates easy, cheap, <strong className="text-foreground">lifetime streaming access</strong> by mirroring popular platforms like Netflix, Disney+, HBO Max and more. Think of it as a clone of the most popular streaming services — all in one place, forever free after your one-time payment.
+                  <strong className="text-foreground">StreamNetMirror</strong> facilitates easy, cheap, <strong className="text-foreground">affordable streaming access</strong> by mirroring popular platforms like Netflix, Disney+, HBO Max and more — all in one place for one low subscription.
                 </p>
                 <p>
                   <AlertTriangle size={14} className="inline text-primary mr-1" />
@@ -299,7 +303,7 @@ const MemberDashboard = () => {
                 </p>
                 <p>
                   <RefreshCw size={14} className="inline text-primary mr-1" />
-                  Occasional lags or downtime are normal. The service will always remain free and active — we continuously update links and mirrors to keep everything working.
+                  Occasional lags or downtime are normal. We continuously update links and mirrors to keep everything working for as long as your membership is active.
                 </p>
               </div>
             </CardContent>

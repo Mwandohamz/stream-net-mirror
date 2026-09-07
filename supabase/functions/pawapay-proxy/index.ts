@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { activateSubscriptionForPayment } from "../_shared/subscription.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -63,7 +64,7 @@ serve(async (req) => {
 
     // INITIATE DEPOSIT
     if (action === "deposit") {
-      const { depositId, amount, currency, phoneNumber, provider, name, email, country, promoCode, discountApplied } = params;
+      const { depositId, amount, currency, phoneNumber, provider, name, email, country, promoCode, discountApplied, planId, userId, amountUsd, fxRate } = params;
 
       // Insert payment record
       await supabase.from("payments").insert({
@@ -79,6 +80,10 @@ serve(async (req) => {
         transaction_id: `TXN-${Date.now()}`,
         promo_code: promoCode || null,
         discount_applied: discountApplied || 0,
+        plan_id: planId || null,
+        user_id: userId || null,
+        amount_usd: amountUsd ?? null,
+        fx_rate: fxRate ?? null,
       });
 
       const depositBody = {
@@ -132,13 +137,12 @@ serve(async (req) => {
         const providerTxnId = Array.isArray(data)
           ? data[0]?.providerTransactionId
           : data?.providerTransactionId;
-        await supabase
-          .from("payments")
-          .update({
-            status: "completed",
-            provider_transaction_id: providerTxnId ?? null,
-          })
-          .eq("deposit_id", depositId);
+        const completedUpdate: Record<string, unknown> = { status: "completed" };
+        if (providerTxnId) completedUpdate.provider_transaction_id = providerTxnId;
+        await supabase.from("payments").update(completedUpdate).eq("deposit_id", depositId);
+
+        const activation = await activateSubscriptionForPayment(supabase, depositId);
+        console.log("Activation (status poll):", JSON.stringify(activation));
       } else if (status === "FAILED") {
         const reason = Array.isArray(data)
           ? data[0]?.failureReason?.failureMessage

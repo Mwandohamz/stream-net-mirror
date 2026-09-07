@@ -34,6 +34,7 @@ export const useSubscriber = () => {
   const [subscription, setSubscription] = useState<SubscriptionRecord | null>(null);
   const [loading, setLoading] = useState(true);
   const requestIdRef = useRef(0);
+  const claimedRef = useRef(false);
 
   const resolveAccessState = useCallback(async (currentUser: User | null) => {
     const requestId = ++requestIdRef.current;
@@ -62,7 +63,30 @@ export const useSubscriber = () => {
         return;
       }
 
-      // 2. Legacy lifetime subscriber rows
+      // 2. Claim any completed payment made with this email before the account existed.
+      if (!claimedRef.current) {
+        claimedRef.current = true;
+        try {
+          const { data: claim } = await supabase.functions.invoke("claim-payments");
+          if ((claim as any)?.activated > 0) {
+            const { data: fresh } = await supabase
+              .from("subscriptions" as any)
+              .select("*")
+              .eq("user_id", currentUser.id)
+              .maybeSingle();
+            const freshRecord = (fresh as any as SubscriptionRecord) ?? null;
+            setSubscription(freshRecord);
+            if (isSubscriptionActive(freshRecord)) {
+              setIsSubscriber(true);
+              return;
+            }
+          }
+        } catch (e) {
+          console.warn("claim-payments failed", e);
+        }
+      }
+
+      // 3. Legacy lifetime subscriber rows
       const { data: legacy } = await supabase
         .from("subscribers")
         .select("id, status")
@@ -75,7 +99,7 @@ export const useSubscriber = () => {
         return;
       }
 
-      // 3. Admin bypass
+      // 4. Admin bypass
       if (currentUser.email) {
         const admin = await validateAdminEmail(currentUser.email);
         if (admin) {

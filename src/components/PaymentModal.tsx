@@ -6,12 +6,12 @@ import { Label } from "@/components/ui/label";
 import { Loader2, Check, X, Phone, ChevronDown, ArrowLeft } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { SUPPORTED_COUNTRIES, DEFAULT_COUNTRY, type Country } from "@/data/countries";
-import { useExchangeRate } from "@/hooks/useExchangeRate";
+import { useFxRates } from "@/hooks/useFxRates";
 import { useActiveConf, type ProviderConf } from "@/hooks/useActiveConf";
 import { usePaymentStatus } from "@/hooks/usePaymentStatus";
 import { initiateDeposit, predictProvider } from "@/lib/pawapay";
 import { formatCurrencyAmount, roundForCurrency } from "@/lib/currency";
-import { useAppSettings } from "@/hooks/useAppSettings";
+import { supabase } from "@/integrations/supabase/client";
 
 interface PaymentModalProps {
   isOpen: boolean;
@@ -22,13 +22,16 @@ interface PaymentModalProps {
   userEmail: string;
   promoCode?: string;
   discountPercent?: number;
+  /** Plan price in USD (after any promo discount). Prices come from the admin dashboard. */
+  priceUsd: number | null;
+  planId?: string;
 }
 
 type Step = 1 | 2 | 3;
 
 const STEP_LABELS = ["Country & Price", "Phone & Pay", "Payment"];
 
-export default function PaymentModal({ isOpen, onClose, onSuccess, onFailure, userName, userEmail, promoCode, discountPercent = 0 }: PaymentModalProps) {
+export default function PaymentModal({ isOpen, onClose, onSuccess, onFailure, userName, userEmail, promoCode, discountPercent = 0, priceUsd, planId }: PaymentModalProps) {
   const [step, setStep] = useState<Step>(1);
   const [country, setCountry] = useState<Country>(DEFAULT_COUNTRY);
   const [selectedProvider, setSelectedProvider] = useState<ProviderConf | null>(null);
@@ -44,18 +47,13 @@ export default function PaymentModal({ isOpen, onClose, onSuccess, onFailure, us
   const [detectionFailed, setDetectionFailed] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const { settings: appSettings } = useAppSettings();
-  const baseAmountZMW = (() => {
-    const raw = parseFloat(appSettings.base_price_zmw || "49") || 49;
-    return discountPercent > 0 ? Math.round(raw * (1 - discountPercent / 100)) : raw;
-  })();
-
-  const { getUSDEquivalent, convertFromZMW, loading: ratesLoading } = useExchangeRate();
+  const { convertFromUSD, rateFor, loading: ratesLoading } = useFxRates();
   const { providers, loading: providersLoading } = useActiveConf(step >= 2 ? country.iso3 : "");
   const paymentResult = usePaymentStatus(step === 3 ? depositId : null);
 
-  const usdAmount = getUSDEquivalent(baseAmountZMW);
-  const localAmount = country.currency === "ZMW" ? baseAmountZMW : convertFromZMW(baseAmountZMW, country.currency);
+  const usdAmount = priceUsd;
+  const localAmount = priceUsd === null ? null : convertFromUSD(priceUsd, country.currency);
+  const fxRate = rateFor(country.currency);
 
   // Handle payment result
   useEffect(() => {
@@ -141,6 +139,8 @@ export default function PaymentModal({ isOpen, onClose, onSuccess, onFailure, us
     }
 
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+
       const result = await initiateDeposit({
         depositId: id,
         amount,
@@ -152,6 +152,10 @@ export default function PaymentModal({ isOpen, onClose, onSuccess, onFailure, us
         country: country.iso3,
         promoCode: promoCode || undefined,
         discountApplied: discountPercent || 0,
+        planId,
+        userId: session?.user?.id,
+        amountUsd: priceUsd ?? undefined,
+        fxRate: fxRate ?? undefined,
       });
 
       if (result?.status === "REJECTED") {
@@ -188,12 +192,12 @@ export default function PaymentModal({ isOpen, onClose, onSuccess, onFailure, us
                     {ratesLoading ? "Loading rates..." : usdAmount ? `≈ $${usdAmount.toFixed(2)} USD` : ""}
                   </p>
                   <p className="text-4xl font-bold text-foreground netflix-title">
-                    {localAmount !== null ? formatCurrencyAmount(localAmount, country.currency) : "ZMW 49.00"}
+                    {localAmount !== null ? formatCurrencyAmount(localAmount, country.currency) : "..."}
                   </p>
-                  {country.currency !== "ZMW" && (
-                    <p className="text-xs text-muted-foreground">Converted from ZMW {baseAmountZMW} at live exchange rate</p>
+                  {country.currency !== "USD" && (
+                    <p className="text-xs text-muted-foreground">Converted at today's exchange rate</p>
                   )}
-                  <p className="text-xs text-muted-foreground">One-time payment · Unlimited streaming access</p>
+                  <p className="text-xs text-muted-foreground">Unlimited streaming access</p>
                 </div>
 
                 {/* Country selector */}
@@ -323,7 +327,7 @@ export default function PaymentModal({ isOpen, onClose, onSuccess, onFailure, us
                 <div className="bg-muted/30 rounded-lg p-3 space-y-1.5">
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Amount</span>
-                    <span className="text-foreground font-medium">{localAmount !== null ? formatCurrencyAmount(localAmount, country.currency) : "ZMW 49.00"}</span>
+                    <span className="text-foreground font-medium">{localAmount !== null ? formatCurrencyAmount(localAmount, country.currency) : "..."}</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Country</span>
@@ -342,7 +346,7 @@ export default function PaymentModal({ isOpen, onClose, onSuccess, onFailure, us
                   disabled={phoneNumber.length < 6 || !selectedProvider}
                   className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/80 font-semibold text-base"
                 >
-                  Pay {localAmount !== null ? formatCurrencyAmount(localAmount, country.currency) : "ZMW 49"} Now
+                  Pay {localAmount !== null ? formatCurrencyAmount(localAmount, country.currency) : "..."} Now
                 </Button>
               </motion.div>
             )}
@@ -358,7 +362,7 @@ export default function PaymentModal({ isOpen, onClose, onSuccess, onFailure, us
                     </div>
                     <h3 className="netflix-title text-2xl text-foreground">PAYMENT SUCCESSFUL! 🎉</h3>
                     <p className="text-sm text-muted-foreground">
-                      {localAmount !== null ? formatCurrencyAmount(localAmount, country.currency) : "ZMW 49"} paid via {selectedProvider?.displayName}
+                      {localAmount !== null ? formatCurrencyAmount(localAmount, country.currency) : "..."} paid via {selectedProvider?.displayName}
                     </p>
                     {paymentResult.data?.providerTransactionId && (
                       <p className="text-xs text-muted-foreground">Ref: {paymentResult.data.providerTransactionId}</p>

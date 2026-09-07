@@ -34,6 +34,10 @@ export interface DepositRequest {
   country: string;
   promoCode?: string;
   discountApplied?: number;
+  planId?: string;
+  userId?: string;
+  amountUsd?: number;
+  fxRate?: number;
 }
 
 export async function initiateDeposit(req: DepositRequest) {

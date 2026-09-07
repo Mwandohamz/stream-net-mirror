@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Check, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useAppSettings } from "@/hooks/useAppSettings";
+import { usePricing } from "@/hooks/usePricing";
 import { motion } from "framer-motion";
 
 import netflixLogo from "@/assets/ott/netflix.jpg";
@@ -27,15 +27,15 @@ const planFeatures = [
   "Download on 2 devices",
   "Ad-free streaming experience",
   "Access to 50+ OTT platforms",
-  "Lifetime access — no recurring fees",
+  "Cancel anytime — no hidden fees",
   "Email support & WhatsApp assistance",
 ];
 
 const PricingTier = () => {
   const navigate = useNavigate();
-  const { settings, loading } = useAppSettings();
-  const currentPrice = parseFloat(settings.base_price_zmw || "49") || 49;
-  const oldPrice = Math.round(currentPrice / 0.30);
+  const { plan, priceUsd, formatPrice, intervalLabel, loading } = usePricing();
+  const priceLabel = priceUsd === null ? "..." : formatPrice(priceUsd);
+  const oldPriceLabel = priceUsd === null ? "..." : formatPrice(priceUsd / 0.3);
 
   return (
     <section className="py-8 md:py-16">
@@ -64,17 +64,17 @@ const PricingTier = () => {
               <CardContent className="p-5 md:p-8 space-y-5 md:space-y-6">
                 {/* Plan name & comparison */}
                 <div>
-                  <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">StreamNetMirror Standard</p>
+                  <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">{plan?.name ?? "StreamNetMirror Standard"}</p>
                   <div className="flex items-baseline gap-2">
                     <span className="text-muted-foreground line-through text-lg md:text-xl">
-                      ZMW {loading ? "..." : oldPrice}
+                      {loading ? "..." : oldPriceLabel}
                     </span>
                     <span className="netflix-title text-4xl md:text-5xl text-primary">
-                      ZMW {loading ? "..." : currentPrice}
+                      {loading ? "..." : priceLabel}
                     </span>
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">
-                    One-time payment · <span className="text-primary font-semibold">Lifetime access</span>
+                    {loading ? "" : intervalLabel} · <span className="text-primary font-semibold">Priced in your local currency</span>
                   </p>
                 </div>
 
@@ -120,14 +120,14 @@ const PricingTier = () => {
 
                 {/* CTA */}
                 <Button
-                  onClick={() => navigate("/payment")}
+                  onClick={() => navigate(plan ? `/payment?plan=${plan.id}` : "/payment")}
                   className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/80 font-semibold text-base active:scale-95 transition-transform"
                 >
-                  Get Started — ZMW {loading ? "..." : currentPrice}
+                  Get Started — {loading ? "..." : priceLabel}
                 </Button>
 
                 <p className="text-[9px] md:text-[10px] text-muted-foreground text-center">
-                  After payment, you'll receive login details via email and can create your account to access the streaming portal.
+                  Create your free account first, then pay to unlock the streaming portal instantly.
                 </p>
               </CardContent>
             </Card>

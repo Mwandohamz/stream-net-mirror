@@ -6,11 +6,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Upload, FileDown, Trash2, Download } from "lucide-react";
 
 const AdminSettings = () => {
+  const navigate = useNavigate();
   const { user } = useAdmin();
   const { settings, loading: settingsLoading, updateSetting } = useAppSettings();
   const [newPassword, setNewPassword] = useState("");
@@ -145,41 +147,16 @@ const AdminSettings = () => {
           <CardHeader>
             <CardTitle className="netflix-title text-lg text-foreground">PRICING</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label className="text-foreground text-sm">Base Price (ZMW)</Label>
-              <Input
-                type="number"
-                value={priceInput || settings.base_price_zmw || "49"}
-                onChange={(e) => setPriceInput(e.target.value)}
-                placeholder="49"
-                className="bg-secondary border-border text-foreground"
-                min="1"
-              />
-              <p className="text-xs text-muted-foreground">
-                This is the base price in Zambian Kwacha. It will be converted to local currencies for other countries.
-              </p>
-            </div>
+          <CardContent className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Prices are now set per plan in USD and converted automatically into each customer's
+              local currency at today's exchange rate.
+            </p>
             <Button
-              onClick={async () => {
-                const val = priceInput || settings.base_price_zmw || "49";
-                if (parseFloat(val) <= 0) {
-                  toast.error("Price must be greater than 0");
-                  return;
-                }
-                setPriceSaving(true);
-                const { error } = await updateSetting("base_price_zmw", val);
-                if (error) {
-                  toast.error(error.message);
-                } else {
-                  toast.success("Price updated successfully");
-                }
-                setPriceSaving(false);
-              }}
-              disabled={priceSaving || settingsLoading}
+              onClick={() => navigate("/admin/plans")}
               className="bg-primary text-primary-foreground hover:bg-primary/80"
             >
-              {priceSaving ? "Saving..." : "Update Price"}
+              Manage Plans & Pricing
             </Button>
           </CardContent>
         </Card>
