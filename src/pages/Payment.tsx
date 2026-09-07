@@ -33,14 +33,11 @@ const Payment = () => {
   const validatePromo = async () => {
     if (!promoCode.trim()) return;
     setPromoChecking(true);
-    const { data } = await supabase
-      .from("influencers" as any)
-      .select("discount_percent, is_active")
-      .eq("promo_code", promoCode.trim().toUpperCase())
-      .eq("is_active", true)
-      .maybeSingle();
+    const { data } = await supabase.rpc("validate_promo_code" as any, {
+      _promo_code: promoCode.trim().toUpperCase(),
+    });
 
-    const inf = data as any;
+    const inf = Array.isArray(data) ? (data[0] as any) : null;
     if (inf) {
       setPromoValid(true);
       setPromoDiscount(inf.discount_percent);
