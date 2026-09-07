@@ -37,13 +37,13 @@ const InfluencerDashboard = () => {
     const { data, error: fetchError } = await supabase.rpc("influencer_login" as any, {
       _promo_code: promoCode || "",
       _email: email.trim().toLowerCase(),
-      _phone: (phone || "").trim(),
+      _password: password,
     });
 
     const inf = Array.isArray(data) ? (data[0] as any) : null;
 
     if (fetchError || !inf) {
-      setError("Invalid credentials. Check your email, promo code and phone number.");
+      setError("Invalid email or password. Ask the admin to set or reset your password.");
       setLoading(false);
       return;
     }
