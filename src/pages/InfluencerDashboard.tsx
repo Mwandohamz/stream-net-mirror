@@ -134,8 +134,7 @@ const InfluencerDashboard = () => {
                 ) : payments.map((p, i) => (
                   <TableRow key={i}>
                     <TableCell>
-                      <p className="text-foreground text-sm">{p.name}</p>
-                      <p className="text-[10px] text-muted-foreground">{p.email}</p>
+                      <p className="text-foreground text-sm">{p.customer}</p>
                     </TableCell>
                     <TableCell className="text-foreground">{p.currency || "ZMW"} {p.amount}</TableCell>
                     <TableCell className="text-muted-foreground text-sm">{new Date(p.created_at).toLocaleDateString()}</TableCell>
