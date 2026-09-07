@@ -27,6 +27,10 @@ const SignIn = () => {
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session?.user) {
+        if (safeNext) {
+          window.location.href = safeNext;
+          return;
+        }
         const { data } = await supabase
           .from("subscribers")
           .select("id, status")
