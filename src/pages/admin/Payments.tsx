@@ -181,11 +181,14 @@ const Payments = () => {
                   <TableHead>Provider</TableHead>
                   <TableHead>Amount</TableHead>
                   <TableHead>Currency</TableHead>
+                  <TableHead>USD equiv.</TableHead>
                   <TableHead>Promo Code</TableHead>
                   <TableHead>Discount</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Date</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
+
               </TableHeader>
               <TableBody>
                 {loading ? (
