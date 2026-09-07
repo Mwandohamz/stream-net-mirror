@@ -14,26 +14,17 @@ import { parsePhoneNumber } from "react-phone-number-input";
 import "react-phone-number-input/style.css";
 
 interface Payment {
-  name: string;
-  email: string;
+  customer: string;
   amount: number;
   currency: string;
   created_at: string;
   status: string;
 }
 
-const normalizePhone = (phone: string): string => {
-  try {
-    return parsePhoneNumber(phone)?.format("E.164") || phone;
-  } catch {
-    return phone;
-  }
-};
-
 const InfluencerDashboard = () => {
   const { promoCode } = useParams<{ promoCode: string }>();
   const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState<string | undefined>("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [authenticated, setAuthenticated] = useState(false);
