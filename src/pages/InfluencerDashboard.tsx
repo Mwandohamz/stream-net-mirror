@@ -9,31 +9,19 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { motion } from "framer-motion";
 import { Lock, DollarSign, TrendingUp, CreditCard } from "lucide-react";
 import StatCard from "@/components/admin/StatCard";
-import PhoneInput from "react-phone-number-input";
-import { parsePhoneNumber } from "react-phone-number-input";
-import "react-phone-number-input/style.css";
 
 interface Payment {
-  name: string;
-  email: string;
+  customer: string;
   amount: number;
   currency: string;
   created_at: string;
   status: string;
 }
 
-const normalizePhone = (phone: string): string => {
-  try {
-    return parsePhoneNumber(phone)?.format("E.164") || phone;
-  } catch {
-    return phone;
-  }
-};
-
 const InfluencerDashboard = () => {
   const { promoCode } = useParams<{ promoCode: string }>();
   const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState<string | undefined>("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [authenticated, setAuthenticated] = useState(false);
@@ -49,13 +37,13 @@ const InfluencerDashboard = () => {
     const { data, error: fetchError } = await supabase.rpc("influencer_login" as any, {
       _promo_code: promoCode || "",
       _email: email.trim().toLowerCase(),
-      _phone: (phone || "").trim(),
+      _password: password,
     });
 
     const inf = Array.isArray(data) ? (data[0] as any) : null;
 
     if (fetchError || !inf) {
-      setError("Invalid credentials. Check your email, promo code and phone number.");
+      setError("Invalid email or password. Ask the admin to set or reset your password.");
       setLoading(false);
       return;
     }
@@ -65,7 +53,7 @@ const InfluencerDashboard = () => {
     const { data: paymentData } = await supabase.rpc("influencer_payments" as any, {
       _promo_code: promoCode || "",
       _email: email.trim().toLowerCase(),
-      _phone: (phone || "").trim(),
+      _password: password,
     });
 
     const pList = ((paymentData || []) as any[]) as unknown as Payment[];
@@ -94,16 +82,18 @@ const InfluencerDashboard = () => {
                 <Input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="your@email.com" className="bg-secondary border-border text-foreground" type="email" />
               </div>
               <div className="space-y-1">
-                <Label className="text-foreground text-sm">Phone Number (password)</Label>
-                <PhoneInput
-                  international
-                  defaultCountry="ZM"
-                  value={phone}
-                  onChange={setPhone}
-                  className="phone-input-dark"
+                <Label className="text-foreground text-sm">Password</Label>
+                <Input
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter" && email && password) handleLogin(); }}
+                  placeholder="Your dashboard password"
+                  className="bg-secondary border-border text-foreground"
+                  type="password"
                 />
+                <p className="text-[10px] text-muted-foreground">Set for you by the admin. Contact them if you don't have one.</p>
               </div>
-              <Button onClick={handleLogin} disabled={!email || loading} className="w-full bg-primary text-primary-foreground">
+              <Button onClick={handleLogin} disabled={!email || !password || loading} className="w-full bg-primary text-primary-foreground">
                 {loading ? "Verifying..." : "View Dashboard"}
               </Button>
             </CardContent>
@@ -144,8 +134,7 @@ const InfluencerDashboard = () => {
                 ) : payments.map((p, i) => (
                   <TableRow key={i}>
                     <TableCell>
-                      <p className="text-foreground text-sm">{p.name}</p>
-                      <p className="text-[10px] text-muted-foreground">{p.email}</p>
+                      <p className="text-foreground text-sm">{p.customer}</p>
                     </TableCell>
                     <TableCell className="text-foreground">{p.currency || "ZMW"} {p.amount}</TableCell>
                     <TableCell className="text-muted-foreground text-sm">{new Date(p.created_at).toLocaleDateString()}</TableCell>

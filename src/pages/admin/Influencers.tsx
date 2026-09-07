@@ -7,7 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Trash2, Copy, ToggleLeft, ToggleRight, DollarSign, Users, TrendingUp } from "lucide-react";
+import { Plus, Trash2, Copy, ToggleLeft, ToggleRight, DollarSign, Users, TrendingUp, KeyRound } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import StatCard from "@/components/admin/StatCard";
 import PhoneInput, { isValidPhoneNumber, parsePhoneNumber } from "react-phone-number-input";
 import "react-phone-number-input/style.css";
@@ -39,6 +40,9 @@ const Influencers = () => {
   const [form, setForm] = useState({ full_name: "", email: "", phone: "" as string | undefined, discount_percent: "10", revenue_share_percent: "20" });
   const [saving, setSaving] = useState(false);
   const [phoneError, setPhoneError] = useState("");
+  const [pwTarget, setPwTarget] = useState<Influencer | null>(null);
+  const [newPassword, setNewPassword] = useState("");
+  const [savingPw, setSavingPw] = useState(false);
 
   const [totalInfluencerRevenue, setTotalInfluencerRevenue] = useState(0);
   const [totalOrganicRevenue, setTotalOrganicRevenue] = useState(0);
@@ -122,6 +126,23 @@ const Influencers = () => {
     await supabase.from("influencers" as any).delete().eq("id", id);
     fetchAll();
     toast({ title: "Influencer removed" });
+  };
+
+  const savePassword = async () => {
+    if (!pwTarget || newPassword.length < 8) return;
+    setSavingPw(true);
+    const { error } = await supabase.rpc("set_influencer_password" as any, {
+      _influencer_id: pwTarget.id,
+      _password: newPassword,
+    });
+    setSavingPw(false);
+    if (error) {
+      toast({ title: "Could not set password", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Password set", description: `Share it privately with ${pwTarget.full_name}.` });
+    setPwTarget(null);
+    setNewPassword("");
   };
 
   const copyLink = (promoCode: string) => {
@@ -234,6 +255,9 @@ const Influencers = () => {
                           <Button variant="ghost" size="icon" onClick={() => toggleActive(inf)} title={inf.is_active ? "Deactivate" : "Activate"}>
                             {inf.is_active ? <ToggleRight size={16} className="text-green-500" /> : <ToggleLeft size={16} className="text-muted-foreground" />}
                           </Button>
+                          <Button variant="ghost" size="icon" onClick={() => { setPwTarget(inf); setNewPassword(""); }} title="Set dashboard password">
+                            <KeyRound size={14} className="text-muted-foreground" />
+                          </Button>
                           <Button variant="ghost" size="icon" onClick={() => copyLink(inf.promo_code)} title="Copy dashboard link">
                             <Copy size={14} className="text-muted-foreground" />
                           </Button>
@@ -249,6 +273,29 @@ const Influencers = () => {
             </Table>
           </CardContent>
         </Card>
+
+        <Dialog open={!!pwTarget} onOpenChange={(o) => { if (!o) { setPwTarget(null); setNewPassword(""); } }}>
+          <DialogContent className="bg-card border-border">
+            <DialogHeader>
+              <DialogTitle className="text-foreground">Set dashboard password</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground">
+                {pwTarget?.full_name} will sign in at their link with their email and this password.
+              </p>
+              <Input
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="At least 8 characters"
+                className="bg-secondary border-border text-foreground"
+              />
+              <Button onClick={savePassword} disabled={savingPw || newPassword.length < 8} className="bg-primary text-primary-foreground">
+                {savingPw ? "Saving..." : "Save password"}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </AdminLayout>
   );

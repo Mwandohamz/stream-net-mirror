@@ -8,6 +8,11 @@ export interface ActivationResult {
   userId?: string;
 }
 
+/** Escapes LIKE/ILIKE wildcards so user input cannot pattern-match other rows. */
+export function escapeLike(value: string): string {
+  return value.replace(/[\\%_]/g, (c) => `\\${c}`);
+}
+
 function addInterval(from: Date, interval: string, count: number): Date {
   const d = new Date(from);
   const n = count && count > 0 ? count : 1;
@@ -59,7 +64,7 @@ export async function activateSubscriptionForPayment(
     const { data: profile } = await supabase
       .from("profiles")
       .select("id")
-      .ilike("email", payment.email)
+      .ilike("email", escapeLike(payment.email.trim()))
       .maybeSingle();
     userId = profile?.id ?? null;
   }
@@ -84,6 +89,38 @@ export async function activateSubscriptionForPayment(
       .limit(1)
       .maybeSingle();
     plan = data;
+  }
+
+  // Verify the amount actually paid covers the plan's authoritative price.
+  if (plan?.price_usd != null) {
+    let expectedUsd = Number(plan.price_usd);
+
+    if (payment.promo_code) {
+      const { data: promo } = await supabase
+        .from("influencers")
+        .select("discount_percent")
+        .eq("is_active", true)
+        .ilike("promo_code", escapeLike(String(payment.promo_code).trim()))
+        .maybeSingle();
+      const pct = Number(promo?.discount_percent ?? 0);
+      if (pct > 0 && pct < 100) expectedUsd = expectedUsd * (1 - pct / 100);
+    }
+
+    const paidUsd =
+      payment.amount_usd != null
+        ? Number(payment.amount_usd)
+        : payment.fx_rate
+          ? Number(payment.amount) / Number(payment.fx_rate)
+          : null;
+
+    // 5% tolerance for rounding / FX drift.
+    if (paidUsd == null || !isFinite(paidUsd) || paidUsd < expectedUsd * 0.95) {
+      console.error(
+        "activate: underpaid or unverifiable amount",
+        JSON.stringify({ paymentId: payment.id, paidUsd, expectedUsd }),
+      );
+      return { activated: false, reason: "amount_mismatch" };
+    }
   }
 
   const interval = plan?.interval ?? "month";

@@ -21,15 +21,54 @@ serve(async (req) => {
     console.log("pawaPay callback received:", JSON.stringify(body));
 
     const depositId = body.depositId;
-    const status = body.status;
 
-    if (!depositId || !status) {
-      console.error("Missing depositId or status in callback body");
-      return new Response(JSON.stringify({ error: "Missing depositId or status" }), {
+    if (!depositId) {
+      console.error("Missing depositId in callback body");
+      return new Response(JSON.stringify({ error: "Missing depositId" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    // NEVER trust the webhook body: confirm the real status server-to-server with pawaPay.
+    const PAWAPAY_TOKEN = Deno.env.get("PAWAPAY_API_TOKEN");
+    const PAWAPAY_BASE = Deno.env.get("PAWAPAY_BASE_URL") || "https://api.sandbox.pawapay.io";
+    if (!PAWAPAY_TOKEN) {
+      console.error("pawaPay token not configured - refusing to process callback");
+      return new Response(JSON.stringify({ error: "Not configured" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const verifyRes = await fetch(`${PAWAPAY_BASE}/v1/deposits/${encodeURIComponent(depositId)}`, {
+      headers: { Authorization: `Bearer ${PAWAPAY_TOKEN}`, "Content-Type": "application/json" },
+    });
+
+    if (!verifyRes.ok) {
+      console.error("pawaPay verification failed", verifyRes.status);
+      return new Response(JSON.stringify({ error: "Verification failed" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const verified = await verifyRes.json();
+    const record = Array.isArray(verified) ? verified[0] : verified;
+    const status = record?.status;
+
+    if (!status) {
+      console.error("Deposit not found at pawaPay:", depositId);
+      return new Response(JSON.stringify({ error: "Unknown deposit" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Use only provider-confirmed values from here on.
+    body.providerTransactionId = record?.providerTransactionId ?? body.providerTransactionId;
+    body.failureReason = record?.failureReason ?? body.failureReason;
+
 
     if (status === "COMPLETED") {
       const updateData: Record<string, any> = {
