@@ -40,6 +40,9 @@ const Influencers = () => {
   const [form, setForm] = useState({ full_name: "", email: "", phone: "" as string | undefined, discount_percent: "10", revenue_share_percent: "20" });
   const [saving, setSaving] = useState(false);
   const [phoneError, setPhoneError] = useState("");
+  const [pwTarget, setPwTarget] = useState<Influencer | null>(null);
+  const [newPassword, setNewPassword] = useState("");
+  const [savingPw, setSavingPw] = useState(false);
 
   const [totalInfluencerRevenue, setTotalInfluencerRevenue] = useState(0);
   const [totalOrganicRevenue, setTotalOrganicRevenue] = useState(0);
@@ -123,6 +126,23 @@ const Influencers = () => {
     await supabase.from("influencers" as any).delete().eq("id", id);
     fetchAll();
     toast({ title: "Influencer removed" });
+  };
+
+  const savePassword = async () => {
+    if (!pwTarget || newPassword.length < 8) return;
+    setSavingPw(true);
+    const { error } = await supabase.rpc("set_influencer_password" as any, {
+      _influencer_id: pwTarget.id,
+      _password: newPassword,
+    });
+    setSavingPw(false);
+    if (error) {
+      toast({ title: "Could not set password", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Password set", description: `Share it privately with ${pwTarget.full_name}.` });
+    setPwTarget(null);
+    setNewPassword("");
   };
 
   const copyLink = (promoCode: string) => {
