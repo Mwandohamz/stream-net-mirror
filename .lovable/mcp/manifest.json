@@ -1,0 +1,119 @@
+{
+  "version": 1,
+  "sdk_version": "2.0.2",
+  "path": "/mcp",
+  "auth": {
+    "type": "oauth",
+    "issuer": "https://rhobeyejmrnnreepacmr.supabase.co/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ]
+  },
+  "mcp": {
+    "server": {
+      "name": "stream-net-mirror",
+      "version": "0.1.0",
+      "title": "Stream Net Mirror"
+    },
+    "tools": [
+      {
+        "name": "get_my_membership",
+        "title": "Get my membership",
+        "description": "Get the signed-in user's Stream Net Mirror membership status, name, email and signup date.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_my_payments",
+        "title": "List my payments",
+        "description": "List the payments made with the signed-in user's email address, including amount, currency, status and date.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_my_support_tickets",
+        "title": "List my support tickets",
+        "description": "List the signed-in user's support tickets with subject, status and creation date.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "create_support_ticket",
+        "title": "Create support ticket",
+        "description": "Open a new support ticket for the signed-in user.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "subject": {
+              "type": "string",
+              "description": "Short summary of the issue."
+            },
+            "message": {
+              "type": "string",
+              "description": "Full description of the issue."
+            },
+            "payment_ref": {
+              "type": "string",
+              "description": "Optional payment reference or transaction id related to the issue."
+            }
+          },
+          "required": [
+            "subject",
+            "message"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_streaming_links",
+        "title": "Get streaming links",
+        "description": "Get the current official Stream Net Mirror streaming website links and the Android APK download link.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}
