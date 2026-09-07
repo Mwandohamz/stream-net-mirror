@@ -64,7 +64,7 @@ export async function activateSubscriptionForPayment(
     const { data: profile } = await supabase
       .from("profiles")
       .select("id")
-      .ilike("email", payment.email)
+      .ilike("email", escapeLike(payment.email.trim()))
       .maybeSingle();
     userId = profile?.id ?? null;
   }
