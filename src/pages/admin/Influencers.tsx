@@ -273,6 +273,29 @@ const Influencers = () => {
             </Table>
           </CardContent>
         </Card>
+
+        <Dialog open={!!pwTarget} onOpenChange={(o) => { if (!o) { setPwTarget(null); setNewPassword(""); } }}>
+          <DialogContent className="bg-card border-border">
+            <DialogHeader>
+              <DialogTitle className="text-foreground">Set dashboard password</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground">
+                {pwTarget?.full_name} will sign in at their link with their email and this password.
+              </p>
+              <Input
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="At least 8 characters"
+                className="bg-secondary border-border text-foreground"
+              />
+              <Button onClick={savePassword} disabled={savingPw || newPassword.length < 8} className="bg-primary text-primary-foreground">
+                {savingPw ? "Saving..." : "Save password"}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </AdminLayout>
   );
