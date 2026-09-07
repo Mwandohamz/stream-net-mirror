@@ -91,6 +91,10 @@ const SignIn = () => {
       }
 
       if (data.user) {
+        if (safeNext) {
+          window.location.href = safeNext;
+          return;
+        }
         const { data: sub } = await supabase
           .from("subscribers")
           .select("id, status")
