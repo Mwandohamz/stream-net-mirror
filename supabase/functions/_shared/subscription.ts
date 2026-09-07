@@ -91,6 +91,38 @@ export async function activateSubscriptionForPayment(
     plan = data;
   }
 
+  // Verify the amount actually paid covers the plan's authoritative price.
+  if (plan?.price_usd != null) {
+    let expectedUsd = Number(plan.price_usd);
+
+    if (payment.promo_code) {
+      const { data: promo } = await supabase
+        .from("influencers")
+        .select("discount_percent")
+        .eq("is_active", true)
+        .ilike("promo_code", escapeLike(String(payment.promo_code).trim()))
+        .maybeSingle();
+      const pct = Number(promo?.discount_percent ?? 0);
+      if (pct > 0 && pct < 100) expectedUsd = expectedUsd * (1 - pct / 100);
+    }
+
+    const paidUsd =
+      payment.amount_usd != null
+        ? Number(payment.amount_usd)
+        : payment.fx_rate
+          ? Number(payment.amount) / Number(payment.fx_rate)
+          : null;
+
+    // 5% tolerance for rounding / FX drift.
+    if (paidUsd == null || !isFinite(paidUsd) || paidUsd < expectedUsd * 0.95) {
+      console.error(
+        "activate: underpaid or unverifiable amount",
+        JSON.stringify({ paymentId: payment.id, paidUsd, expectedUsd }),
+      );
+      return { activated: false, reason: "amount_mismatch" };
+    }
+  }
+
   const interval = plan?.interval ?? "month";
   const intervalCount = plan?.interval_count ?? 1;
 
