@@ -52,7 +52,7 @@ const SignIn = () => {
         } catch {}
       }
     });
-  }, [navigate]);
+  }, [navigate, safeNext]);
 
   const handleResendVerification = async () => {
     setResending(true);
