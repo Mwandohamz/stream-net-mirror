@@ -92,6 +92,7 @@ const AnimatedRoutes = () => {
         <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
         <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
       </Routes>
+      </Suspense>
     </AnimatePresence>
   );
 };
@@ -103,6 +104,7 @@ const StatusStrip = () => {
 };
 
 const App = () => (
+  <ErrorBoundary>
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
