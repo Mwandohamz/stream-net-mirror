@@ -39,7 +39,7 @@ Deno.serve(async (req) => {
     const { data: payments } = await admin
       .from("payments")
       .select("id, deposit_id, user_id, subscription_id")
-      .ilike("email", user.email)
+      .ilike("email", escapeLike(user.email.trim()))
       .eq("status", "completed");
 
     const claimable = (payments ?? []).filter((p: any) => !p.subscription_id);
