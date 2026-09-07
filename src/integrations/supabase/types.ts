@@ -79,6 +79,7 @@ export type Database = {
           full_name: string
           id: string
           is_active: boolean
+          password_hash: string | null
           phone: string | null
           promo_code: string
           revenue_share_percent: number
@@ -90,6 +91,7 @@ export type Database = {
           full_name: string
           id?: string
           is_active?: boolean
+          password_hash?: string | null
           phone?: string | null
           promo_code: string
           revenue_share_percent?: number
@@ -101,6 +103,7 @@ export type Database = {
           full_name?: string
           id?: string
           is_active?: boolean
+          password_hash?: string | null
           phone?: string | null
           promo_code?: string
           revenue_share_percent?: number
@@ -492,7 +495,7 @@ export type Database = {
         Returns: boolean
       }
       influencer_login: {
-        Args: { _email: string; _phone: string; _promo_code: string }
+        Args: { _email: string; _password: string; _promo_code: string }
         Returns: {
           discount_percent: number
           full_name: string
@@ -501,16 +504,19 @@ export type Database = {
         }[]
       }
       influencer_payments: {
-        Args: { _email: string; _phone: string; _promo_code: string }
+        Args: { _email: string; _password: string; _promo_code: string }
         Returns: {
           amount: number
           created_at: string
           currency: string
-          email: string
-          name: string
+          customer: string
           promo_code: string
           status: string
         }[]
+      }
+      set_influencer_password: {
+        Args: { _influencer_id: string; _password: string }
+        Returns: boolean
       }
       validate_promo_code: {
         Args: { _promo_code: string }
