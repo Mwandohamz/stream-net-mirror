@@ -193,15 +193,20 @@ const Payments = () => {
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={10} className="text-center text-muted-foreground py-8">Loading...</TableCell>
+                    <TableCell colSpan={12} className="text-center text-muted-foreground py-8">Loading...</TableCell>
                   </TableRow>
                 ) : filtered.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={10} className="text-center text-muted-foreground py-8">No payments found</TableCell>
+                    <TableCell colSpan={12} className="text-center text-muted-foreground py-8">No payments found</TableCell>
                   </TableRow>
                 ) : (
                   filtered.map((p) => {
                     const normalizedStatus = String(p.status || "").toLowerCase();
+                    const usd = p.amount_usd
+                      ? Number(p.amount_usd)
+                      : p.fx_rate
+                        ? Number(p.amount) / Number(p.fx_rate)
+                        : null;
                     return (
                       <TableRow key={p.id}>
                         <TableCell className="font-medium text-foreground">{p.name}</TableCell>
@@ -210,6 +215,7 @@ const Payments = () => {
                         <TableCell className="capitalize text-muted-foreground">{p.provider}</TableCell>
                         <TableCell className="text-foreground font-medium">{p.amount}</TableCell>
                         <TableCell className="text-muted-foreground">{p.currency || "ZMW"}</TableCell>
+                        <TableCell className="text-muted-foreground">{usd !== null ? `$${usd.toFixed(2)}` : "—"}</TableCell>
                         <TableCell className="text-muted-foreground">{p.promo_code || "—"}</TableCell>
                         <TableCell className="text-muted-foreground">{p.discount_applied ? `${p.discount_applied}%` : "—"}</TableCell>
                         <TableCell>
@@ -228,10 +234,19 @@ const Payments = () => {
                         <TableCell className="text-muted-foreground text-xs whitespace-nowrap">
                           {new Date(p.created_at).toLocaleString()}
                         </TableCell>
+                        <TableCell className="text-right whitespace-nowrap">
+                          <Button variant="ghost" size="icon" title="Edit" onClick={() => openEdit(p)}>
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" title="Delete" onClick={() => setDeleteTarget(p)}>
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </TableCell>
                       </TableRow>
                     );
                   })
                 )}
+
               </TableBody>
             </Table>
           </CardContent>
