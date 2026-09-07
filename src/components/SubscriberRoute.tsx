@@ -1,9 +1,10 @@
 import { Navigate } from "react-router-dom";
 import { useSubscriber } from "@/hooks/useSubscriber";
 import { Loader2 } from "lucide-react";
+import MembershipLocked from "@/pages/MembershipLocked";
 
 const SubscriberRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user, isSubscriber, loading } = useSubscriber();
+  const { user, isSubscriber, subscription, loading } = useSubscriber();
 
   if (loading) {
     return (
@@ -17,8 +18,9 @@ const SubscriberRoute = ({ children }: { children: React.ReactNode }) => {
     return <Navigate to="/signin" replace />;
   }
 
+  // Signed in but not paid (or expired): show plans instead of the streaming links.
   if (!isSubscriber) {
-    return <Navigate to="/payment" replace />;
+    return <MembershipLocked subscription={subscription} />;
   }
 
   return <>{children}</>;

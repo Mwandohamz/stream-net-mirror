@@ -5,9 +5,33 @@ import { validateAdminEmail } from "@/hooks/useAdmin";
 
 const LOADING_TIMEOUT_MS = 8000;
 
+export interface SubscriptionRecord {
+  id: string;
+  user_id: string;
+  plan_id: string | null;
+  status: string;
+  current_period_start: string;
+  current_period_end: string;
+  grace_days: number;
+  cancel_at: string | null;
+}
+
+export function subscriptionAccessEnd(sub: SubscriptionRecord): Date {
+  const end = new Date(sub.current_period_end);
+  end.setDate(end.getDate() + (sub.grace_days ?? 0));
+  return end;
+}
+
+export function isSubscriptionActive(sub: SubscriptionRecord | null): boolean {
+  if (!sub) return false;
+  if (sub.status === "cancelled" || sub.status === "disabled") return false;
+  return subscriptionAccessEnd(sub).getTime() > Date.now();
+}
+
 export const useSubscriber = () => {
   const [user, setUser] = useState<User | null>(null);
   const [isSubscriber, setIsSubscriber] = useState(false);
+  const [subscription, setSubscription] = useState<SubscriptionRecord | null>(null);
   const [loading, setLoading] = useState(true);
   const requestIdRef = useRef(0);
 
@@ -19,25 +43,39 @@ export const useSubscriber = () => {
 
       if (!currentUser) {
         setIsSubscriber(false);
+        setSubscription(null);
         return;
       }
 
-      // Check subscriber table first
-      const { data, error } = await supabase
+      // 1. Subscription record (current model)
+      const { data: sub } = await supabase
+        .from("subscriptions" as any)
+        .select("*")
+        .eq("user_id", currentUser.id)
+        .maybeSingle();
+
+      const subscriptionRecord = (sub as any as SubscriptionRecord) ?? null;
+      setSubscription(subscriptionRecord);
+
+      if (isSubscriptionActive(subscriptionRecord)) {
+        setIsSubscriber(true);
+        return;
+      }
+
+      // 2. Legacy lifetime subscriber rows
+      const { data: legacy } = await supabase
         .from("subscribers")
         .select("id, status")
         .eq("user_id", currentUser.id)
         .eq("status", "active")
         .maybeSingle();
 
-      if (error) throw error;
-
-      if (data) {
+      if (legacy) {
         setIsSubscriber(true);
         return;
       }
 
-      // Admin bypass using same unified helper
+      // 3. Admin bypass
       if (currentUser.email) {
         const admin = await validateAdminEmail(currentUser.email);
         if (admin) {
@@ -59,7 +97,6 @@ export const useSubscriber = () => {
   useEffect(() => {
     let mounted = true;
 
-    // Safety timeout
     const timeout = setTimeout(() => {
       if (!mounted) return;
       setLoading(false);
@@ -67,7 +104,7 @@ export const useSubscriber = () => {
 
     // Keep callback non-blocking to avoid auth deadlocks.
     const {
-      data: { subscription },
+      data: { subscription: authSub },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!mounted) return;
       setLoading(true);
@@ -91,9 +128,9 @@ export const useSubscriber = () => {
     return () => {
       mounted = false;
       clearTimeout(timeout);
-      subscription.unsubscribe();
+      authSub.unsubscribe();
     };
   }, [resolveAccessState]);
 
-  return { user, isSubscriber, loading };
+  return { user, isSubscriber, subscription, loading };
 };
