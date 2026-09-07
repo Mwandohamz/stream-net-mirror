@@ -13,6 +13,9 @@ import Footer from "@/components/Footer";
 
 const SignIn = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const nextParam = searchParams.get("next");
+  const safeNext = nextParam && /^\/(?!\/)/.test(nextParam) ? nextParam : null;
   const { toast } = useToast();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
