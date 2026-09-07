@@ -9,9 +9,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { motion } from "framer-motion";
 import { Lock, DollarSign, TrendingUp, CreditCard } from "lucide-react";
 import StatCard from "@/components/admin/StatCard";
-import PhoneInput from "react-phone-number-input";
-import { parsePhoneNumber } from "react-phone-number-input";
-import "react-phone-number-input/style.css";
 
 interface Payment {
   customer: string;
