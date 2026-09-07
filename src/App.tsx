@@ -27,6 +27,8 @@ import Analytics from "./pages/admin/Analytics.tsx";
 import Customers from "./pages/admin/Customers.tsx";
 import AdminUsers from "./pages/admin/Users.tsx";
 import AdminPlans from "./pages/admin/Plans.tsx";
+import AdminEmails from "./pages/admin/Emails.tsx";
+
 
 import AdminSettings from "./pages/admin/Settings.tsx";
 import SupportTickets from "./pages/admin/SupportTickets.tsx";
@@ -68,6 +70,8 @@ const AnimatedRoutes = () => {
         <Route path="/admin/customers" element={<AdminRoute><Customers /></AdminRoute>} />
         <Route path="/admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
         <Route path="/admin/plans" element={<AdminRoute><AdminPlans /></AdminRoute>} />
+        <Route path="/admin/emails" element={<AdminRoute><AdminEmails /></AdminRoute>} />
+
 
         <Route path="/admin/settings" element={<AdminRoute><AdminSettings /></AdminRoute>} />
         <Route path="/admin/support" element={<AdminRoute><SupportTickets /></AdminRoute>} />

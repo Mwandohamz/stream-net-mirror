@@ -16,6 +16,8 @@ const Dashboard = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [stats, setStats] = useState({
     totalRevenue: 0,
+    totalRevenueUsd: 0,
+
     organicRevenue: 0,
     influencerRevenue: 0,
     totalPayments: 0,
@@ -71,12 +73,17 @@ const Dashboard = () => {
       const totalRevenue = completedPayments.reduce((sum: number, p: any) => sum + Number(p.amount), 0);
       const organicRevenue = completedPayments.filter((p: any) => !p.promo_code).reduce((sum: number, p: any) => sum + Number(p.amount), 0);
       const influencerRevenue = completedPayments.filter((p: any) => !!p.promo_code).reduce((sum: number, p: any) => sum + Number(p.amount), 0);
+      const usdOf = (p: any) =>
+        p.amount_usd ? Number(p.amount_usd) : p.fx_rate ? Number(p.amount) / Number(p.fx_rate) : 0;
+      const totalRevenueUsd = completedPayments.reduce((sum: number, p: any) => sum + usdOf(p), 0);
       const conversionRate = uniqueSessions > 0 ? ((completedPayments.length / uniqueSessions) * 100) : 0;
 
       setStats({
         totalRevenue,
+        totalRevenueUsd,
         organicRevenue,
         influencerRevenue,
+
         totalPayments: payments.length,
         completedPayments: completedPayments.length,
         todayPayments: (todayData || []).length,
@@ -228,7 +235,7 @@ const Dashboard = () => {
         )}
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <StatCard title="Total Revenue" value={`ZMW ${stats.totalRevenue}`} icon={DollarSign} description="All completed" />
+          <StatCard title="Total Revenue" value={`ZMW ${stats.totalRevenue.toLocaleString()}`} icon={DollarSign} description={`≈ $${stats.totalRevenueUsd.toFixed(2)} USD`} />
           <StatCard title="Organic Revenue" value={`ZMW ${stats.organicRevenue}`} icon={DollarSign} description="No promo code" />
           <StatCard title="Promo Revenue" value={`ZMW ${stats.influencerRevenue}`} icon={TrendingUp} description="Via influencers" />
           <StatCard title="Total Payments" value={stats.totalPayments} icon={CreditCard} description="All statuses" />

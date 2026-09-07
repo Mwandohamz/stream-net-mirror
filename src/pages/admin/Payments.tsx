@@ -5,16 +5,70 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { Card, CardContent } from "@/components/ui/card";
-import { Search, Download, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, Download, ChevronLeft, ChevronRight, Pencil, Trash2 } from "lucide-react";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
 
 const PAGE_SIZE = 100;
+const STATUSES = ["completed", "pending", "failed", "refunded"];
+
 
 const Payments = () => {
+  const { toast } = useToast();
   const [payments, setPayments] = useState<any[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
+  const [editing, setEditing] = useState<any | null>(null);
+  const [editStatus, setEditStatus] = useState("completed");
+  const [editRef, setEditRef] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<any | null>(null);
+
+  const openEdit = (p: any) => {
+    setEditing(p);
+    setEditStatus(String(p.status || "completed").toLowerCase());
+    setEditRef(p.provider_transaction_id || "");
+  };
+
+  const saveEdit = async () => {
+    if (!editing) return;
+    setSaving(true);
+    const { error } = await supabase
+      .from("payments")
+      .update({ status: editStatus, provider_transaction_id: editRef || null })
+      .eq("id", editing.id);
+    setSaving(false);
+    if (error) {
+      toast({ title: "Could not save", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Payment updated" });
+    setEditing(null);
+    void fetchPayments();
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    const { error } = await supabase.from("payments").delete().eq("id", deleteTarget.id);
+    if (error) {
+      toast({ title: "Could not delete", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Payment deleted" });
+    setDeleteTarget(null);
+    void fetchPayments();
+  };
+
 
   useEffect(() => {
     void fetchPayments();
@@ -127,24 +181,32 @@ const Payments = () => {
                   <TableHead>Provider</TableHead>
                   <TableHead>Amount</TableHead>
                   <TableHead>Currency</TableHead>
+                  <TableHead>USD equiv.</TableHead>
                   <TableHead>Promo Code</TableHead>
                   <TableHead>Discount</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Date</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
+
               </TableHeader>
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={10} className="text-center text-muted-foreground py-8">Loading...</TableCell>
+                    <TableCell colSpan={12} className="text-center text-muted-foreground py-8">Loading...</TableCell>
                   </TableRow>
                 ) : filtered.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={10} className="text-center text-muted-foreground py-8">No payments found</TableCell>
+                    <TableCell colSpan={12} className="text-center text-muted-foreground py-8">No payments found</TableCell>
                   </TableRow>
                 ) : (
                   filtered.map((p) => {
                     const normalizedStatus = String(p.status || "").toLowerCase();
+                    const usd = p.amount_usd
+                      ? Number(p.amount_usd)
+                      : p.fx_rate
+                        ? Number(p.amount) / Number(p.fx_rate)
+                        : null;
                     return (
                       <TableRow key={p.id}>
                         <TableCell className="font-medium text-foreground">{p.name}</TableCell>
@@ -153,6 +215,7 @@ const Payments = () => {
                         <TableCell className="capitalize text-muted-foreground">{p.provider}</TableCell>
                         <TableCell className="text-foreground font-medium">{p.amount}</TableCell>
                         <TableCell className="text-muted-foreground">{p.currency || "ZMW"}</TableCell>
+                        <TableCell className="text-muted-foreground">{usd !== null ? `$${usd.toFixed(2)}` : "—"}</TableCell>
                         <TableCell className="text-muted-foreground">{p.promo_code || "—"}</TableCell>
                         <TableCell className="text-muted-foreground">{p.discount_applied ? `${p.discount_applied}%` : "—"}</TableCell>
                         <TableCell>
@@ -171,10 +234,19 @@ const Payments = () => {
                         <TableCell className="text-muted-foreground text-xs whitespace-nowrap">
                           {new Date(p.created_at).toLocaleString()}
                         </TableCell>
+                        <TableCell className="text-right whitespace-nowrap">
+                          <Button variant="ghost" size="icon" title="Edit" onClick={() => openEdit(p)}>
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" title="Delete" onClick={() => setDeleteTarget(p)}>
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </TableCell>
                       </TableRow>
                     );
                   })
                 )}
+
               </TableBody>
             </Table>
           </CardContent>
@@ -193,8 +265,61 @@ const Payments = () => {
             </div>
           </div>
         )}
+
+        <Dialog open={!!editing} onOpenChange={(open) => !open && setEditing(null)}>
+          <DialogContent className="max-w-sm">
+            <DialogHeader>
+              <DialogTitle>Edit payment</DialogTitle>
+              <DialogDescription>{editing?.email}</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Status</Label>
+                <Select value={editStatus} onValueChange={setEditStatus}>
+                  <SelectTrigger className="bg-secondary border-border text-foreground">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {STATUSES.map((s) => (
+                      <SelectItem key={s} value={s} className="capitalize">{s}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Provider reference</Label>
+                <Input
+                  value={editRef}
+                  onChange={(e) => setEditRef(e.target.value)}
+                  placeholder="e.g. 9001134014"
+                  className="bg-secondary border-border text-foreground"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setEditing(null)}>Cancel</Button>
+              <Button onClick={saveEdit} disabled={saving}>{saving ? "Saving..." : "Save"}</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete this payment?</AlertDialogTitle>
+              <AlertDialogDescription>
+                The record for {deleteTarget?.email} will be removed permanently.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={confirmDelete}>Delete</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </AdminLayout>
+
   );
 };
 
