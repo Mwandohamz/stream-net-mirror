@@ -16,6 +16,8 @@ const Dashboard = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [stats, setStats] = useState({
     totalRevenue: 0,
+    totalRevenueUsd: 0,
+
     organicRevenue: 0,
     influencerRevenue: 0,
     totalPayments: 0,
