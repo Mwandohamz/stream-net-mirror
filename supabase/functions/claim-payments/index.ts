@@ -1,6 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
-import { activateSubscriptionForPayment } from "../_shared/subscription.ts";
+import { activateSubscriptionForPayment, escapeLike } from "../_shared/subscription.ts";
 
 // Links any completed payments made with the signed-in user's email to their
 // account and activates/extends their subscription.
