@@ -82,16 +82,18 @@ const InfluencerDashboard = () => {
                 <Input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="your@email.com" className="bg-secondary border-border text-foreground" type="email" />
               </div>
               <div className="space-y-1">
-                <Label className="text-foreground text-sm">Phone Number (password)</Label>
-                <PhoneInput
-                  international
-                  defaultCountry="ZM"
-                  value={phone}
-                  onChange={setPhone}
-                  className="phone-input-dark"
+                <Label className="text-foreground text-sm">Password</Label>
+                <Input
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter" && email && password) handleLogin(); }}
+                  placeholder="Your dashboard password"
+                  className="bg-secondary border-border text-foreground"
+                  type="password"
                 />
+                <p className="text-[10px] text-muted-foreground">Set for you by the admin. Contact them if you don't have one.</p>
               </div>
-              <Button onClick={handleLogin} disabled={!email || loading} className="w-full bg-primary text-primary-foreground">
+              <Button onClick={handleLogin} disabled={!email || !password || loading} className="w-full bg-primary text-primary-foreground">
                 {loading ? "Verifying..." : "View Dashboard"}
               </Button>
             </CardContent>
