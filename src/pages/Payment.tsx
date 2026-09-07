@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,11 +9,16 @@ import { ArrowLeft, Mail, User, Shield, Tag, Check } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import PaymentModal from "@/components/PaymentModal";
-import { useAppSettings } from "@/hooks/useAppSettings";
+import { usePricing } from "@/hooks/usePricing";
+import { usePlans, planIntervalLabel } from "@/hooks/usePlans";
+import { useProfile } from "@/hooks/useProfile";
 import { supabase } from "@/integrations/supabase/client";
 
 const Payment = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const planIdParam = searchParams.get("plan");
+
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
@@ -22,13 +27,23 @@ const Payment = () => {
   const [promoDiscount, setPromoDiscount] = useState(0);
   const [promoChecking, setPromoChecking] = useState(false);
 
-  const { settings, loading } = useAppSettings();
-  const currentPrice = parseFloat(settings.base_price_zmw || "49") || 49;
-  const oldPrice = Math.round(currentPrice / 0.30);
-  const discountedPrice = promoValid ? Math.round(currentPrice * (1 - promoDiscount / 100)) : currentPrice;
+  const { profile } = useProfile();
+  const { plans } = usePlans();
+  const { plan: defaultPlan, currency, formatPrice, loading } = usePricing();
+
+  const plan = (planIdParam && plans.find((p) => p.id === planIdParam)) || defaultPlan;
+  const priceUsd = plan ? Number(plan.price_usd) : null;
+  const discountedUsd = priceUsd !== null && promoValid ? priceUsd * (1 - promoDiscount / 100) : priceUsd;
+
+  useEffect(() => {
+    if (profile) {
+      setName((prev) => prev || profile.full_name || "");
+      setEmail((prev) => prev || profile.email || "");
+    }
+  }, [profile]);
 
   const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  const isValid = name.trim().length >= 2 && emailValid;
+  const isValid = name.trim().length >= 2 && emailValid && priceUsd !== null;
 
   const validatePromo = async () => {
     if (!promoCode.trim()) return;
@@ -72,22 +87,23 @@ const Payment = () => {
             <CardContent className="space-y-5">
               {/* Price display */}
               <div className="bg-primary/10 border border-primary/20 rounded-lg p-4 text-center">
-                <p className="text-sm text-muted-foreground">Total Amount</p>
-                <div className="flex items-baseline justify-center gap-2">
-                  <span className="text-muted-foreground line-through text-lg">
-                    ZMW {loading ? "..." : oldPrice}
-                  </span>
-                  {promoValid && (
+                <p className="text-sm text-muted-foreground">{plan?.name ?? "Plan"} · Total Amount</p>
+                <div className="flex items-baseline justify-center gap-2 flex-wrap">
+                  {promoValid && priceUsd !== null && (
                     <span className="text-muted-foreground line-through text-base">
-                      ZMW {loading ? "..." : currentPrice}
+                      {formatPrice(priceUsd)}
                     </span>
                   )}
                   <span className="netflix-title text-4xl text-primary">
-                    ZMW {loading ? "..." : discountedPrice}
+                    {loading || discountedUsd === null ? "..." : formatPrice(discountedUsd)}
                   </span>
                 </div>
+                {discountedUsd !== null && currency !== "USD" && (
+                  <p className="text-xs text-muted-foreground mt-1">≈ USD {discountedUsd.toFixed(2)}</p>
+                )}
                 <p className="text-xs text-muted-foreground mt-1">
-                  One-time payment · Lifetime access · <span className="text-primary font-semibold">Save 70%{promoValid ? ` + ${promoDiscount}% promo` : ""}</span>
+                  {plan ? planIntervalLabel(plan) : ""}
+                  {promoValid ? <span className="text-primary font-semibold"> · {promoDiscount}% promo applied</span> : null}
                 </p>
               </div>
 
@@ -162,15 +178,18 @@ const Payment = () => {
       <PaymentModal
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
-        onSuccess={(depositId) => {
+        onSuccess={() => {
           setModalOpen(false);
-          navigate(`/signup?email=${encodeURIComponent(email.trim())}&name=${encodeURIComponent(name.trim())}`);
+          if (profile) navigate("/dashboard");
+          else navigate(`/signup?email=${encodeURIComponent(email.trim())}&name=${encodeURIComponent(name.trim())}`);
         }}
         onFailure={(depositId, reason) => {
           console.error("Payment failed:", reason);
         }}
         userName={name.trim()}
         userEmail={email.trim()}
+        priceUsd={discountedUsd}
+        planId={plan?.id}
         promoCode={promoValid ? promoCode.trim().toUpperCase() : undefined}
         discountPercent={promoValid ? promoDiscount : 0}
       />
