@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import AccountOverviewCard from "@/components/member/AccountOverviewCard";
 import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
 import {
@@ -257,6 +258,9 @@ const MemberDashboard = () => {
               </Button>
             </div>
           </div>
+
+          {/* Account & subscription overview */}
+          <AccountOverviewCard />
 
           {/* Temp Password Banner */}
           {showTempPasswordBanner && (

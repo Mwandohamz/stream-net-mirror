@@ -9,6 +9,7 @@ export interface Profile {
   country_iso3: string | null;
   country_name: string | null;
   currency: string | null;
+  avatar_url: string | null;
   created_at: string;
   updated_at: string;
 }
