@@ -53,7 +53,7 @@ const InfluencerDashboard = () => {
     const { data: paymentData } = await supabase.rpc("influencer_payments" as any, {
       _promo_code: promoCode || "",
       _email: email.trim().toLowerCase(),
-      _phone: (phone || "").trim(),
+      _password: password,
     });
 
     const pList = ((paymentData || []) as any[]) as unknown as Payment[];
