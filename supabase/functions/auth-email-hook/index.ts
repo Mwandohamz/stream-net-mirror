@@ -37,9 +37,9 @@ const EMAIL_TEMPLATES: Record<string, React.ComponentType<any>> = {
 
 // Configuration
 const SITE_NAME = "Stream Net Mirror"
-const SENDER_DOMAIN = "notify.afritechsystemsltd.com"
-const ROOT_DOMAIN = "afritechsystemsltd.com"
-const FROM_DOMAIN = "notify.afritechsystemsltd.com" // Domain shown in From address (may be root or sender subdomain)
+const SENDER_DOMAIN = "notify.streamnetmirror.app"
+const ROOT_DOMAIN = "streamnetmirror.app"
+const FROM_DOMAIN = "notify.streamnetmirror.app" // Domain shown in From address (may be root or sender subdomain)
 
 function redactEmail(email: string | null | undefined): string {
   if (!email) return '***'
