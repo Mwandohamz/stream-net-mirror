@@ -15,7 +15,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { NavLink } from "@/components/NavLink";
-import { LayoutDashboard, CreditCard, BarChart3, Users, Settings, LogOut, Megaphone, MessageSquare, UserCog, Package } from "lucide-react";
+import { LayoutDashboard, CreditCard, BarChart3, Users, Settings, LogOut, Megaphone, MessageSquare, UserCog, Package, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const navItems = [
@@ -27,8 +27,10 @@ const navItems = [
   { title: "Customers", url: "/admin/customers", icon: Users, badgeKey: "customers" },
   { title: "Support", url: "/admin/support", icon: MessageSquare, badgeKey: "tickets" },
   { title: "Influencers", url: "/admin/influencers", icon: Megaphone, badgeKey: null },
+  { title: "Emails", url: "/admin/emails", icon: Mail, badgeKey: null },
   { title: "Settings", url: "/admin/settings", icon: Settings, badgeKey: null },
 ] as const;
+
 
 
 const SUCCESS_PAYMENT_STATUSES = ["completed", "success", "succeeded"];
