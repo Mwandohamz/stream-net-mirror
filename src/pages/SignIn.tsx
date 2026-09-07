@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +13,9 @@ import Footer from "@/components/Footer";
 
 const SignIn = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const nextParam = searchParams.get("next");
+  const safeNext = nextParam && /^\/(?!\/)/.test(nextParam) ? nextParam : null;
   const { toast } = useToast();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -24,6 +27,10 @@ const SignIn = () => {
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session?.user) {
+        if (safeNext) {
+          window.location.href = safeNext;
+          return;
+        }
         const { data } = await supabase
           .from("subscribers")
           .select("id, status")
@@ -45,7 +52,7 @@ const SignIn = () => {
         } catch {}
       }
     });
-  }, [navigate]);
+  }, [navigate, safeNext]);
 
   const handleResendVerification = async () => {
     setResending(true);
@@ -84,6 +91,10 @@ const SignIn = () => {
       }
 
       if (data.user) {
+        if (safeNext) {
+          window.location.href = safeNext;
+          return;
+        }
         const { data: sub } = await supabase
           .from("subscribers")
           .select("id, status")
