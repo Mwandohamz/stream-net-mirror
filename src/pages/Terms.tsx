@@ -19,7 +19,7 @@ const Terms = () => {
           <h3 className="netflix-title text-xl text-foreground">1. Service Description</h3>
           <p>Stream Net Mirror provides users with access credentials to the NetMirror streaming portal upon successful payment. We act as an access gateway and do not host, upload, or store any streaming content on our servers.</p>
           <h3 className="netflix-title text-xl text-foreground">2. Payment</h3>
-          <p>The service requires a one-time payment of ZMW 49 via Mobile Money (Airtel Money or MTN MoMo). Payment is processed instantly and access is granted immediately upon confirmation.</p>
+          <p>The service is billed as a subscription at the price shown on the pricing section, charged in your local currency via Mobile Money. Payment is processed instantly and access is granted immediately upon confirmation, then renews each billing period until you cancel.</p>
           <h3 className="netflix-title text-xl text-foreground">3. Chargebacks</h3>
           <p>Filing a chargeback or disputing a legitimate transaction may result in immediate suspension of your account.</p>
           <h3 className="netflix-title text-xl text-foreground">4. Refund Policy</h3>
