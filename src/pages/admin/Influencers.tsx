@@ -255,6 +255,9 @@ const Influencers = () => {
                           <Button variant="ghost" size="icon" onClick={() => toggleActive(inf)} title={inf.is_active ? "Deactivate" : "Activate"}>
                             {inf.is_active ? <ToggleRight size={16} className="text-green-500" /> : <ToggleLeft size={16} className="text-muted-foreground" />}
                           </Button>
+                          <Button variant="ghost" size="icon" onClick={() => { setPwTarget(inf); setNewPassword(""); }} title="Set dashboard password">
+                            <KeyRound size={14} className="text-muted-foreground" />
+                          </Button>
                           <Button variant="ghost" size="icon" onClick={() => copyLink(inf.promo_code)} title="Copy dashboard link">
                             <Copy size={14} className="text-muted-foreground" />
                           </Button>
