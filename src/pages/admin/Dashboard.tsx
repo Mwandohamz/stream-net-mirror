@@ -235,7 +235,7 @@ const Dashboard = () => {
         )}
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <StatCard title="Total Revenue" value={`ZMW ${stats.totalRevenue}`} icon={DollarSign} description="All completed" />
+          <StatCard title="Total Revenue" value={`ZMW ${stats.totalRevenue.toLocaleString()}`} icon={DollarSign} description={`≈ $${stats.totalRevenueUsd.toFixed(2)} USD`} />
           <StatCard title="Organic Revenue" value={`ZMW ${stats.organicRevenue}`} icon={DollarSign} description="No promo code" />
           <StatCard title="Promo Revenue" value={`ZMW ${stats.influencerRevenue}`} icon={TrendingUp} description="Via influencers" />
           <StatCard title="Total Payments" value={stats.totalPayments} icon={CreditCard} description="All statuses" />
