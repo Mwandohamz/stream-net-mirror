@@ -265,8 +265,61 @@ const Payments = () => {
             </div>
           </div>
         )}
+
+        <Dialog open={!!editing} onOpenChange={(open) => !open && setEditing(null)}>
+          <DialogContent className="max-w-sm">
+            <DialogHeader>
+              <DialogTitle>Edit payment</DialogTitle>
+              <DialogDescription>{editing?.email}</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Status</Label>
+                <Select value={editStatus} onValueChange={setEditStatus}>
+                  <SelectTrigger className="bg-secondary border-border text-foreground">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {STATUSES.map((s) => (
+                      <SelectItem key={s} value={s} className="capitalize">{s}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Provider reference</Label>
+                <Input
+                  value={editRef}
+                  onChange={(e) => setEditRef(e.target.value)}
+                  placeholder="e.g. 9001134014"
+                  className="bg-secondary border-border text-foreground"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setEditing(null)}>Cancel</Button>
+              <Button onClick={saveEdit} disabled={saving}>{saving ? "Saving..." : "Save"}</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete this payment?</AlertDialogTitle>
+              <AlertDialogDescription>
+                The record for {deleteTarget?.email} will be removed permanently.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={confirmDelete}>Delete</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </AdminLayout>
+
   );
 };
 
