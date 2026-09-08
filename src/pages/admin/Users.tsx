@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import CountdownBadge from "@/components/CountdownBadge";
 import { supabase } from "@/integrations/supabase/client";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Input } from "@/components/ui/input";
@@ -237,6 +238,9 @@ const AdminUsers = () => {
           {active ? "Active" : sub.status === "cancelled" ? "Cancelled" : "Expired"}
         </Badge>
         <p className="text-[11px] text-muted-foreground">until {end.toLocaleDateString()}</p>
+        {sub.status !== "cancelled" && (
+          <CountdownBadge target={new Date(end.getTime() + (sub.grace_days ?? 0) * 86400000)} />
+        )}
       </div>
     );
   };

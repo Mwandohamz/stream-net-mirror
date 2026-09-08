@@ -19,3 +19,7 @@ project_id = "rhobeyejmrnnreepacmr"
     verify_jwt = false
   [functions.validate-admin-email]
     verify_jwt = false
+  [functions.preview-transactional-email]
+    verify_jwt = false
+  [functions.subscription-emails]
+    verify_jwt = false

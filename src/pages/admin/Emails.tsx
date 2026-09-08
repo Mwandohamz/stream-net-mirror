@@ -5,7 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Search, ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
+import { Search, ChevronLeft, ChevronRight, RefreshCw, Send } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 const PAGE_SIZE = 100;
 
@@ -25,6 +26,28 @@ const Emails = () => {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
   const [total, setTotal] = useState(0);
+  const [reminderDays, setReminderDays] = useState("3");
+  const [sending, setSending] = useState(false);
+  const [lastRun, setLastRun] = useState<string | null>(null);
+  const { toast } = useToast();
+
+  const sendReminders = async () => {
+    setSending(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("subscription-emails", {
+        body: { days: Number(reminderDays) || 0 },
+      });
+      if (error) throw error;
+      const summary = `${data?.reminders ?? 0} reminder(s), ${data?.expired ?? 0} expiry notice(s), ${data?.skipped ?? 0} skipped`;
+      setLastRun(`Last run: ${summary}`);
+      toast({ title: "Reminders sent", description: summary });
+      void fetchRows();
+    } catch (err: any) {
+      toast({ title: "Could not send reminders", description: err?.message ?? "Unexpected error", variant: "destructive" });
+    } finally {
+      setSending(false);
+    }
+  };
 
   useEffect(() => {
     void fetchRows();
@@ -79,6 +102,35 @@ const Emails = () => {
               Payment confirmations, renewal reminders and account emails all appear here with their delivery result.
             </CardDescription>
           </CardHeader>
+        </Card>
+
+        <Card className="bg-card border-border">
+          <CardHeader>
+            <CardTitle className="text-foreground text-base">Renewal reminders</CardTitle>
+            <CardDescription>
+              Send reminder emails to everyone whose access ends within the number of days below.
+              Members already past their end date get an expiry notice instead. Each person only
+              receives one email per billing period, so it is safe to run this more than once.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-wrap items-end gap-3">
+            <div className="space-y-1">
+              <p className="text-xs text-muted-foreground">Days ahead</p>
+              <Input
+                type="number"
+                min={0}
+                max={30}
+                value={reminderDays}
+                onChange={(e) => setReminderDays(e.target.value)}
+                className="w-28 bg-secondary border-border text-foreground"
+              />
+            </div>
+            <Button onClick={sendReminders} disabled={sending} className="gap-2">
+              <Send className="h-4 w-4" />
+              {sending ? "Sending..." : "Send reminders now"}
+            </Button>
+            {lastRun && <p className="text-xs text-muted-foreground">{lastRun}</p>}
+          </CardContent>
         </Card>
 
         <div className="relative max-w-sm">
