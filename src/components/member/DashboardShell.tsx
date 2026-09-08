@@ -58,7 +58,7 @@ const DashboardShell = ({ tab, onTabChange, children }: Props) => {
       <header className="fixed top-0 left-0 right-0 z-40 h-14 border-b border-border bg-background/95 backdrop-blur">
         <div className="flex h-full items-center justify-between px-3 md:px-5">
           <Link to="/" className="flex items-center gap-2">
-            <LogoShowcase size="sm" />
+            <LogoShowcase size="md" />
             <span className="netflix-title text-sm md:text-lg text-primary">STREAMNETMIRROR</span>
           </Link>
 
