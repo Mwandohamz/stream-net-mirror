@@ -3,12 +3,14 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { motion } from "framer-motion";
-import { ArrowLeft, Mail, User, Shield, Tag, Check } from "lucide-react";
+import { ArrowLeft, Mail, User, Shield, Tag, Check, Loader2 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import PaymentModal from "@/components/PaymentModal";
+import TermsDialog from "@/components/TermsDialog";
 import { usePricing } from "@/hooks/usePricing";
 import { usePlans, planIntervalLabel } from "@/hooks/usePlans";
 import { useProfile } from "@/hooks/useProfile";
@@ -29,11 +31,20 @@ const Payment = () => {
   const [promoValid, setPromoValid] = useState<null | boolean>(null);
   const [promoDiscount, setPromoDiscount] = useState(0);
   const [promoChecking, setPromoChecking] = useState(false);
+  const [termsOk, setTermsOk] = useState(false);
+  const [termsOpen, setTermsOpen] = useState(false);
 
   const { profile } = useProfile();
   const { plans } = usePlans();
   const { plan: defaultPlan, currency, formatPrice, loading } = usePricing();
-  const { isMember, renewsOn } = useMembership();
+  const { isMember, renewsOn, state } = useMembership();
+
+  // An account always comes first — nobody can reach checkout as a visitor.
+  useEffect(() => {
+    if (state === "guest") {
+      navigate(`/signup?next=${encodeURIComponent(`/payment${planIdParam ? `?plan=${planIdParam}` : ""}`)}`, { replace: true });
+    }
+  }, [state, navigate, planIdParam]);
 
   const plan = (planIdParam && plans.find((p) => p.id === planIdParam)) || defaultPlan;
   const priceUsd = plan ? Number(plan.price_usd) : null;
@@ -47,7 +58,8 @@ const Payment = () => {
   }, [profile]);
 
   const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  const isValid = name.trim().length >= 2 && emailValid && priceUsd !== null;
+  const isValid = name.trim().length >= 2 && emailValid && priceUsd !== null && termsOk;
+
 
   const validatePromo = async () => {
     if (!promoCode.trim()) return;
