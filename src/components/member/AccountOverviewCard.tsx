@@ -106,12 +106,12 @@ const AccountOverviewCard = () => {
   };
 
   return (
-    <Card className="bg-card border-border">
-      <CardContent className="p-5 md:p-6 space-y-5">
-        <div className="flex items-start gap-4 flex-wrap">
+    <Card className="overflow-hidden border-border bg-card">
+      <CardContent className="space-y-5 p-5 md:p-6">
+        <div className="flex flex-wrap items-start gap-4">
           {/* Avatar */}
-          <div className="relative">
-            <Avatar className="h-20 w-20 border-2 border-primary/40">
+          <div className="relative shrink-0">
+            <Avatar className="h-16 w-16 border-2 border-primary/40 md:h-20 md:w-20">
               <AvatarImage src={(profile as any)?.avatar_url || undefined} alt={profile?.full_name || "Profile picture"} />
               <AvatarFallback className="bg-secondary text-foreground text-lg font-semibold">{initials}</AvatarFallback>
             </Avatar>
@@ -159,16 +159,21 @@ const AccountOverviewCard = () => {
               </div>
             ) : (
               <>
-                <div className="flex items-center gap-2">
-                  <h2 className="netflix-title text-xl text-foreground">
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                  <h2 className="netflix-title break-words text-lg md:text-xl text-foreground">
                     {profileLoading ? "…" : profile?.full_name || "Your account"}
                   </h2>
-                  <Button size="sm" variant="ghost" className="h-7 px-2 text-muted-foreground" onClick={() => setEditing(true)}>
-                    <Pencil size={13} />
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-7 gap-1 px-2 text-xs text-muted-foreground"
+                    onClick={() => setEditing(true)}
+                  >
+                    <Pencil size={12} /> Edit
                   </Button>
                 </div>
-                <p className="text-sm text-muted-foreground">{profile?.email}</p>
-                <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground pt-1">
+                <p className="break-all text-sm text-muted-foreground">{profile?.email}</p>
+                <div className="flex flex-wrap gap-x-4 gap-y-1 pt-1 text-xs text-muted-foreground">
                   {profile?.phone && <span>{profile.phone}</span>}
                   {profile?.country_name && <span>{profile.country_name}</span>}
                   {profile?.currency && <span>Currency: {profile.currency}</span>}
@@ -178,6 +183,7 @@ const AccountOverviewCard = () => {
             )}
           </div>
         </div>
+
 
         {/* Subscription status */}
         <div className="rounded-lg border border-border bg-secondary/40 p-4 space-y-3">

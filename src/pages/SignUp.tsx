@@ -44,7 +44,7 @@ const SignUp = () => {
     setLoading(true);
 
     try {
-      const { error: authError } = await supabase.auth.signUp({
+      const { data, error: authError } = await supabase.auth.signUp({
         email: email.trim().toLowerCase(),
         password,
         options: {
@@ -62,6 +62,14 @@ const SignUp = () => {
       if (authError) {
         setError(authError.message);
         setLoading(false);
+        return;
+      }
+
+      // When email confirmation is off, the account is signed in right away —
+      // take them straight into their dashboard.
+      if (data.session) {
+        toast({ title: "Welcome!", description: "Your account is ready." });
+        navigate("/dashboard", { replace: true });
         return;
       }
 

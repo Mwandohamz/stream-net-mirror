@@ -9,7 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { LayoutDashboard, Clapperboard, Trophy, Download, CreditCard, LifeBuoy, LogOut, Settings, Home } from "lucide-react";
+import { LayoutDashboard, Clapperboard, Trophy, Download, CreditCard, LifeBuoy, LogOut, Settings, Home, Film, Tv, Compass } from "lucide-react";
 import LogoShowcase from "@/components/LogoShowcase";
 import CountdownBadge from "@/components/CountdownBadge";
 import { supabase } from "@/integrations/supabase/client";
@@ -26,6 +26,15 @@ export const DASHBOARD_TABS: { id: DashboardTab; label: string; short: string; i
   { id: "billing", label: "Billing", short: "Billing", icon: CreditCard },
   { id: "support", label: "Support", short: "Help", icon: LifeBuoy },
 ];
+
+/** Public pages, presented inside the dashboard so members never feel signed out. */
+const EXPLORE_LINKS: { label: string; href: string; icon: typeof Home }[] = [
+  { label: "Home", href: "/", icon: Home },
+  { label: "Movies", href: "/#trending", icon: Film },
+  { label: "TV Series", href: "/#trending", icon: Tv },
+  { label: "Live Sports page", href: "/live-sports", icon: Compass },
+];
+
 
 interface Props {
   tab: DashboardTab;
@@ -85,9 +94,13 @@ const DashboardShell = ({ tab, onTabChange, children }: Props) => {
                 <DropdownMenuItem onClick={() => onTabChange("billing")}>
                   <CreditCard className="mr-2 h-4 w-4" /> Billing
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate("/")}>
-                  <Home className="mr-2 h-4 w-4" /> Main site
-                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground">Browse the site</DropdownMenuLabel>
+                {EXPLORE_LINKS.map((l) => (
+                  <DropdownMenuItem key={l.label} onClick={() => navigate(l.href)}>
+                    <l.icon className="mr-2 h-4 w-4" /> {l.label}
+                  </DropdownMenuItem>
+                ))}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={signOut}>
                   <LogOut className="mr-2 h-4 w-4" /> Sign out
@@ -99,26 +112,41 @@ const DashboardShell = ({ tab, onTabChange, children }: Props) => {
       </header>
 
       {/* Desktop sidebar */}
-      <aside className="fixed left-0 top-14 bottom-0 z-30 hidden w-56 border-r border-border bg-card/40 p-3 md:block">
-        <nav className="space-y-1">
-          {DASHBOARD_TABS.map((t) => (
-            <button
-              key={t.id}
-              onClick={() => onTabChange(t.id)}
-              className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors ${
-                tab === t.id ? "bg-primary/15 text-primary font-medium" : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
-              }`}
-            >
-              <t.icon size={16} /> {t.label}
-            </button>
-          ))}
-        </nav>
-        <div className="absolute bottom-4 left-3 right-3">
-          <Button variant="ghost" size="sm" className="w-full justify-start gap-2 text-muted-foreground" onClick={signOut}>
-            <LogOut size={16} /> Sign out
-          </Button>
+      <aside className="fixed left-0 top-14 bottom-0 z-30 hidden w-56 flex-col justify-between overflow-y-auto border-r border-border bg-card/40 p-3 md:flex">
+        <div>
+          <p className="px-3 pb-1 pt-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">My account</p>
+          <nav className="space-y-1">
+            {DASHBOARD_TABS.map((t) => (
+              <button
+                key={t.id}
+                onClick={() => onTabChange(t.id)}
+                className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors ${
+                  tab === t.id ? "bg-primary/15 text-primary font-medium" : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                }`}
+              >
+                <t.icon size={16} /> {t.label}
+              </button>
+            ))}
+          </nav>
+
+          <p className="px-3 pb-1 pt-5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">Browse the site</p>
+          <nav className="space-y-1">
+            {EXPLORE_LINKS.map((l) => (
+              <Link
+                key={l.label}
+                to={l.href}
+                className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+              >
+                <l.icon size={16} /> {l.label}
+              </Link>
+            ))}
+          </nav>
         </div>
+        <Button variant="ghost" size="sm" className="w-full justify-start gap-2 text-muted-foreground" onClick={signOut}>
+          <LogOut size={16} /> Sign out
+        </Button>
       </aside>
+
 
       {/* Mobile segmented switcher */}
       <div className="fixed top-14 left-0 right-0 z-30 overflow-x-auto border-b border-border bg-background/95 px-3 py-2 backdrop-blur md:hidden">

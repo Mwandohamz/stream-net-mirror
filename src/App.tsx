@@ -105,7 +105,11 @@ const AnimatedRoutes = () => {
 
 const StatusStrip = () => {
   const location = useLocation();
-  if (location.pathname.startsWith("/admin") || location.pathname.startsWith("/influencer")) return null;
+  if (
+    location.pathname.startsWith("/admin") ||
+    location.pathname.startsWith("/influencer") ||
+    location.pathname.startsWith("/dashboard")
+  ) return null;
   return <MembershipBanner />;
 };
 
