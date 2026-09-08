@@ -226,39 +226,67 @@ const MemberDashboard = () => {
   return (
     <DashboardShell tab={tab} onTabChange={setTab}>
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-3xl mx-auto space-y-6">
-          {/* Header */}
-          <div className="flex items-center justify-between flex-wrap gap-2">
-            <div>
-              <h1 className="netflix-title text-2xl md:text-4xl text-foreground">
-                WELCOME, {userName.toUpperCase()}!
-              </h1>
-              <p className="text-sm text-muted-foreground">Your StreamNetMirror membership is active</p>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                className="border-border text-foreground gap-1"
-                onClick={() => {
-                  navigator.clipboard.writeText(window.location.origin + "/dashboard");
-                  toast({ title: "Link copied!", description: "Dashboard link copied to clipboard." });
-                }}
-              >
-                <Copy size={14} /> Copy Link
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="border-border text-foreground gap-1"
-                onClick={() => {
-                  const text = encodeURIComponent(`Check out StreamNetMirror - Lifetime streaming access! ${window.location.origin}`);
-                  window.open(`https://wa.me/?text=${text}`, "_blank");
-                }}
-              >
-                <Share2 size={14} /> WhatsApp
-              </Button>
+          {/* Welcome hero */}
+          <div className="relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-primary/15 via-card to-card p-5 md:p-6">
+            <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-primary/20 blur-3xl" />
+            <div className="relative space-y-4">
+              <div className="space-y-1">
+                <span
+                  className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium ${
+                    membership.isMember
+                      ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-400"
+                      : "border-amber-500/40 bg-amber-500/10 text-amber-400"
+                  }`}
+                >
+                  <CheckCircle2 size={12} aria-hidden="true" />
+                  {membership.isMember
+                    ? membership.daysLeft !== null
+                      ? `Membership active — ${membership.daysLeft} day${membership.daysLeft === 1 ? "" : "s"} left`
+                      : "Membership active"
+                    : "Membership inactive"}
+                </span>
+                <h1 className="netflix-title break-words text-2xl leading-tight text-foreground md:text-4xl">
+                  Welcome back{userName ? `, ${userName.split(" ")[0]}` : ""}
+                </h1>
+                <p className="text-sm text-muted-foreground">
+                  Everything you need — streaming links, live sports and downloads — in one place.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  size="sm"
+                  className="gap-1 bg-primary text-primary-foreground hover:bg-primary/80"
+                  onClick={() => setTab("streaming")}
+                >
+                  <Play size={14} /> Start watching
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1 border-border text-foreground"
+                  onClick={() => {
+                    navigator.clipboard.writeText(window.location.origin + "/dashboard");
+                    toast({ title: "Link copied!", description: "Dashboard link copied to clipboard." });
+                  }}
+                >
+                  <Copy size={14} /> Copy link
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1 border-border text-foreground"
+                  onClick={() => {
+                    const text = encodeURIComponent(`Check out StreamNetMirror - Lifetime streaming access! ${window.location.origin}`);
+                    window.open(`https://wa.me/?text=${text}`, "_blank");
+                  }}
+                >
+                  <Share2 size={14} /> Share
+                </Button>
+              </div>
             </div>
           </div>
+
 
           {(tab === "overview" || tab === "streaming") && (<>
 
