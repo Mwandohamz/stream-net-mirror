@@ -225,9 +225,25 @@ const AdminPlans = () => {
               </div>
             </div>
             <div className="flex items-center gap-2">
+            <div className="space-y-2 rounded-md border border-border p-3">
+              <Label className="mb-0">Included categories</Label>
+              <p className="text-xs text-muted-foreground">Tick everything this plan unlocks for the customer.</p>
+              {categories.map((c) => (
+                <div key={c.id} className="flex items-center gap-2">
+                  <Checkbox
+                    id={`cat-${c.id}`}
+                    checked={form.category_slugs.includes(c.slug)}
+                    onCheckedChange={() => toggleCategory(c.slug)}
+                  />
+                  <Label htmlFor={`cat-${c.id}`} className="mb-0 text-sm font-normal">{c.name}</Label>
+                </div>
+              ))}
+            </div>
+            <div className="flex items-center gap-2">
               <Switch checked={form.is_active} onCheckedChange={(v) => setForm({ ...form, is_active: v })} />
               <Label className="mb-0">Visible to customers</Label>
             </div>
+
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
