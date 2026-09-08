@@ -94,9 +94,13 @@ const DashboardShell = ({ tab, onTabChange, children }: Props) => {
                 <DropdownMenuItem onClick={() => onTabChange("billing")}>
                   <CreditCard className="mr-2 h-4 w-4" /> Billing
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate("/")}>
-                  <Home className="mr-2 h-4 w-4" /> Main site
-                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground">Browse the site</DropdownMenuLabel>
+                {EXPLORE_LINKS.map((l) => (
+                  <DropdownMenuItem key={l.label} onClick={() => navigate(l.href)}>
+                    <l.icon className="mr-2 h-4 w-4" /> {l.label}
+                  </DropdownMenuItem>
+                ))}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={signOut}>
                   <LogOut className="mr-2 h-4 w-4" /> Sign out
