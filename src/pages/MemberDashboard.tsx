@@ -594,19 +594,11 @@ const MemberDashboard = () => {
           </>)}
 
           {tab === "sports" && (
-            <CategoryLinks
-              slug="live-sports"
-              title="LIVE SPORTS"
-              blurb="Watch UEFA Champions League, Premier League, LaLiga, Bundesliga and Sky Sports Football from anywhere. We find, test and refresh these links for you — if one is slow, try the next."
-            />
+            <CategoryLinks slug="live-sports" unlocked />
           )}
 
           {tab === "downloads" && (
-            <CategoryLinks
-              slug="downloads"
-              title="MOVIE DOWNLOADS & TOOLS"
-              blurb="Links and software you can use to download movies and shows. Use a download manager for the best speeds and never enter personal details on a third-party site."
-            />
+            <CategoryLinks slug="downloads" unlocked />
           )}
 
           {(tab === "overview" || tab === "billing" || tab === "support") && (<>
