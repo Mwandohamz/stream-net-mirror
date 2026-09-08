@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useMembership } from "@/hooks/useMembership";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -82,6 +83,7 @@ const MemberDashboard = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showAccountSettings, setShowAccountSettings] = useState(false);
   const [tab, setTab] = useState<DashboardTab>("overview");
+  const membership = useMembership();
 
 
   const streamingLink1 = settings.streaming_link_1 || "";
