@@ -13,8 +13,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Plus, Pencil, Trash2, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { usePlans, planIntervalLabel, type Plan } from "@/hooks/usePlans";
+import { useContent } from "@/hooks/useContent";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useFxRates } from "@/hooks/useFxRates";
 import { formatCurrencyAmount } from "@/lib/currency";
+
 
 const emptyPlan = {
   id: "",
@@ -25,7 +28,9 @@ const emptyPlan = {
   price_usd: 2,
   is_active: true,
   sort_order: 0,
+  category_slugs: ["netmirror"] as string[],
 };
+
 
 const AdminPlans = () => {
   const { toast } = useToast();
