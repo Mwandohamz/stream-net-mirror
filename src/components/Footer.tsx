@@ -47,6 +47,10 @@ const LegalDialog = ({ title, content, fullPageLink }: { title: string; content:
 );
 
 const Footer = () => {
+  const { state } = useMembership();
+  // Support is a member benefit — visitors without an account see sign-up instead.
+  const hasAccount = state !== "guest" && state !== "loading";
+
   return (
     <footer className="bg-background border-t border-border pt-8 md:pt-12 pb-4 md:pb-6">
       <div className="container mx-auto px-4">
@@ -58,18 +62,25 @@ const Footer = () => {
               { label: "Privacy Policy", dialog: "privacy" },
               { label: "DMCA", href: "#" },
             ]},
-            { title: "Support", items: [
-              { label: "FAQ", href: "#faq" },
-              { label: "Help Center", href: "#" },
-              { label: "Contact Us", href: "mailto:shuvaegonera@gmail.com" },
-              { label: "My Account", href: "/signin" },
-            ]},
+            { title: hasAccount ? "Support" : "Get started", items: hasAccount
+              ? [
+                  { label: "FAQ", href: "#faq" },
+                  { label: "Help Center", href: "/support" },
+                  { label: "Contact Us", href: "mailto:shuvaegonera@gmail.com" },
+                  { label: "My Account", href: "/dashboard" },
+                ]
+              : [
+                  { label: "FAQ", href: "#faq" },
+                  { label: "Create Account", href: "/signup" },
+                  { label: "Sign In", href: "/signin" },
+                ]},
             { title: "Stream", items: [
               { label: "Movies", href: "/#trending" },
               { label: "TV Series", href: "/#trending" },
-              { label: "Originals", href: "/#trending" },
+              { label: "Live Sports", href: "/live-sports" },
               { label: "New Releases", href: "/#trending" },
             ]},
+
             { title: "Download", items: [
               { label: "Android APK", href: "#download" },
               { label: "iOS (WebView)", href: "#" },
