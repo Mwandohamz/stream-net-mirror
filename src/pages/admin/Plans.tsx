@@ -224,8 +224,8 @@ const AdminPlans = () => {
                 <Input type="number" value={form.sort_order} onChange={(e) => setForm({ ...form, sort_order: Number(e.target.value) })} />
               </div>
             </div>
-            <div className="flex items-center gap-2">
             <div className="space-y-2 rounded-md border border-border p-3">
+
               <Label className="mb-0">Included categories</Label>
               <p className="text-xs text-muted-foreground">Tick everything this plan unlocks for the customer.</p>
               {categories.map((c) => (
