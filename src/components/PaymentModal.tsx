@@ -9,7 +9,7 @@ import { SUPPORTED_COUNTRIES, DEFAULT_COUNTRY, type Country } from "@/data/count
 import { useFxRates } from "@/hooks/useFxRates";
 import { useActiveConf, type ProviderConf } from "@/hooks/useActiveConf";
 import { usePaymentStatus } from "@/hooks/usePaymentStatus";
-import { initiateDeposit, predictProvider } from "@/lib/pawapay";
+import { initiateDeposit, predictProvider, expireDeposit } from "@/lib/pawapay";
 import { formatCurrencyAmount, roundForCurrency } from "@/lib/currency";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -25,13 +25,16 @@ interface PaymentModalProps {
   /** Plan price in USD (after any promo discount). Prices come from the admin dashboard. */
   priceUsd: number | null;
   planId?: string;
+  /** True when the customer ticked the terms box on the checkout page. */
+  termsAccepted?: boolean;
 }
+
 
 type Step = 1 | 2 | 3;
 
 const STEP_LABELS = ["Country & Price", "Phone & Pay", "Payment"];
 
-export default function PaymentModal({ isOpen, onClose, onSuccess, onFailure, userName, userEmail, promoCode, discountPercent = 0, priceUsd, planId }: PaymentModalProps) {
+export default function PaymentModal({ isOpen, onClose, onSuccess, onFailure, userName, userEmail, promoCode, discountPercent = 0, priceUsd, planId, termsAccepted }: PaymentModalProps) {
   const [step, setStep] = useState<Step>(1);
   const [country, setCountry] = useState<Country>(DEFAULT_COUNTRY);
   const [selectedProvider, setSelectedProvider] = useState<ProviderConf | null>(null);
@@ -60,7 +63,14 @@ export default function PaymentModal({ isOpen, onClose, onSuccess, onFailure, us
     if (paymentResult.status === "COMPLETED") {
       onSuccess(depositId!);
     }
+    // The mobile money prompt only lives for 10 minutes — record the expiry so
+    // the admin dashboard shows why the payment never completed.
+    if (paymentResult.status === "TIMEOUT" && depositId) {
+      void expireDeposit(depositId).catch(() => undefined);
+      onFailure(depositId, "Payment window expired after 10 minutes");
+    }
   }, [paymentResult.status]);
+
 
   // Revival timer
   useEffect(() => {
