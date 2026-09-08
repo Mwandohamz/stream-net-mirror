@@ -594,11 +594,19 @@ const MemberDashboard = () => {
           </>)}
 
           {tab === "sports" && (
-            <CategoryLinks slug="live-sports" unlocked />
+            <CategoryLinks
+              slug="live-sports"
+              unlocked={membership.isMember}
+              onUnlockClick={() => navigate("/payment")}
+            />
           )}
 
           {tab === "downloads" && (
-            <CategoryLinks slug="downloads" unlocked />
+            <CategoryLinks
+              slug="downloads"
+              unlocked={membership.isMember}
+              onUnlockClick={() => navigate("/payment")}
+            />
           )}
 
           {(tab === "overview" || tab === "billing" || tab === "support") && (<>
