@@ -184,6 +184,18 @@ const Payment = () => {
                 )}
               </div>
 
+              {/* Terms & conditions */}
+              <div className="flex items-start gap-2 rounded-lg border border-border bg-secondary/40 p-3">
+                <Checkbox id="terms" checked={termsOk} onCheckedChange={(v) => setTermsOk(v === true)} className="mt-0.5" />
+                <Label htmlFor="terms" className="text-xs text-muted-foreground leading-relaxed font-normal">
+                  I agree to the{" "}
+                  <button type="button" onClick={() => setTermsOpen(true)} className="text-primary underline font-semibold">
+                    Terms &amp; Conditions
+                  </button>{" "}
+                  and understand what StreamNetMirror provides.
+                </Label>
+              </div>
+
               <Button
                 onClick={() => setModalOpen(true)}
                 disabled={!isValid}
@@ -198,21 +210,22 @@ const Payment = () => {
               </div>
 
               <p className="text-[10px] text-muted-foreground/40 text-center leading-relaxed">
-                By completing this payment, you agree to our Terms & Conditions. Refunds are available within 7 days of purchase.
-                Contact shuvaegonera@gmail.com for refund requests. Chargebacks may result in account suspension.
+                Payment requests expire after 10 minutes if not approved on your phone. Refunds are available within 7 days
+                of purchase — contact shuvaegonera@gmail.com. Chargebacks may result in account suspension.
               </p>
             </CardContent>
           </Card>
         </motion.div>
       </div>
 
+      <TermsDialog open={termsOpen} onOpenChange={setTermsOpen} />
+
       <PaymentModal
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
         onSuccess={() => {
           setModalOpen(false);
-          if (profile) navigate("/dashboard");
-          else navigate(`/signup?email=${encodeURIComponent(email.trim())}&name=${encodeURIComponent(name.trim())}`);
+          navigate("/dashboard");
         }}
         onFailure={(depositId, reason) => {
           console.error("Payment failed:", reason);
@@ -223,7 +236,9 @@ const Payment = () => {
         planId={plan?.id}
         promoCode={promoValid ? promoCode.trim().toUpperCase() : undefined}
         discountPercent={promoValid ? promoDiscount : 0}
+        termsAccepted={termsOk}
       />
+
 
       <Footer />
     </div>
