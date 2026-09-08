@@ -10,7 +10,10 @@ export interface Plan {
   price_usd: number;
   is_active: boolean;
   sort_order: number;
+  /** Which content categories this plan unlocks, e.g. ["netmirror","live-sports"]. */
+  category_slugs: string[];
 }
+
 
 export function usePlans(includeInactive = false) {
   const [plans, setPlans] = useState<Plan[]>([]);

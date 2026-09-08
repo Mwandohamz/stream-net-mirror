@@ -35,6 +35,92 @@ export type Database = {
         }
         Relationships: []
       }
+      content_categories: {
+        Row: {
+          created_at: string
+          description: string | null
+          icon: string | null
+          id: string
+          is_active: boolean
+          name: string
+          slug: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          slug: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          slug?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      content_links: {
+        Row: {
+          category_id: string
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          logo_url: string | null
+          platform: string
+          sort_order: number
+          title: string
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          category_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          logo_url?: string | null
+          platform?: string
+          sort_order?: number
+          title: string
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          category_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          logo_url?: string | null
+          platform?: string
+          sort_order?: number
+          title?: string
+          updated_at?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_links_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "content_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       email_log: {
         Row: {
           created_at: string
@@ -147,6 +233,7 @@ export type Database = {
           deposit_id: string | null
           discount_applied: number | null
           email: string
+          expires_at: string | null
           failure_reason: string | null
           fx_rate: number | null
           id: string
@@ -158,6 +245,7 @@ export type Database = {
           provider_transaction_id: string | null
           status: string
           subscription_id: string | null
+          terms_accepted_at: string | null
           transaction_id: string | null
           user_id: string | null
         }
@@ -170,6 +258,7 @@ export type Database = {
           deposit_id?: string | null
           discount_applied?: number | null
           email: string
+          expires_at?: string | null
           failure_reason?: string | null
           fx_rate?: number | null
           id?: string
@@ -181,6 +270,7 @@ export type Database = {
           provider_transaction_id?: string | null
           status?: string
           subscription_id?: string | null
+          terms_accepted_at?: string | null
           transaction_id?: string | null
           user_id?: string | null
         }
@@ -193,6 +283,7 @@ export type Database = {
           deposit_id?: string | null
           discount_applied?: number | null
           email?: string
+          expires_at?: string | null
           failure_reason?: string | null
           fx_rate?: number | null
           id?: string
@@ -204,6 +295,7 @@ export type Database = {
           provider_transaction_id?: string | null
           status?: string
           subscription_id?: string | null
+          terms_accepted_at?: string | null
           transaction_id?: string | null
           user_id?: string | null
         }
@@ -226,6 +318,7 @@ export type Database = {
       }
       plans: {
         Row: {
+          category_slugs: string[]
           created_at: string
           description: string | null
           id: string
@@ -238,6 +331,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          category_slugs?: string[]
           created_at?: string
           description?: string | null
           id?: string
@@ -250,6 +344,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          category_slugs?: string[]
           created_at?: string
           description?: string | null
           id?: string

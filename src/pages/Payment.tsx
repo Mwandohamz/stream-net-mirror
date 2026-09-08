@@ -3,12 +3,14 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { motion } from "framer-motion";
-import { ArrowLeft, Mail, User, Shield, Tag, Check } from "lucide-react";
+import { ArrowLeft, Mail, User, Shield, Tag, Check, Loader2 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import PaymentModal from "@/components/PaymentModal";
+import TermsDialog from "@/components/TermsDialog";
 import { usePricing } from "@/hooks/usePricing";
 import { usePlans, planIntervalLabel } from "@/hooks/usePlans";
 import { useProfile } from "@/hooks/useProfile";
@@ -29,11 +31,20 @@ const Payment = () => {
   const [promoValid, setPromoValid] = useState<null | boolean>(null);
   const [promoDiscount, setPromoDiscount] = useState(0);
   const [promoChecking, setPromoChecking] = useState(false);
+  const [termsOk, setTermsOk] = useState(false);
+  const [termsOpen, setTermsOpen] = useState(false);
 
   const { profile } = useProfile();
   const { plans } = usePlans();
   const { plan: defaultPlan, currency, formatPrice, loading } = usePricing();
-  const { isMember, renewsOn } = useMembership();
+  const { isMember, renewsOn, state } = useMembership();
+
+  // An account always comes first — nobody can reach checkout as a visitor.
+  useEffect(() => {
+    if (state === "guest") {
+      navigate(`/signup?next=${encodeURIComponent(`/payment${planIdParam ? `?plan=${planIdParam}` : ""}`)}`, { replace: true });
+    }
+  }, [state, navigate, planIdParam]);
 
   const plan = (planIdParam && plans.find((p) => p.id === planIdParam)) || defaultPlan;
   const priceUsd = plan ? Number(plan.price_usd) : null;
@@ -47,7 +58,8 @@ const Payment = () => {
   }, [profile]);
 
   const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  const isValid = name.trim().length >= 2 && emailValid && priceUsd !== null;
+  const isValid = name.trim().length >= 2 && emailValid && priceUsd !== null && termsOk;
+
 
   const validatePromo = async () => {
     if (!promoCode.trim()) return;
@@ -172,6 +184,18 @@ const Payment = () => {
                 )}
               </div>
 
+              {/* Terms & conditions */}
+              <div className="flex items-start gap-2 rounded-lg border border-border bg-secondary/40 p-3">
+                <Checkbox id="terms" checked={termsOk} onCheckedChange={(v) => setTermsOk(v === true)} className="mt-0.5" />
+                <Label htmlFor="terms" className="text-xs text-muted-foreground leading-relaxed font-normal">
+                  I agree to the{" "}
+                  <button type="button" onClick={() => setTermsOpen(true)} className="text-primary underline font-semibold">
+                    Terms &amp; Conditions
+                  </button>{" "}
+                  and understand what StreamNetMirror provides.
+                </Label>
+              </div>
+
               <Button
                 onClick={() => setModalOpen(true)}
                 disabled={!isValid}
@@ -186,21 +210,22 @@ const Payment = () => {
               </div>
 
               <p className="text-[10px] text-muted-foreground/40 text-center leading-relaxed">
-                By completing this payment, you agree to our Terms & Conditions. Refunds are available within 7 days of purchase.
-                Contact shuvaegonera@gmail.com for refund requests. Chargebacks may result in account suspension.
+                Payment requests expire after 10 minutes if not approved on your phone. Refunds are available within 7 days
+                of purchase — contact shuvaegonera@gmail.com. Chargebacks may result in account suspension.
               </p>
             </CardContent>
           </Card>
         </motion.div>
       </div>
 
+      <TermsDialog open={termsOpen} onOpenChange={setTermsOpen} />
+
       <PaymentModal
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
         onSuccess={() => {
           setModalOpen(false);
-          if (profile) navigate("/dashboard");
-          else navigate(`/signup?email=${encodeURIComponent(email.trim())}&name=${encodeURIComponent(name.trim())}`);
+          navigate("/dashboard");
         }}
         onFailure={(depositId, reason) => {
           console.error("Payment failed:", reason);
@@ -211,7 +236,9 @@ const Payment = () => {
         planId={plan?.id}
         promoCode={promoValid ? promoCode.trim().toUpperCase() : undefined}
         discountPercent={promoValid ? promoDiscount : 0}
+        termsAccepted={termsOk}
       />
+
 
       <Footer />
     </div>

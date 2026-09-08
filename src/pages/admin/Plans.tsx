@@ -13,8 +13,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Plus, Pencil, Trash2, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { usePlans, planIntervalLabel, type Plan } from "@/hooks/usePlans";
+import { useContent } from "@/hooks/useContent";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useFxRates } from "@/hooks/useFxRates";
 import { formatCurrencyAmount } from "@/lib/currency";
+
 
 const emptyPlan = {
   id: "",
@@ -25,16 +28,27 @@ const emptyPlan = {
   price_usd: 2,
   is_active: true,
   sort_order: 0,
+  category_slugs: ["netmirror"] as string[],
 };
+
 
 const AdminPlans = () => {
   const { toast } = useToast();
   const { plans, loading, reload } = usePlans(true);
   const { convertFromUSD } = useFxRates();
+  const { categories } = useContent(true);
   const [form, setForm] = useState(emptyPlan);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  const toggleCategory = (slug: string) =>
+    setForm((f) => ({
+      ...f,
+      category_slugs: f.category_slugs.includes(slug)
+        ? f.category_slugs.filter((s) => s !== slug)
+        : [...f.category_slugs, slug],
+    }));
 
   const openCreate = () => { setForm(emptyPlan); setEditing(false); setOpen(true); };
   const openEdit = (p: Plan) => {
@@ -47,6 +61,7 @@ const AdminPlans = () => {
       price_usd: Number(p.price_usd),
       is_active: p.is_active,
       sort_order: p.sort_order,
+      category_slugs: p.category_slugs?.length ? p.category_slugs : ["netmirror"],
     });
     setEditing(true);
     setOpen(true);
@@ -62,7 +77,9 @@ const AdminPlans = () => {
       price_usd: Number(form.price_usd),
       is_active: form.is_active,
       sort_order: Number(form.sort_order) || 0,
+      category_slugs: form.category_slugs,
     };
+
 
     const { error } = editing
       ? await supabase.from("plans" as any).update(payload as any).eq("id", form.id)
@@ -207,10 +224,26 @@ const AdminPlans = () => {
                 <Input type="number" value={form.sort_order} onChange={(e) => setForm({ ...form, sort_order: Number(e.target.value) })} />
               </div>
             </div>
+            <div className="space-y-2 rounded-md border border-border p-3">
+
+              <Label className="mb-0">Included categories</Label>
+              <p className="text-xs text-muted-foreground">Tick everything this plan unlocks for the customer.</p>
+              {categories.map((c) => (
+                <div key={c.id} className="flex items-center gap-2">
+                  <Checkbox
+                    id={`cat-${c.id}`}
+                    checked={form.category_slugs.includes(c.slug)}
+                    onCheckedChange={() => toggleCategory(c.slug)}
+                  />
+                  <Label htmlFor={`cat-${c.id}`} className="mb-0 text-sm font-normal">{c.name}</Label>
+                </div>
+              ))}
+            </div>
             <div className="flex items-center gap-2">
               <Switch checked={form.is_active} onCheckedChange={(v) => setForm({ ...form, is_active: v })} />
               <Label className="mb-0">Visible to customers</Label>
             </div>
+
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>

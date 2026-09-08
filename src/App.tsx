@@ -38,8 +38,11 @@ const AdminSettings = lazy(() => import("./pages/admin/Settings.tsx"));
 const SupportTickets = lazy(() => import("./pages/admin/SupportTickets.tsx"));
 const Influencers = lazy(() => import("./pages/admin/Influencers.tsx"));
 const InfluencerDashboard = lazy(() => import("./pages/InfluencerDashboard.tsx"));
+const AdminContent = lazy(() => import("./pages/admin/Content.tsx"));
 import Support from "./pages/Support.tsx";
+import LiveSports from "./pages/LiveSports.tsx";
 import OAuthConsent from "./pages/OAuthConsent.tsx";
+
 
 const queryClient = new QueryClient();
 
@@ -87,8 +90,11 @@ const AnimatedRoutes = () => {
         <Route path="/admin/settings" element={<AdminRoute><AdminSettings /></AdminRoute>} />
         <Route path="/admin/support" element={<AdminRoute><SupportTickets /></AdminRoute>} />
         <Route path="/admin/influencers" element={<AdminRoute><Influencers /></AdminRoute>} />
+        <Route path="/admin/content" element={<AdminRoute><AdminContent /></AdminRoute>} />
         <Route path="/influencer/:promoCode" element={<InfluencerDashboard />} />
+        <Route path="/live-sports" element={<PageTransition><LiveSports /></PageTransition>} />
         <Route path="/support" element={<PageTransition><Support /></PageTransition>} />
+
         <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
         <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
       </Routes>

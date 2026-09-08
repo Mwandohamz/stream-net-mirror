@@ -15,10 +15,12 @@ import {
   AlertTriangle, CheckCircle2, Info, RefreshCw, Laptop, Lock, Eye, EyeOff, Settings,
   Copy, Share2
 } from "lucide-react";
-import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import DashboardShell, { type DashboardTab } from "@/components/member/DashboardShell";
+import CategoryLinks from "@/components/member/CategoryLinks";
 import { useToast } from "@/hooks/use-toast";
 import { useAppSettings } from "@/hooks/useAppSettings";
+
 
 import netflixLogo from "@/assets/ott/netflix.jpg";
 import disneyLogo from "@/assets/ott/disney-plus.jpg";
@@ -79,6 +81,8 @@ const MemberDashboard = () => {
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showAccountSettings, setShowAccountSettings] = useState(false);
+  const [tab, setTab] = useState<DashboardTab>("overview");
+
 
   const streamingLink1 = settings.streaming_link_1 || "";
   const streamingLink2 = settings.streaming_link_2 || "";
@@ -218,9 +222,7 @@ const MemberDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      <div className="pt-24 pb-16 container mx-auto px-4">
+    <DashboardShell tab={tab} onTabChange={setTab}>
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-3xl mx-auto space-y-6">
           {/* Header */}
           <div className="flex items-center justify-between flex-wrap gap-2">
@@ -253,11 +255,11 @@ const MemberDashboard = () => {
               >
                 <Share2 size={14} /> WhatsApp
               </Button>
-              <Button variant="ghost" size="sm" onClick={handleSignOut} className="text-muted-foreground hover:text-foreground">
-                <LogOut size={16} className="mr-1" /> Sign Out
-              </Button>
             </div>
           </div>
+
+          {(tab === "overview" || tab === "streaming") && (<>
+
 
           {/* Account & subscription overview */}
           <AccountOverviewCard />
@@ -589,7 +591,20 @@ const MemberDashboard = () => {
             </CardContent>
           </Card>
 
+          </>)}
+
+          {tab === "sports" && (
+            <CategoryLinks slug="live-sports" unlocked />
+          )}
+
+          {tab === "downloads" && (
+            <CategoryLinks slug="downloads" unlocked />
+          )}
+
+          {(tab === "overview" || tab === "billing" || tab === "support") && (<>
           {/* Account Settings */}
+
+
           <Card id="account-settings" className="bg-card border-border">
             <CardContent className="p-4">
               <Button
@@ -779,11 +794,12 @@ const MemberDashboard = () => {
               )}
             </CardContent>
           </Card>
+          </>)}
         </motion.div>
-      </div>
-      <Footer />
-    </div>
+    </DashboardShell>
   );
 };
+
+
 
 export default MemberDashboard;

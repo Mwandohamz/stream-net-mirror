@@ -9,7 +9,7 @@ import { SUPPORTED_COUNTRIES, DEFAULT_COUNTRY, type Country } from "@/data/count
 import { useFxRates } from "@/hooks/useFxRates";
 import { useActiveConf, type ProviderConf } from "@/hooks/useActiveConf";
 import { usePaymentStatus } from "@/hooks/usePaymentStatus";
-import { initiateDeposit, predictProvider } from "@/lib/pawapay";
+import { initiateDeposit, predictProvider, expireDeposit } from "@/lib/pawapay";
 import { formatCurrencyAmount, roundForCurrency } from "@/lib/currency";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -25,13 +25,16 @@ interface PaymentModalProps {
   /** Plan price in USD (after any promo discount). Prices come from the admin dashboard. */
   priceUsd: number | null;
   planId?: string;
+  /** True when the customer ticked the terms box on the checkout page. */
+  termsAccepted?: boolean;
 }
+
 
 type Step = 1 | 2 | 3;
 
 const STEP_LABELS = ["Country & Price", "Phone & Pay", "Payment"];
 
-export default function PaymentModal({ isOpen, onClose, onSuccess, onFailure, userName, userEmail, promoCode, discountPercent = 0, priceUsd, planId }: PaymentModalProps) {
+export default function PaymentModal({ isOpen, onClose, onSuccess, onFailure, userName, userEmail, promoCode, discountPercent = 0, priceUsd, planId, termsAccepted }: PaymentModalProps) {
   const [step, setStep] = useState<Step>(1);
   const [country, setCountry] = useState<Country>(DEFAULT_COUNTRY);
   const [selectedProvider, setSelectedProvider] = useState<ProviderConf | null>(null);
@@ -60,7 +63,14 @@ export default function PaymentModal({ isOpen, onClose, onSuccess, onFailure, us
     if (paymentResult.status === "COMPLETED") {
       onSuccess(depositId!);
     }
+    // The mobile money prompt only lives for 10 minutes — record the expiry so
+    // the admin dashboard shows why the payment never completed.
+    if (paymentResult.status === "TIMEOUT" && depositId) {
+      void expireDeposit(depositId).catch(() => undefined);
+      onFailure(depositId, "Payment window expired after 10 minutes");
+    }
   }, [paymentResult.status]);
+
 
   // Revival timer
   useEffect(() => {
@@ -156,6 +166,8 @@ export default function PaymentModal({ isOpen, onClose, onSuccess, onFailure, us
         userId: session?.user?.id,
         amountUsd: priceUsd ?? undefined,
         fxRate: fxRate ?? undefined,
+        termsAccepted,
+
       });
 
       if (result?.status === "REJECTED") {
@@ -379,7 +391,15 @@ export default function PaymentModal({ isOpen, onClose, onSuccess, onFailure, us
                     <div className="w-16 h-16 rounded-full bg-destructive/20 border-2 border-destructive flex items-center justify-center mx-auto">
                       <X size={32} className="text-destructive" />
                     </div>
-                    <h3 className="netflix-title text-2xl text-foreground">PAYMENT FAILED</h3>
+                    <h3 className="netflix-title text-2xl text-foreground">
+                      {paymentResult.status === "TIMEOUT" ? "PAYMENT EXPIRED" : "PAYMENT FAILED"}
+                    </h3>
+                    {paymentResult.status === "TIMEOUT" && (
+                      <p className="text-xs text-muted-foreground">
+                        The 10 minute payment window closed before the prompt was approved. Nothing was charged — start again when you are ready.
+                      </p>
+                    )}
+
                     <p className="text-sm text-muted-foreground">
                       {depositError ?? paymentResult.error ?? "Something went wrong."}
                     </p>

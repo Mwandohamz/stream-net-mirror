@@ -1,9 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Check, Sparkles } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Check, Sparkles, Trophy, Download } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { usePricing } from "@/hooks/usePricing";
+import { usePlans, planIntervalLabel, type Plan } from "@/hooks/usePlans";
 import { useMembership } from "@/hooks/useMembership";
+import { useContent } from "@/hooks/useContent";
 import CurrencySelector from "@/components/CurrencySelector";
 import { motion } from "framer-motion";
 
@@ -23,133 +26,165 @@ const ottPlatforms = [
   { name: "Paramount+", logo: paramountLogo },
 ];
 
-const planFeatures = [
+const baseFeatures = [
   "Full HD (1080p) streaming quality",
   "Watch on 2 devices at the same time",
-  "Download on 2 devices",
   "Ad-free streaming experience",
   "Access to 50+ OTT platforms",
-  "Cancel anytime — no hidden fees",
+  "Verified links, refreshed whenever they change",
   "Email support & WhatsApp assistance",
 ];
 
+const CATEGORY_LABEL: Record<string, string> = {
+  netmirror: "NetMirror streaming",
+  "live-sports": "Live football streams",
+  downloads: "Movie download links & tools",
+};
+
 const PricingTier = () => {
   const navigate = useNavigate();
-  const { plan, priceUsd, formatPrice, formatUsd, showsConversion, intervalLabel, loading } = usePricing();
-  const { state, isMember, ctaLabel, ctaHref } = useMembership();
-  const priceLabel = priceUsd === null ? "..." : formatPrice(priceUsd);
-  const oldPriceLabel = priceUsd === null ? "..." : formatPrice(priceUsd / 0.3);
-  const usdLabel = priceUsd === null ? "..." : formatUsd(priceUsd);
-  const payHref = plan ? `/payment?plan=${plan.id}` : "/payment";
-  const primaryLabel = isMember
-    ? "Manage membership"
-    : state === "guest"
-      ? `Get Started — ${loading ? "..." : priceLabel}`
-      : `${ctaLabel} — ${loading ? "..." : priceLabel}`;
-  const primaryHref = isMember ? ctaHref : payHref;
+  const { formatPrice, formatUsd, loading } = usePricing();
+  const { plans } = usePlans();
+  const { isMember, state, ctaHref } = useMembership();
+  const { categoryBySlug, linksFor } = useContent();
+
+  const sportsCategory = categoryBySlug("live-sports");
+  const sportsLogos = (sportsCategory ? linksFor(sportsCategory.id) : []).filter((l) => l.logo_url).slice(0, 5);
+
+  const goTo = (plan: Plan) => {
+    if (isMember) return navigate(ctaHref);
+    if (state === "guest") return navigate(`/signup?next=${encodeURIComponent(`/payment?plan=${plan.id}`)}`);
+    return navigate(`/payment?plan=${plan.id}`);
+  };
+
+  const ctaText = (plan: Plan) => {
+    if (isMember) return "Manage membership";
+    if (state === "guest") return `Create free account — ${loading ? "..." : formatPrice(Number(plan.price_usd))}`;
+    return `Unlock now — ${loading ? "..." : formatPrice(Number(plan.price_usd))}`;
+  };
 
   return (
-    <section className="py-8 md:py-16">
+    <section className="py-8 md:py-16" id="plans">
       <div className="container mx-auto px-4">
         <div className="text-center mb-6 md:mb-10">
-          <h2 className="netflix-title text-2xl md:text-5xl text-foreground mb-1 md:mb-2">
-            CHOOSE YOUR PLAN
-          </h2>
+          <h2 className="netflix-title text-2xl md:text-5xl text-foreground mb-1 md:mb-2">CHOOSE YOUR PLAN</h2>
           <p className="text-xs md:text-base text-muted-foreground font-medium">
-            Why pay for each platform separately when you can have them all?
+            Prices are set in USD. Pick your country to see what you would pay locally.
           </p>
+          <div className="mt-3 flex justify-center">
+            <CurrencySelector />
+          </div>
         </div>
 
-        <div className="max-w-md mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-          >
-            <Card className="bg-card border-2 border-primary/40 relative overflow-hidden">
-              {/* Badge */}
-              <div className="absolute top-0 right-0 bg-primary text-primary-foreground px-3 py-1 rounded-bl-lg text-xs font-bold flex items-center gap-1">
-                <Sparkles size={12} /> SAVE 70%
-              </div>
+        <div className={`mx-auto grid gap-5 ${plans.length > 1 ? "max-w-4xl md:grid-cols-2" : "max-w-md"}`}>
+          {plans.map((plan, i) => {
+            const priceUsd = Number(plan.price_usd);
+            const slugs = plan.category_slugs?.length ? plan.category_slugs : ["netmirror"];
+            const isBundle = slugs.length > 1;
 
-              <CardContent className="p-5 md:p-8 space-y-5 md:space-y-6">
-                {/* Plan name & comparison */}
-                <div>
-                  <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">{plan?.name ?? "StreamNetMirror Standard"}</p>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-muted-foreground line-through text-lg md:text-xl">
-                      {loading ? "..." : oldPriceLabel}
-                    </span>
-                    <span className="netflix-title text-4xl md:text-5xl text-primary">
-                      {loading ? "..." : priceLabel}
-                    </span>
+            return (
+              <motion.div
+                key={plan.id}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.08 }}
+              >
+                <Card className={`relative h-full overflow-hidden bg-card ${isBundle ? "border-2 border-primary" : "border-2 border-primary/30"}`}>
+                  <div className="absolute right-0 top-0 flex items-center gap-1 rounded-bl-lg bg-primary px-3 py-1 text-xs font-bold text-primary-foreground">
+                    <Sparkles size={12} /> {isBundle ? "ALL ACCESS" : "SAVE 70%"}
                   </div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {loading ? "" : intervalLabel}
-                    {showsConversion && !loading && (
-                      <> · <span className="text-foreground font-semibold">{usdLabel}</span> converted at today&apos;s rate</>
-                    )}
-                  </p>
-                  <div className="mt-3">
-                    <CurrencySelector />
-                    <p className="text-[10px] text-muted-foreground mt-1">Pick your country to see what you would pay.</p>
-                  </div>
-                </div>
 
-                {/* Comparison note */}
-                <div className="bg-secondary/60 rounded-lg p-3 text-center">
-                  <p className="text-[10px] md:text-xs text-muted-foreground">
-                    Netflix Standard alone costs <span className="text-foreground font-semibold">$7.99/month</span>. 
-                    With StreamNetMirror, get Netflix + 50 more platforms for a single payment.
-                  </p>
-                </div>
-
-                {/* Features */}
-                <ul className="space-y-2.5">
-                  {planFeatures.map((f) => (
-                    <li key={f} className="flex items-start gap-2 text-xs md:text-sm">
-                      <Check size={16} className="text-primary mt-0.5 shrink-0" />
-                      <span className="text-foreground">{f}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                {/* OTT logos */}
-                <div>
-                  <p className="text-[10px] md:text-xs text-muted-foreground text-center mb-3 uppercase tracking-wider">
-                    All platforms included
-                  </p>
-                  <div className="grid grid-cols-3 gap-3">
-                    {ottPlatforms.map((p) => (
-                      <div key={p.name} className="flex flex-col items-center gap-1">
-                        <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg overflow-hidden bg-secondary flex items-center justify-center">
-                          <img
-                            src={p.logo}
-                            alt={p.name}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                        <span className="text-[9px] md:text-[10px] text-muted-foreground">{p.name}</span>
+                  <CardContent className="space-y-5 p-5 md:p-7">
+                    <div>
+                      <p className="mb-1 text-xs uppercase tracking-wider text-muted-foreground">{plan.name}</p>
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-lg text-muted-foreground line-through md:text-xl">
+                          {loading ? "..." : formatPrice(priceUsd / 0.3)}
+                        </span>
+                        <span className="netflix-title text-4xl text-primary md:text-5xl">
+                          {loading ? "..." : formatPrice(priceUsd)}
+                        </span>
                       </div>
-                    ))}
-                  </div>
-                  <p className="text-[9px] text-muted-foreground text-center mt-2">+ 44 more platforms</p>
-                </div>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {planIntervalLabel(plan)} · <span className="font-semibold text-foreground">{formatUsd(priceUsd)}</span> base price
+                      </p>
+                      {plan.description && <p className="mt-2 text-xs text-muted-foreground">{plan.description}</p>}
+                    </div>
 
-                {/* CTA */}
-                <Button
-                  onClick={() => navigate(primaryHref)}
-                  className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/80 font-semibold text-base active:scale-95 transition-transform"
-                >
-                  {primaryLabel}
-                </Button>
+                    {/* What's included */}
+                    <div className="space-y-2 rounded-lg bg-secondary/60 p-3">
+                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Included in this plan</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {slugs.map((s) => (
+                          <Badge key={s} variant="outline" className="border-primary/30 text-[10px] text-foreground">
+                            {CATEGORY_LABEL[s] ?? s}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
 
-                <p className="text-[9px] md:text-[10px] text-muted-foreground text-center">
-                  Create your free account first, then pay to unlock the streaming portal instantly.
-                </p>
-              </CardContent>
-            </Card>
-          </motion.div>
+                    {/* Visual: OTT logos */}
+                    {slugs.includes("netmirror") && (
+                      <div>
+                        <p className="mb-2 text-[10px] uppercase tracking-wider text-muted-foreground">Streaming platforms</p>
+                        <div className="flex flex-wrap gap-2">
+                          {ottPlatforms.map((p) => (
+                            <div key={p.name} className="h-9 w-9 overflow-hidden rounded-lg bg-secondary">
+                              <img src={p.logo} alt={p.name} loading="lazy" decoding="async" className="h-full w-full object-cover" />
+                            </div>
+                          ))}
+                          <div className="flex h-9 items-center rounded-lg bg-secondary px-2 text-[10px] text-muted-foreground">+44</div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Visual: league logos */}
+                    {slugs.includes("live-sports") && sportsLogos.length > 0 && (
+                      <div>
+                        <p className="mb-2 flex items-center gap-1 text-[10px] uppercase tracking-wider text-muted-foreground">
+                          <Trophy size={11} className="text-primary" /> Live football
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {sportsLogos.map((l) => (
+                            <div key={l.id} className="h-9 w-9 overflow-hidden rounded-lg bg-secondary">
+                              <img src={l.logo_url!} alt={l.title} loading="lazy" decoding="async" className="h-full w-full object-cover" />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {slugs.includes("downloads") && (
+                      <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <Download size={13} className="text-primary" /> Movie download links plus the software tools that make them work
+                      </p>
+                    )}
+
+                    <ul className="space-y-2">
+                      {baseFeatures.map((f) => (
+                        <li key={f} className="flex items-start gap-2 text-xs md:text-sm">
+                          <Check size={15} className="mt-0.5 shrink-0 text-primary" />
+                          <span className="text-foreground">{f}</span>
+                        </li>
+                      ))}
+                    </ul>
+
+                    <Button
+                      onClick={() => goTo(plan)}
+                      className="h-12 w-full bg-primary text-base font-semibold text-primary-foreground transition-transform hover:bg-primary/80 active:scale-95"
+                    >
+                      {ctaText(plan)}
+                    </Button>
+
+                    <p className="text-center text-[9px] text-muted-foreground md:text-[10px]">
+                      Create your free account first — payment happens inside your dashboard.
+                    </p>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            );
+          })}
         </div>
       </div>
     </section>

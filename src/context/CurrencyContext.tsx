@@ -10,21 +10,20 @@ interface CurrencyContextValue {
   countries: WorldCountry[];
 }
 
+/**
+ * USD is the base currency for every visitor. The country picker only adds a
+ * local equivalent on top — we never guess a currency from the browser locale.
+ */
 const FALLBACK: WorldCountry =
-  ALL_COUNTRIES.find((c) => c.iso2 === "ZM") ??
+  ALL_COUNTRIES.find((c) => c.iso2 === "US") ??
   ALL_COUNTRIES.find((c) => c.currency === "USD") ??
   ALL_COUNTRIES[0];
 
-function detectCountry(): WorldCountry {
+function savedCountry(): WorldCountry {
   if (typeof window !== "undefined") {
     const saved = window.sessionStorage.getItem(STORAGE_KEY);
     const savedMatch = saved ? ALL_COUNTRIES.find((c) => c.iso2 === saved) : undefined;
     if (savedMatch) return savedMatch;
-
-    const locale = navigator.language || "";
-    const region = locale.split("-")[1]?.toUpperCase();
-    const localeMatch = region ? ALL_COUNTRIES.find((c) => c.iso2 === region) : undefined;
-    if (localeMatch) return localeMatch;
   }
   return FALLBACK;
 }
@@ -35,7 +34,7 @@ export const CurrencyProvider = ({ children }: { children: React.ReactNode }) =>
   const [country, setCountry] = useState<WorldCountry>(FALLBACK);
 
   useEffect(() => {
-    setCountry(detectCountry());
+    setCountry(savedCountry());
   }, []);
 
   const setCountryIso2 = useCallback((iso2: string) => {

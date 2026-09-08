@@ -38,6 +38,8 @@ export interface DepositRequest {
   userId?: string;
   amountUsd?: number;
   fxRate?: number;
+  /** Set when the customer ticked the terms box before paying. */
+  termsAccepted?: boolean;
 }
 
 export async function initiateDeposit(req: DepositRequest) {
@@ -47,3 +49,9 @@ export async function initiateDeposit(req: DepositRequest) {
 export async function checkDepositStatus(depositId: string) {
   return proxyCall("status", { depositId });
 }
+
+/** Marks a still-pending payment as expired after the 10 minute window. */
+export async function expireDeposit(depositId: string, reason = "Payment window expired after 10 minutes") {
+  return proxyCall("expire", { depositId, reason });
+}
+
