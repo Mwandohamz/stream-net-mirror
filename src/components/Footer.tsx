@@ -3,6 +3,8 @@ import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import LogoShowcase from "@/components/LogoShowcase";
+import { useMembership } from "@/hooks/useMembership";
+
 
 const termsContent = [
   { heading: "1. Service Description", text: "StreamNetMirror provides users with access credentials to the streaming portal upon successful payment. We act as an access gateway and do not host, upload, or store any streaming content on our servers." },
