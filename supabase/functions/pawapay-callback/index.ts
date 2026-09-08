@@ -91,6 +91,11 @@ serve(async (req) => {
         console.log("Payment updated to completed:", JSON.stringify(updateResult));
         const activation = await activateSubscriptionForPayment(supabase, depositId);
         console.log("Activation result:", JSON.stringify(activation));
+        try {
+          await sendPaymentConfirmation(supabase, depositId);
+        } catch (mailErr) {
+          console.error("Confirmation email failed:", mailErr);
+        }
       }
     } else if (status === "FAILED") {
       const reason = body.failureReason?.failureMessage ?? "Payment failed";
