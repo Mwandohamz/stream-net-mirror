@@ -106,12 +106,12 @@ const AccountOverviewCard = () => {
   };
 
   return (
-    <Card className="bg-card border-border">
-      <CardContent className="p-5 md:p-6 space-y-5">
-        <div className="flex items-start gap-4 flex-wrap">
+    <Card className="overflow-hidden border-border bg-card">
+      <CardContent className="space-y-5 p-5 md:p-6">
+        <div className="flex flex-wrap items-start gap-4">
           {/* Avatar */}
-          <div className="relative">
-            <Avatar className="h-20 w-20 border-2 border-primary/40">
+          <div className="relative shrink-0">
+            <Avatar className="h-16 w-16 border-2 border-primary/40 md:h-20 md:w-20">
               <AvatarImage src={(profile as any)?.avatar_url || undefined} alt={profile?.full_name || "Profile picture"} />
               <AvatarFallback className="bg-secondary text-foreground text-lg font-semibold">{initials}</AvatarFallback>
             </Avatar>
