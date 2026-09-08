@@ -23,9 +23,12 @@ const Navbar = () => {
     { label: "Home", href: "/" },
     { label: "Movies", href: "/#trending" },
     { label: "TV Series", href: "/#trending" },
+    { label: "Live Sports", href: "/live-sports" },
     { label: "Download App", href: "/#download" },
-    { label: "Need Help?", href: "/support" },
+    // Support is only offered to people who already have an account.
+    ...(signedIn ? [{ label: "Need Help?", href: "/support" }] : []),
   ];
+
 
   const memberPill = isMember && (
     <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-medium text-emerald-400">

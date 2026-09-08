@@ -15,7 +15,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { NavLink } from "@/components/NavLink";
-import { LayoutDashboard, CreditCard, BarChart3, Users, Settings, LogOut, Megaphone, MessageSquare, UserCog, Package, Mail } from "lucide-react";
+import { LayoutDashboard, CreditCard, BarChart3, Users, Settings, LogOut, Megaphone, MessageSquare, UserCog, Package, Mail, Link2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const navItems = [
@@ -23,6 +23,8 @@ const navItems = [
   { title: "Users", url: "/admin/users", icon: UserCog, badgeKey: null },
   { title: "Payments", url: "/admin/payments", icon: CreditCard, badgeKey: "payments" },
   { title: "Plans", url: "/admin/plans", icon: Package, badgeKey: null },
+  { title: "Content & Links", url: "/admin/content", icon: Link2, badgeKey: null },
+
   { title: "Analytics", url: "/admin/analytics", icon: BarChart3, badgeKey: null },
   { title: "Customers", url: "/admin/customers", icon: Users, badgeKey: "customers" },
   { title: "Support", url: "/admin/support", icon: MessageSquare, badgeKey: "tickets" },
