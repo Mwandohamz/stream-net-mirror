@@ -9,7 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { LayoutDashboard, Clapperboard, Trophy, Download, CreditCard, LifeBuoy, LogOut, Settings, Home } from "lucide-react";
+import { LayoutDashboard, Clapperboard, Trophy, Download, CreditCard, LifeBuoy, LogOut, Settings, Home, Film, Tv, Compass } from "lucide-react";
 import LogoShowcase from "@/components/LogoShowcase";
 import CountdownBadge from "@/components/CountdownBadge";
 import { supabase } from "@/integrations/supabase/client";
@@ -26,6 +26,15 @@ export const DASHBOARD_TABS: { id: DashboardTab; label: string; short: string; i
   { id: "billing", label: "Billing", short: "Billing", icon: CreditCard },
   { id: "support", label: "Support", short: "Help", icon: LifeBuoy },
 ];
+
+/** Public pages, presented inside the dashboard so members never feel signed out. */
+const EXPLORE_LINKS: { label: string; href: string; icon: typeof Home }[] = [
+  { label: "Home", href: "/", icon: Home },
+  { label: "Movies", href: "/#trending", icon: Film },
+  { label: "TV Series", href: "/#trending", icon: Tv },
+  { label: "Live Sports page", href: "/live-sports", icon: Compass },
+];
+
 
 interface Props {
   tab: DashboardTab;
