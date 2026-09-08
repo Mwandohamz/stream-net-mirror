@@ -81,6 +81,8 @@ const MemberDashboard = () => {
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showAccountSettings, setShowAccountSettings] = useState(false);
+  const [tab, setTab] = useState<DashboardTab>("overview");
+
 
   const streamingLink1 = settings.streaming_link_1 || "";
   const streamingLink2 = settings.streaming_link_2 || "";
@@ -607,7 +609,9 @@ const MemberDashboard = () => {
             />
           )}
 
+          {(tab === "overview" || tab === "billing" || tab === "support") && (<>
           {/* Account Settings */}
+
 
           <Card id="account-settings" className="bg-card border-border">
             <CardContent className="p-4">
@@ -798,11 +802,12 @@ const MemberDashboard = () => {
               )}
             </CardContent>
           </Card>
+          </>)}
         </motion.div>
-      </div>
-      <Footer />
-    </div>
+    </DashboardShell>
   );
+};
+
 };
 
 export default MemberDashboard;
