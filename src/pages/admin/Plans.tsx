@@ -36,10 +36,19 @@ const AdminPlans = () => {
   const { toast } = useToast();
   const { plans, loading, reload } = usePlans(true);
   const { convertFromUSD } = useFxRates();
+  const { categories } = useContent(true);
   const [form, setForm] = useState(emptyPlan);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  const toggleCategory = (slug: string) =>
+    setForm((f) => ({
+      ...f,
+      category_slugs: f.category_slugs.includes(slug)
+        ? f.category_slugs.filter((s) => s !== slug)
+        : [...f.category_slugs, slug],
+    }));
 
   const openCreate = () => { setForm(emptyPlan); setEditing(false); setOpen(true); };
   const openEdit = (p: Plan) => {
@@ -52,6 +61,7 @@ const AdminPlans = () => {
       price_usd: Number(p.price_usd),
       is_active: p.is_active,
       sort_order: p.sort_order,
+      category_slugs: p.category_slugs?.length ? p.category_slugs : ["netmirror"],
     });
     setEditing(true);
     setOpen(true);
@@ -67,7 +77,9 @@ const AdminPlans = () => {
       price_usd: Number(form.price_usd),
       is_active: form.is_active,
       sort_order: Number(form.sort_order) || 0,
+      category_slugs: form.category_slugs,
     };
+
 
     const { error } = editing
       ? await supabase.from("plans" as any).update(payload as any).eq("id", form.id)
