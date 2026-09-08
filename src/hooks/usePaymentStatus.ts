@@ -8,7 +8,9 @@ type PaymentStatusResult = {
 };
 
 const POLL_INTERVAL = 5000;
-const TIMEOUT_MS = 3 * 60 * 1000; // 3 min
+/** A mobile money prompt is only valid for 10 minutes. */
+const TIMEOUT_MS = 10 * 60 * 1000;
+
 
 export function usePaymentStatus(depositId: string | null) {
   const [result, setResult] = useState<PaymentStatusResult>({ status: null, data: null, error: null });

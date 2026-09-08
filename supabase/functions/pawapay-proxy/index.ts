@@ -62,9 +62,27 @@ serve(async (req) => {
       });
     }
 
+    // EXPIRE A PENDING DEPOSIT (10 minute payment window)
+    if (action === "expire") {
+      const { depositId, reason } = params;
+      if (depositId) {
+        await supabase
+          .from("payments")
+          .update({
+            status: "expired",
+            failure_reason: reason || "Payment window expired after 10 minutes",
+          })
+          .eq("deposit_id", depositId)
+          .eq("status", "pending");
+      }
+      return new Response(JSON.stringify({ ok: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // INITIATE DEPOSIT
     if (action === "deposit") {
-      const { depositId, amount, currency, phoneNumber, provider, name, email, country, promoCode, discountApplied, planId, userId, amountUsd, fxRate } = params;
+      const { depositId, amount, currency, phoneNumber, provider, name, email, country, promoCode, discountApplied, planId, userId, amountUsd, fxRate, termsAccepted } = params;
 
       // Insert payment record
       await supabase.from("payments").insert({
@@ -84,7 +102,10 @@ serve(async (req) => {
         user_id: userId || null,
         amount_usd: amountUsd ?? null,
         fx_rate: fxRate ?? null,
+        expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
+        terms_accepted_at: termsAccepted ? new Date().toISOString() : null,
       });
+
 
       const depositBody = {
         depositId,
