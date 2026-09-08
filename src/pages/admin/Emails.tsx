@@ -81,6 +81,35 @@ const Emails = () => {
           </CardHeader>
         </Card>
 
+        <Card className="bg-card border-border">
+          <CardHeader>
+            <CardTitle className="text-foreground text-base">Renewal reminders</CardTitle>
+            <CardDescription>
+              Send reminder emails to everyone whose access ends within the number of days below.
+              Members already past their end date get an expiry notice instead. Each person only
+              receives one email per billing period, so it is safe to run this more than once.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-wrap items-end gap-3">
+            <div className="space-y-1">
+              <p className="text-xs text-muted-foreground">Days ahead</p>
+              <Input
+                type="number"
+                min={0}
+                max={30}
+                value={reminderDays}
+                onChange={(e) => setReminderDays(e.target.value)}
+                className="w-28 bg-secondary border-border text-foreground"
+              />
+            </div>
+            <Button onClick={sendReminders} disabled={sending} className="gap-2">
+              <Send className="h-4 w-4" />
+              {sending ? "Sending..." : "Send reminders now"}
+            </Button>
+            {lastRun && <p className="text-xs text-muted-foreground">{lastRun}</p>}
+          </CardContent>
+        </Card>
+
         <div className="relative max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
