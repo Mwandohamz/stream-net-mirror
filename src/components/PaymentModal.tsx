@@ -166,6 +166,8 @@ export default function PaymentModal({ isOpen, onClose, onSuccess, onFailure, us
         userId: session?.user?.id,
         amountUsd: priceUsd ?? undefined,
         fxRate: fxRate ?? undefined,
+        termsAccepted,
+
       });
 
       if (result?.status === "REJECTED") {
@@ -389,7 +391,15 @@ export default function PaymentModal({ isOpen, onClose, onSuccess, onFailure, us
                     <div className="w-16 h-16 rounded-full bg-destructive/20 border-2 border-destructive flex items-center justify-center mx-auto">
                       <X size={32} className="text-destructive" />
                     </div>
-                    <h3 className="netflix-title text-2xl text-foreground">PAYMENT FAILED</h3>
+                    <h3 className="netflix-title text-2xl text-foreground">
+                      {paymentResult.status === "TIMEOUT" ? "PAYMENT EXPIRED" : "PAYMENT FAILED"}
+                    </h3>
+                    {paymentResult.status === "TIMEOUT" && (
+                      <p className="text-xs text-muted-foreground">
+                        The 10 minute payment window closed before the prompt was approved. Nothing was charged — start again when you are ready.
+                      </p>
+                    )}
+
                     <p className="text-sm text-muted-foreground">
                       {depositError ?? paymentResult.error ?? "Something went wrong."}
                     </p>
