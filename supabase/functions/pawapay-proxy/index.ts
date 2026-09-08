@@ -164,6 +164,11 @@ serve(async (req) => {
 
         const activation = await activateSubscriptionForPayment(supabase, depositId);
         console.log("Activation (status poll):", JSON.stringify(activation));
+        try {
+          await sendPaymentConfirmation(supabase, depositId);
+        } catch (mailErr) {
+          console.error("Confirmation email failed:", mailErr);
+        }
       } else if (status === "FAILED") {
         const reason = Array.isArray(data)
           ? data[0]?.failureReason?.failureMessage
