@@ -225,6 +225,8 @@ const Payment = () => {
         onClose={() => setModalOpen(false)}
         onSuccess={() => {
           setModalOpen(false);
+          // Re-check membership so the dashboard opens already unlocked.
+          window.dispatchEvent(new Event("membership:refresh"));
           navigate("/dashboard");
         }}
         onFailure={(depositId, reason) => {
