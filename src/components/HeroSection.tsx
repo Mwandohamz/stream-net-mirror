@@ -40,7 +40,7 @@ const HeroSection = () => {
             UNLIMITED MOVIES,
             <br />
             <span className="bg-gradient-to-r from-primary via-accent to-orange-500 bg-clip-text text-transparent">
-              TV SHOWS & MORE
+              TV SHOWS & LIVE SPORTS
             </span>
           </h1>
 
