@@ -58,16 +58,18 @@ const Emails = () => {
     setLoading(true);
     try {
       await supabase.functions.invoke("assign-admin-role");
-      const [countRes, dataRes] = await Promise.all([
+      const [countRes, dataRes, profileRes] = await Promise.all([
         supabase.from("email_log").select("id", { count: "exact", head: true }),
         supabase
           .from("email_log")
-          .select("id, recipient, email_type, subject, status, error, created_at")
+          .select("id, user_id, recipient, email_type, subject, status, error, created_at")
           .order("created_at", { ascending: false })
           .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1),
+        supabase.from("profiles").select("id, full_name, email, country_name, created_at"),
       ]);
       setTotal(countRes.count || 0);
       setRows((dataRes.data as EmailRow[]) || []);
+      setProfiles((profileRes.data as Profile[]) || []);
     } catch (err) {
       console.error("Email log fetch error:", err);
       setRows([]);
@@ -76,12 +78,25 @@ const Emails = () => {
     }
   };
 
-  const filtered = rows.filter(
-    (r) =>
-      r.recipient?.toLowerCase().includes(search.toLowerCase()) ||
-      r.email_type?.toLowerCase().includes(search.toLowerCase()) ||
-      (r.subject || "").toLowerCase().includes(search.toLowerCase())
-  );
+  /** Email address -> registered account, so every log line shows who it belongs to. */
+  const accountByEmail = new Map(profiles.map((p) => [(p.email || "").toLowerCase(), p]));
+  const accountFor = (r: EmailRow) =>
+    profiles.find((p) => p.id === r.user_id) || accountByEmail.get((r.recipient || "").toLowerCase()) || null;
+
+  const filtered = rows.filter((r) => {
+    const q = search.toLowerCase();
+    const acct = accountFor(r);
+    return (
+      r.recipient?.toLowerCase().includes(q) ||
+      r.email_type?.toLowerCase().includes(q) ||
+      (r.subject || "").toLowerCase().includes(q) ||
+      (acct?.full_name || "").toLowerCase().includes(q)
+    );
+  });
+
+  // Registered accounts that have never received an email yet — easy to miss otherwise.
+  const emailed = new Set(rows.map((r) => (r.recipient || "").toLowerCase()));
+  const neverEmailed = profiles.filter((p) => p.email && !emailed.has(p.email.toLowerCase()));
 
   const totalPages = Math.ceil(total / PAGE_SIZE);
 
