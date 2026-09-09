@@ -7,6 +7,8 @@ const LOADING_TIMEOUT_MS = 8000;
 /** Asks the backend whether the CURRENT signed-in account is an admin. */
 const validateAdminEmail = async (_email?: string): Promise<boolean> => {
   try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) return false;
     const { data } = await supabase.functions.invoke("validate-admin-email");
     return data?.valid === true;
   } catch {
