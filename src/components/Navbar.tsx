@@ -5,6 +5,8 @@ import { Menu, X, CheckCircle2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import LogoShowcase from "@/components/LogoShowcase";
 import { useMembership } from "@/hooks/useMembership";
+import MembershipBanner from "@/components/MembershipBanner";
+
 
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
@@ -115,6 +117,11 @@ const Navbar = () => {
           {mobileOpen ? <X size={22} /> : <Menu size={22} />}
         </button>
       </div>
+
+      {/* Membership status strip — part of the same fixed stack so it can never overlap */}
+      <MembershipBanner />
+
+
 
       {/* Mobile menu */}
       <AnimatePresence>

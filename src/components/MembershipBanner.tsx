@@ -40,22 +40,21 @@ const MembershipBanner = () => {
   }
 
   return (
-    <div className={`fixed top-[52px] md:top-[60px] left-0 right-0 z-40 border-b backdrop-blur-md ${tone}`}>
-      <div className="container mx-auto flex items-center justify-between gap-3 px-4 py-1.5">
-        <p className="flex items-center gap-2 text-xs md:text-sm">
-          <Icon size={15} className="shrink-0" aria-hidden="true" />
-          <span>{message}</span>
-        </p>
-        <Button
-          size="sm"
-          className="h-7 shrink-0 bg-primary text-primary-foreground hover:bg-primary/80 text-xs"
-          onClick={() => navigate(ctaHref)}
-        >
-          {ctaLabel}
-        </Button>
-      </div>
+    <div className={`container mx-auto mt-1.5 flex items-center justify-between gap-2 rounded-full border px-3 py-1 backdrop-blur-md md:px-4 ${tone}`}>
+      <p className="flex min-w-0 items-center gap-2 text-[11px] md:text-xs">
+        <Icon size={14} className="shrink-0" aria-hidden="true" />
+        <span className="truncate">{message}</span>
+      </p>
+      <Button
+        size="sm"
+        className="h-6 shrink-0 rounded-full bg-primary px-3 text-[11px] text-primary-foreground hover:bg-primary/80"
+        onClick={() => navigate(ctaHref)}
+      >
+        {ctaLabel}
+      </Button>
     </div>
   );
 };
+
 
 export default MembershipBanner;
