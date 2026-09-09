@@ -9,13 +9,14 @@ Deno.serve(async (req) => {
 
   try {
     const authHeader = req.headers.get("Authorization") ?? "";
-    const token = authHeader.replace("Bearer ", "").trim();
-    if (!token) {
-      return new Response(JSON.stringify({ error: "Missing token" }), {
-        status: 401,
+    const token = authHeader.replace(/^Bearer\s+/i, "").trim();
+    // No signed-in user: nothing to claim. Answer 200 so the app doesn't error.
+    const nothingToClaim = () =>
+      new Response(JSON.stringify({ claimed: 0, activated: 0 }), {
+        status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
-    }
+    if (!token) return nothingToClaim();
 
     const anonClient = createClient(
       Deno.env.get("SUPABASE_URL")!,
@@ -24,12 +25,7 @@ Deno.serve(async (req) => {
     );
 
     const { data: { user }, error: userErr } = await anonClient.auth.getUser(token);
-    if (userErr || !user?.email) {
-      return new Response(JSON.stringify({ error: "Invalid token" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    if (userErr || !user?.email) return nothingToClaim();
 
     const admin = createClient(
       Deno.env.get("SUPABASE_URL")!,
