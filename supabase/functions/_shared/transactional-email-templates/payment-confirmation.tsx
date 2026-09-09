@@ -14,6 +14,7 @@ import {
   Text,
 } from 'npm:@react-email/components@0.0.22'
 import type { TemplateEntry } from './registry.ts'
+import { BrandHeader, brand } from './brand.tsx'
 
 interface Props {
   name?: string
@@ -39,38 +40,44 @@ export const PaymentConfirmationEmail = ({
   <Html lang="en" dir="ltr">
     <Head />
     <Preview>Payment confirmed — your StreamNet Mirror access is active</Preview>
-    <Body style={main}>
-      <Container style={container}>
-        <Heading style={h1}>Payment confirmed</Heading>
-        <Text style={text}>Hi {name}, your payment went through and your access is now active.</Text>
+    <Body style={brand.main}>
+      <Container style={brand.container}>
+        <BrandHeader />
+        <Section style={brand.content}>
+          <Heading style={brand.h1}>Payment confirmed</Heading>
+          <Text style={brand.text}>Hi {name}, your payment went through and your access is now active.</Text>
 
-        <Section style={box}>
-          <Text style={row}><strong>Plan:</strong> {planName}</Text>
-          <Text style={row}><strong>Amount (USD):</strong> {amountUsd}</Text>
-          {amountLocal ? <Text style={row}><strong>Amount charged:</strong> {amountLocal}</Text> : null}
-          {renewsOn ? <Text style={row}><strong>Next payment due:</strong> {renewsOn}</Text> : null}
-          {reference ? <Text style={row}><strong>Reference:</strong> {reference}</Text> : null}
+          <Section style={brand.box}>
+            <Text style={brand.row}><strong>Plan:</strong> {planName}</Text>
+            <Text style={brand.row}><strong>Amount (USD):</strong> {amountUsd}</Text>
+            {amountLocal ? <Text style={brand.row}><strong>Amount charged:</strong> {amountLocal}</Text> : null}
+            {renewsOn ? <Text style={brand.row}><strong>Next payment due:</strong> {renewsOn}</Text> : null}
+            {reference ? <Text style={brand.row}><strong>Reference:</strong> {reference}</Text> : null}
+          </Section>
+
+          {categories.length > 0 && (
+            <>
+              <Text style={brand.text}><strong>What you unlocked</strong></Text>
+              {categories.map((c) => (
+                <Text key={c} style={brand.row}>• {c}</Text>
+              ))}
+            </>
+          )}
+
+          <Text style={brand.text}>
+            <Link href={dashboardUrl} style={brand.button}>Open my dashboard</Link>
+          </Text>
+          <Text style={brand.text}>
+            Your dashboard has your streaming links, app downloads and setup guides:{' '}
+            <Link href={dashboardUrl} style={brand.link}>{dashboardUrl}</Link>
+          </Text>
+
+          <Hr style={brand.hr} />
+          <Text style={brand.footer}>
+            StreamNet Mirror provides verified access links to third-party streaming platforms.
+            Keep this email as your receipt.
+          </Text>
         </Section>
-
-        {categories.length > 0 && (
-          <>
-            <Text style={text}><strong>What you unlocked</strong></Text>
-            {categories.map((c) => (
-              <Text key={c} style={row}>• {c}</Text>
-            ))}
-          </>
-        )}
-
-        <Text style={text}>
-          Open your dashboard to get your streaming links, app downloads and setup guides:{' '}
-          <Link href={dashboardUrl} style={link}>{dashboardUrl}</Link>
-        </Text>
-
-        <Hr style={hr} />
-        <Text style={footer}>
-          StreamNet Mirror provides verified access links to third-party streaming platforms.
-          Keep this email as your receipt.
-        </Text>
       </Container>
     </Body>
   </Html>
@@ -91,13 +98,3 @@ export const template = {
     dashboardUrl: 'https://streamnetmirror.app/dashboard',
   },
 } satisfies TemplateEntry
-
-const main = { backgroundColor: '#0b0b0b', fontFamily: 'Helvetica, Arial, sans-serif' }
-const container = { margin: '0 auto', padding: '24px', maxWidth: '560px' }
-const h1 = { color: '#ffffff', fontSize: '24px', fontWeight: '700' as const }
-const text = { color: '#d4d4d4', fontSize: '15px', lineHeight: '24px' }
-const row = { color: '#d4d4d4', fontSize: '14px', lineHeight: '22px', margin: '2px 0' }
-const box = { backgroundColor: '#171717', borderRadius: '8px', padding: '12px 16px' }
-const link = { color: '#e50914' }
-const hr = { borderColor: '#262626', margin: '20px 0' }
-const footer = { color: '#8a8a8a', fontSize: '12px', lineHeight: '18px' }
