@@ -4,18 +4,16 @@ import AdminLayout from "@/components/admin/AdminLayout";
 import StatCard from "@/components/admin/StatCard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Eye, Users, Globe, TrendingDown, ChevronLeft, ChevronRight } from "lucide-react";
+import { Eye, Users, Globe, TrendingDown } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 
 const COLORS = ["hsl(0 85% 50%)", "hsl(270 60% 55%)", "hsl(200 80% 50%)", "hsl(120 60% 45%)", "hsl(40 90% 55%)"];
-const PAGE_SIZE = 100;
 
 const Analytics = () => {
   const [stats, setStats] = useState({ totalViews: 0, uniqueSessions: 0, bounceRate: 0, avgPagesPerSession: 0 });
   const [pageData, setPageData] = useState<any[]>([]);
   const [deviceData, setDeviceData] = useState<any[]>([]);
   const [dailyData, setDailyData] = useState<any[]>([]);
-  const [page, setPage] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
 
   useEffect(() => {
