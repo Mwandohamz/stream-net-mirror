@@ -12,6 +12,7 @@ const PAGE_SIZE = 100;
 
 type EmailRow = {
   id: string;
+  user_id: string | null;
   recipient: string;
   email_type: string;
   subject: string | null;
@@ -20,8 +21,17 @@ type EmailRow = {
   created_at: string;
 };
 
+type Profile = {
+  id: string;
+  full_name: string | null;
+  email: string | null;
+  country_name: string | null;
+  created_at: string;
+};
+
 const Emails = () => {
   const [rows, setRows] = useState<EmailRow[]>([]);
+  const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
@@ -58,16 +68,18 @@ const Emails = () => {
     setLoading(true);
     try {
       await supabase.functions.invoke("assign-admin-role");
-      const [countRes, dataRes] = await Promise.all([
+      const [countRes, dataRes, profileRes] = await Promise.all([
         supabase.from("email_log").select("id", { count: "exact", head: true }),
         supabase
           .from("email_log")
-          .select("id, recipient, email_type, subject, status, error, created_at")
+          .select("id, user_id, recipient, email_type, subject, status, error, created_at")
           .order("created_at", { ascending: false })
           .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1),
+        supabase.from("profiles").select("id, full_name, email, country_name, created_at"),
       ]);
       setTotal(countRes.count || 0);
       setRows((dataRes.data as EmailRow[]) || []);
+      setProfiles((profileRes.data as Profile[]) || []);
     } catch (err) {
       console.error("Email log fetch error:", err);
       setRows([]);
@@ -76,12 +88,25 @@ const Emails = () => {
     }
   };
 
-  const filtered = rows.filter(
-    (r) =>
-      r.recipient?.toLowerCase().includes(search.toLowerCase()) ||
-      r.email_type?.toLowerCase().includes(search.toLowerCase()) ||
-      (r.subject || "").toLowerCase().includes(search.toLowerCase())
-  );
+  /** Email address -> registered account, so every log line shows who it belongs to. */
+  const accountByEmail = new Map(profiles.map((p) => [(p.email || "").toLowerCase(), p]));
+  const accountFor = (r: EmailRow) =>
+    profiles.find((p) => p.id === r.user_id) || accountByEmail.get((r.recipient || "").toLowerCase()) || null;
+
+  const filtered = rows.filter((r) => {
+    const q = search.toLowerCase();
+    const acct = accountFor(r);
+    return (
+      r.recipient?.toLowerCase().includes(q) ||
+      r.email_type?.toLowerCase().includes(q) ||
+      (r.subject || "").toLowerCase().includes(q) ||
+      (acct?.full_name || "").toLowerCase().includes(q)
+    );
+  });
+
+  // Registered accounts that have never received an email yet — easy to miss otherwise.
+  const emailed = new Set(rows.map((r) => (r.recipient || "").toLowerCase()));
+  const neverEmailed = profiles.filter((p) => p.email && !emailed.has(p.email.toLowerCase()));
 
   const totalPages = Math.ceil(total / PAGE_SIZE);
 
@@ -148,6 +173,7 @@ const Emails = () => {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>Account</TableHead>
                   <TableHead>Recipient</TableHead>
                   <TableHead>Type</TableHead>
                   <TableHead>Subject</TableHead>
@@ -159,17 +185,26 @@ const Emails = () => {
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center text-muted-foreground py-8">Loading...</TableCell>
+                    <TableCell colSpan={7} className="text-center text-muted-foreground py-8">Loading...</TableCell>
                   </TableRow>
                 ) : filtered.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
                       No emails sent yet
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filtered.map((r) => (
+                  filtered.map((r) => {
+                    const acct = accountFor(r);
+                    return (
                     <TableRow key={r.id}>
+                      <TableCell className="text-foreground">
+                        {acct ? (
+                          <span className="font-medium">{acct.full_name || acct.email}</span>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">No account yet</span>
+                        )}
+                      </TableCell>
                       <TableCell className="text-foreground font-medium">{r.recipient}</TableCell>
                       <TableCell className="capitalize text-muted-foreground">{r.email_type.replace(/_/g, " ")}</TableCell>
                       <TableCell className="text-muted-foreground">{r.subject || "—"}</TableCell>
@@ -187,12 +222,55 @@ const Emails = () => {
                         {new Date(r.created_at).toLocaleString()}
                       </TableCell>
                     </TableRow>
+                    );
+                  })
+                )}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-card border-border">
+          <CardHeader>
+            <CardTitle className="text-foreground text-base">Accounts with no email activity ({neverEmailed.length})</CardTitle>
+            <CardDescription>
+              People who signed up but have not received anything from the app yet on this page of results.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-0 overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Country</TableHead>
+                  <TableHead>Joined</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {neverEmailed.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={4} className="py-6 text-center text-muted-foreground">
+                      Every account has received at least one email.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  neverEmailed.slice(0, 50).map((p) => (
+                    <TableRow key={p.id}>
+                      <TableCell className="text-foreground">{p.full_name || "—"}</TableCell>
+                      <TableCell className="text-muted-foreground">{p.email}</TableCell>
+                      <TableCell className="text-muted-foreground">{p.country_name || "—"}</TableCell>
+                      <TableCell className="text-muted-foreground text-xs whitespace-nowrap">
+                        {new Date(p.created_at).toLocaleDateString()}
+                      </TableCell>
+                    </TableRow>
                   ))
                 )}
               </TableBody>
             </Table>
           </CardContent>
         </Card>
+
 
         {total > 0 && (
           <div className="flex items-center justify-between text-sm text-muted-foreground">

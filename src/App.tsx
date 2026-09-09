@@ -42,6 +42,9 @@ const AdminContent = lazy(() => import("./pages/admin/Content.tsx"));
 import Support from "./pages/Support.tsx";
 import LiveSports from "./pages/LiveSports.tsx";
 import OAuthConsent from "./pages/OAuthConsent.tsx";
+import InstallPrompt from "@/components/InstallPrompt";
+const Movies = lazy(() => import("./pages/Movies.tsx"));
+const TVSeries = lazy(() => import("./pages/TVSeries.tsx"));
 
 
 const queryClient = new QueryClient();
@@ -93,6 +96,8 @@ const AnimatedRoutes = () => {
         <Route path="/admin/content" element={<AdminRoute><AdminContent /></AdminRoute>} />
         <Route path="/influencer/:promoCode" element={<InfluencerDashboard />} />
         <Route path="/live-sports" element={<PageTransition><LiveSports /></PageTransition>} />
+        <Route path="/movies" element={<PageTransition><Movies /></PageTransition>} />
+        <Route path="/tv-series" element={<PageTransition><TVSeries /></PageTransition>} />
         <Route path="/support" element={<PageTransition><Support /></PageTransition>} />
 
         <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
@@ -124,6 +129,7 @@ const App = () => (
           <PageViewTracker />
           <StatusStrip />
           <AnimatedRoutes />
+          <InstallPrompt />
         </BrowserRouter>
       </CurrencyProvider>
     </TooltipProvider>

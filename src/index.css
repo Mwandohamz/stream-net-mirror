@@ -49,6 +49,40 @@
     --sidebar-border: 0 0% 18%;
     --sidebar-ring: 0 85% 50%;
   }
+
+  /* Live Sports palette — Premier League / Champions League blues on deep navy. */
+  .theme-sports {
+    --background: 224 45% 7%;
+    --foreground: 210 40% 98%;
+
+    --card: 223 40% 12%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 223 40% 12%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 205 100% 55%;
+    --primary-foreground: 224 60% 8%;
+
+    --secondary: 222 35% 17%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 222 35% 17%;
+    --muted-foreground: 213 25% 75%;
+
+    --accent: 265 70% 65%;
+    --accent-foreground: 0 0% 100%;
+
+    --border: 218 30% 24%;
+    --input: 218 30% 24%;
+    --ring: 205 100% 55%;
+
+    --shadow-glow: 0 0 30px hsl(205 100% 55% / 0.35);
+  }
+
+  .theme-sports .netflix-title {
+    text-shadow: 0 2px 14px hsl(205 100% 55% / 0.35);
+  }
 }
 
 @layer base {

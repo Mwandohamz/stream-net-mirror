@@ -41,6 +41,7 @@ const AdminContent = () => {
   const [linkEditing, setLinkEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [bulk, setBulk] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
 
   const saveCategory = async () => {
@@ -74,7 +75,8 @@ const AdminContent = () => {
     else void reload();
   };
 
-  const saveLink = async () => {
+  /** Saves the form. `andAnother` keeps the dialog open so several links can be added in a row. */
+  const saveLink = async (andAnother = false) => {
     if (!linkForm.title.trim() || !linkForm.url.trim() || !linkForm.category_id) return;
     setSaving(true);
     const payload = {
@@ -95,8 +97,51 @@ const AdminContent = () => {
       toast({ title: "Could not save link", description: error.message, variant: "destructive" });
       return;
     }
-    setLinkOpen(false);
     toast({ title: linkEditing ? "Link updated" : "Link added" });
+    if (andAnother && !linkEditing) {
+      setLinkForm((f) => ({
+        ...emptyLink,
+        category_id: f.category_id,
+        platform: f.platform,
+        sort_order: Number(f.sort_order) + 1,
+      }));
+    } else {
+      setLinkOpen(false);
+    }
+    void reload();
+  };
+
+  /** Bulk add: one link per line, "Title | URL | optional logo URL | optional description". */
+  const saveBulk = async () => {
+    const rows = bulk
+      .split("\n")
+      .map((line) => line.split("|").map((p) => p.trim()))
+      .filter((p) => p[0] && p[1]);
+    if (rows.length === 0 || !linkForm.category_id) {
+      toast({ title: "Nothing to add", description: "Use one line per link: Title | URL", variant: "destructive" });
+      return;
+    }
+    setSaving(true);
+    const base = Number(linkForm.sort_order) || 0;
+    const payload = rows.map((p, i) => ({
+      category_id: linkForm.category_id,
+      title: p[0],
+      url: p[1],
+      logo_url: p[2] || null,
+      description: p[3] || null,
+      platform: linkForm.platform,
+      sort_order: base + i,
+      is_active: true,
+    }));
+    const { error } = await supabase.from("content_links" as any).insert(payload as any);
+    setSaving(false);
+    if (error) {
+      toast({ title: "Could not add links", description: error.message, variant: "destructive" });
+      return;
+    }
+    setBulk("");
+    setLinkOpen(false);
+    toast({ title: `${rows.length} links added` });
     void reload();
   };
 
@@ -108,16 +153,27 @@ const AdminContent = () => {
   };
 
   const uploadLogo = async (file: File) => {
+    const allowed = ["image/jpeg", "image/png", "image/webp", "image/gif", "image/svg+xml"];
+    if (!allowed.includes(file.type)) {
+      toast({ title: "Unsupported image", description: "Use a JPG, PNG, WEBP, GIF or SVG file.", variant: "destructive" });
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      toast({ title: "Image too large", description: "Maximum size is 2MB.", variant: "destructive" });
+      return;
+    }
     setUploading(true);
     const ext = file.name.split(".").pop()?.toLowerCase() || "png";
     const path = `content-logos/${crypto.randomUUID()}.${ext}`;
-    const { error } = await supabase.storage.from("app-files").upload(path, file, { upsert: true });
+    const { error } = await supabase.storage
+      .from("content-media")
+      .upload(path, file, { upsert: true, contentType: file.type });
     if (error) {
       setUploading(false);
       toast({ title: "Upload failed", description: error.message, variant: "destructive" });
       return;
     }
-    const { data } = supabase.storage.from("app-files").getPublicUrl(path);
+    const { data } = supabase.storage.from("content-media").getPublicUrl(path);
     setLinkForm((f) => ({ ...f, logo_url: data.publicUrl }));
     setUploading(false);
   };
@@ -372,10 +428,33 @@ const AdminContent = () => {
                 <Label>Visible</Label>
               </div>
             </div>
+
+            {!linkEditing && (
+              <div className="space-y-1 rounded-lg border border-border bg-secondary/30 p-3">
+                <Label>Add several links at once</Label>
+                <p className="text-[11px] text-muted-foreground">
+                  One link per line: <span className="text-foreground">Title | URL | logo image URL (optional) | description (optional)</span>
+                </p>
+                <Textarea
+                  value={bulk}
+                  onChange={(e) => setBulk(e.target.value)}
+                  rows={4}
+                  placeholder={"Premier League | https://stream1.example | https://logo.png | All 380 matches\nLaLiga | https://stream2.example"}
+                />
+                <Button type="button" size="sm" variant="outline" className="mt-1 gap-1" onClick={() => void saveBulk()} disabled={saving || !bulk.trim()}>
+                  {saving ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />} Add all these links
+                </Button>
+              </div>
+            )}
           </div>
-          <DialogFooter>
+          <DialogFooter className="flex-wrap gap-2">
             <Button variant="ghost" onClick={() => setLinkOpen(false)}>Cancel</Button>
-            <Button onClick={saveLink} disabled={saving} className="bg-primary text-primary-foreground">
+            {!linkEditing && (
+              <Button variant="outline" onClick={() => void saveLink(true)} disabled={saving}>
+                Save & add another
+              </Button>
+            )}
+            <Button onClick={() => void saveLink()} disabled={saving} className="bg-primary text-primary-foreground">
               {saving ? <Loader2 size={14} className="animate-spin" /> : "Save"}
             </Button>
           </DialogFooter>

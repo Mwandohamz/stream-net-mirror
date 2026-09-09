@@ -14,6 +14,7 @@ import {
   Text,
 } from 'npm:@react-email/components@0.0.22'
 import type { TemplateEntry } from './registry.ts'
+import { BrandHeader, brand } from './brand.tsx'
 
 interface Props {
   name?: string
@@ -37,23 +38,29 @@ export const SubscriptionReminderEmail = ({
   <Html lang="en" dir="ltr">
     <Head />
     <Preview>Your StreamNet Mirror access expires in {String(daysLeft)} day(s)</Preview>
-    <Body style={main}>
-      <Container style={container}>
-        <Heading style={h1}>Your access expires soon</Heading>
-        <Text style={text}>
-          Hi {name}, your <strong>{planName}</strong> ends in <strong>{daysLeft} day(s)</strong>
-          {expiresOn ? ` — on ${expiresOn}` : ''}.
-        </Text>
-        <Section style={box}>
-          {amountUsd ? <Text style={row}><strong>Renewal (USD):</strong> {amountUsd}</Text> : null}
-          {amountLocal ? <Text style={row}><strong>In your currency:</strong> {amountLocal}</Text> : null}
+    <Body style={brand.main}>
+      <Container style={brand.container}>
+        <BrandHeader />
+        <Section style={brand.content}>
+          <Heading style={brand.h1}>Your access expires soon</Heading>
+          <Text style={brand.text}>
+            Hi {name}, your <strong>{planName}</strong> ends in <strong>{daysLeft} day(s)</strong>
+            {expiresOn ? ` — on ${expiresOn}` : ''}.
+          </Text>
+          <Section style={brand.box}>
+            {amountUsd ? <Text style={brand.row}><strong>Renewal (USD):</strong> {amountUsd}</Text> : null}
+            {amountLocal ? <Text style={brand.row}><strong>In your currency:</strong> {amountLocal}</Text> : null}
+          </Section>
+          <Text style={brand.text}>
+            <Link href={dashboardUrl} style={brand.button}>Renew now</Link>
+          </Text>
+          <Text style={brand.text}>
+            Renewing keeps your streaming links, live sports links and download tools active:{' '}
+            <Link href={dashboardUrl} style={brand.link}>{dashboardUrl}</Link>
+          </Text>
+          <Hr style={brand.hr} />
+          <Text style={brand.footer}>You get a 3-day grace period after expiry before access is locked.</Text>
         </Section>
-        <Text style={text}>
-          Renew from your dashboard to keep your streaming links, live sports links and download
-          tools active: <Link href={dashboardUrl} style={link}>{dashboardUrl}</Link>
-        </Text>
-        <Hr style={hr} />
-        <Text style={footer}>You get a 3-day grace period after expiry before access is locked.</Text>
       </Container>
     </Body>
   </Html>
@@ -74,13 +81,3 @@ export const template = {
     dashboardUrl: 'https://streamnetmirror.app/dashboard',
   },
 } satisfies TemplateEntry
-
-const main = { backgroundColor: '#0b0b0b', fontFamily: 'Helvetica, Arial, sans-serif' }
-const container = { margin: '0 auto', padding: '24px', maxWidth: '560px' }
-const h1 = { color: '#ffffff', fontSize: '24px', fontWeight: '700' as const }
-const text = { color: '#d4d4d4', fontSize: '15px', lineHeight: '24px' }
-const row = { color: '#d4d4d4', fontSize: '14px', lineHeight: '22px', margin: '2px 0' }
-const box = { backgroundColor: '#171717', borderRadius: '8px', padding: '12px 16px' }
-const link = { color: '#e50914' }
-const hr = { borderColor: '#262626', margin: '20px 0' }
-const footer = { color: '#8a8a8a', fontSize: '12px', lineHeight: '18px' }
