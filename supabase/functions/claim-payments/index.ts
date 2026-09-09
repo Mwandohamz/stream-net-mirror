@@ -25,12 +25,7 @@ Deno.serve(async (req) => {
     );
 
     const { data: { user }, error: userErr } = await anonClient.auth.getUser(token);
-    if (userErr || !user?.email) {
-      return new Response(JSON.stringify({ error: "Invalid token" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    if (userErr || !user?.email) return nothingToClaim();
 
     const admin = createClient(
       Deno.env.get("SUPABASE_URL")!,
