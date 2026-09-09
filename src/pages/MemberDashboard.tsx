@@ -60,7 +60,10 @@ const MemberDashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { settings } = useAppSettings();
-  const portalUrl = settings.portal_url || "https://net22.cc/home";
+  // The portal address is only delivered by the server to paid members.
+  // Unpaid accounts keep the full dashboard but every link points at checkout.
+  const portalUrl = settings.portal_url || "/payment";
+
   const [userName, setUserName] = useState("");
   const [showPortal, setShowPortal] = useState(false);
   const [ticketSubject, setTicketSubject] = useState("");
