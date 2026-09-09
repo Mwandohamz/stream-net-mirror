@@ -42,6 +42,9 @@ const AdminContent = lazy(() => import("./pages/admin/Content.tsx"));
 import Support from "./pages/Support.tsx";
 import LiveSports from "./pages/LiveSports.tsx";
 import OAuthConsent from "./pages/OAuthConsent.tsx";
+import InstallPrompt from "@/components/InstallPrompt";
+const Movies = lazy(() => import("./pages/Movies.tsx"));
+const TVSeries = lazy(() => import("./pages/TVSeries.tsx"));
 
 
 const queryClient = new QueryClient();
