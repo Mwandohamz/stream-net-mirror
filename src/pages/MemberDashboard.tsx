@@ -370,7 +370,22 @@ const MemberDashboard = () => {
                 </p>
               </div>
 
-              {!showPortal ? (
+              {!membership.isMember ? (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/5 p-3">
+                    <Lock size={16} className="text-primary shrink-0" />
+                    <p className="text-xs text-muted-foreground">
+                      Your portal access is locked until your subscription is active. Everything else in your account stays available.
+                    </p>
+                  </div>
+                  <Button
+                    onClick={() => navigate("/payment")}
+                    className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/80 font-semibold text-base gap-2"
+                  >
+                    <Lock size={18} /> Unlock streaming
+                  </Button>
+                </div>
+              ) : !showPortal ? (
                 <Button
                   onClick={() => setShowPortal(true)}
                   className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/80 font-semibold text-base gap-2 active:scale-95 transition-transform"
@@ -384,6 +399,7 @@ const MemberDashboard = () => {
                   </Button>
                 </a>
               )}
+
             </CardContent>
           </Card>
 
@@ -555,7 +571,7 @@ const MemberDashboard = () => {
                     Search <span className="text-foreground font-semibold">"DODO Webview"</span> on the <span className="text-blue-400 font-semibold">Apple App Store</span> and install it
                   </li>
                   <li>
-                    Open the app and type this URL: <span className="text-primary font-mono font-semibold bg-primary/10 px-1.5 py-0.5 rounded text-[11px]">{portalUrl}</span>
+                    Open the app and type this URL: <span className="text-primary font-mono font-semibold bg-primary/10 px-1.5 py-0.5 rounded text-[11px]">{membership.isMember ? portalUrl : "••••••••••••"}</span>
                   </li>
                   <li>
                     Turn <span className="text-foreground font-semibold">ON</span> all 3 buttons:
