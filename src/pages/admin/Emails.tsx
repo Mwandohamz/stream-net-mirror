@@ -12,6 +12,7 @@ const PAGE_SIZE = 100;
 
 type EmailRow = {
   id: string;
+  user_id: string | null;
   recipient: string;
   email_type: string;
   subject: string | null;
@@ -20,8 +21,17 @@ type EmailRow = {
   created_at: string;
 };
 
+type Profile = {
+  id: string;
+  full_name: string | null;
+  email: string | null;
+  country_name: string | null;
+  created_at: string;
+};
+
 const Emails = () => {
   const [rows, setRows] = useState<EmailRow[]>([]);
+  const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
