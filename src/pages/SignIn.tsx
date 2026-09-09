@@ -78,29 +78,9 @@ const SignIn = () => {
           window.location.href = safeNext;
           return;
         }
-        const { data: sub } = await supabase
-          .from("subscribers")
-          .select("id, status")
-          .eq("user_id", data.user.id)
-          .eq("status", "active")
-          .maybeSingle();
-
-        if (sub) {
-          navigate("/dashboard", { replace: true });
-          return;
-        }
-
-        try {
-          const { data: adminData } = await supabase.functions.invoke("validate-admin-email");
-          if (adminData?.valid) {
-            navigate("/dashboard", { replace: true });
-            return;
-          }
-        } catch {}
-
-        setError("No active subscription found. Please complete payment first, then create your account.");
-        await supabase.auth.signOut();
+        navigate("/dashboard", { replace: true });
       }
+
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "Something went wrong";
       setError(msg);
