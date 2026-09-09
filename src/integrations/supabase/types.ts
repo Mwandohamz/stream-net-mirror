@@ -18,18 +18,21 @@ export type Database = {
         Row: {
           id: string
           key: string
+          member_only: boolean
           updated_at: string | null
           value: string
         }
         Insert: {
           id?: string
           key: string
+          member_only?: boolean
           updated_at?: string | null
           value: string
         }
         Update: {
           id?: string
           key?: string
+          member_only?: boolean
           updated_at?: string | null
           value?: string
         }
@@ -582,6 +585,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      has_active_access: { Args: { _user_id: string }; Returns: boolean }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -607,6 +611,20 @@ export type Database = {
           customer: string
           promo_code: string
           status: string
+        }[]
+      }
+      list_content_links: {
+        Args: never
+        Returns: {
+          category_id: string
+          description: string
+          id: string
+          is_active: boolean
+          logo_url: string
+          platform: string
+          sort_order: number
+          title: string
+          url: string
         }[]
       }
       set_influencer_password: {
