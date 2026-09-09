@@ -98,10 +98,16 @@ const LiveSports = () => {
             >
               <Card className="h-full overflow-hidden border-border bg-card transition-shadow hover:shadow-[var(--shadow-glow)]">
                 <div className="relative flex h-32 items-center justify-center bg-gradient-to-br from-primary/25 via-card to-accent/20">
-                  {l.logo ? (
-                    <img src={l.logo} alt={l.name} loading="lazy" decoding="async" className="h-20 w-20 rounded-xl bg-background/60 object-contain p-2" />
-                  ) : (
-                    <Trophy size={40} className="text-primary" />
+                  <Trophy size={40} className="absolute text-primary/70" />
+                  {l.logo && (
+                    <img
+                      src={l.logo}
+                      alt={l.name}
+                      loading="lazy"
+                      decoding="async"
+                      className="relative h-20 w-20 rounded-xl bg-background/60 object-contain p-2"
+                      onError={(e) => { e.currentTarget.style.display = "none"; }}
+                    />
                   )}
                   <Badge className="absolute right-2 top-2 bg-background/80 text-[10px] text-foreground">{l.tag}</Badge>
                 </div>
