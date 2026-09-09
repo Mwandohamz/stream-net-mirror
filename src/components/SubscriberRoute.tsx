@@ -1,10 +1,14 @@
 import { Navigate } from "react-router-dom";
 import { useSubscriber } from "@/hooks/useSubscriber";
 import { Loader2 } from "lucide-react";
-import MembershipLocked from "@/pages/MembershipLocked";
 
+/**
+ * Any signed-in account may open the dashboard. Paid and unpaid members share
+ * the same shell — unpaid accounts simply see locked cards and upgrade CTAs,
+ * and the protected URLs are withheld by the database, not just by the UI.
+ */
 const SubscriberRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user, isSubscriber, subscription, loading } = useSubscriber();
+  const { user, loading } = useSubscriber();
 
   if (loading) {
     return (
@@ -18,12 +22,8 @@ const SubscriberRoute = ({ children }: { children: React.ReactNode }) => {
     return <Navigate to="/signin" replace />;
   }
 
-  // Signed in but not paid (or expired): show plans instead of the streaming links.
-  if (!isSubscriber) {
-    return <MembershipLocked subscription={subscription} />;
-  }
-
   return <>{children}</>;
 };
 
 export default SubscriberRoute;
+

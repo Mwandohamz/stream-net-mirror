@@ -35,16 +35,20 @@ export function useContent(includeInactive = false) {
   const load = useCallback(async () => {
     setLoading(true);
     let catQuery = supabase.from("content_categories" as any).select("*").order("sort_order");
-    let linkQuery = supabase.from("content_links" as any).select("*").order("sort_order");
-    if (!includeInactive) {
-      catQuery = catQuery.eq("is_active", true);
-      linkQuery = linkQuery.eq("is_active", true);
-    }
-    const [cats, lks] = await Promise.all([catQuery, linkQuery]);
+    if (!includeInactive) catQuery = catQuery.eq("is_active", true);
+
+    // Admin views read the table directly; everyone else goes through a
+    // server-side function that only returns real URLs to paid members.
+    const linkPromise = includeInactive
+      ? supabase.from("content_links" as any).select("*").order("sort_order")
+      : supabase.rpc("list_content_links" as any);
+
+    const [cats, lks] = await Promise.all([catQuery, linkPromise]);
     setCategories(((cats.data as any[]) ?? []) as ContentCategory[]);
     setLinks(((lks.data as any[]) ?? []) as ContentLink[]);
     setLoading(false);
   }, [includeInactive]);
+
 
   useEffect(() => {
     void load();
