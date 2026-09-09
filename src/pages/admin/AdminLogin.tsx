@@ -42,13 +42,8 @@ const AdminLogin = () => {
     try {
       const normalizedEmail = loginEmail.trim().toLowerCase();
 
-      const isValidAdmin = await validateAdminEmail(normalizedEmail);
-      if (!isValidAdmin) {
-        setLoginError("This email is not authorized for admin access.");
-        setLoginSubmitting(false);
-        return;
-      }
-
+      // Sign in FIRST — the authorisation check runs server-side against the
+      // signed-in session, so it can only succeed once a session exists.
       const { error } = await supabase.auth.signInWithPassword({
         email: normalizedEmail,
         password: loginPassword,
@@ -56,6 +51,14 @@ const AdminLogin = () => {
 
       if (error) {
         setLoginError(error.message);
+        setLoginSubmitting(false);
+        return;
+      }
+
+      const isValidAdmin = await validateAdminEmail();
+      if (!isValidAdmin) {
+        await supabase.auth.signOut();
+        setLoginError("This email is not authorized for admin access.");
         setLoginSubmitting(false);
         return;
       }
@@ -87,12 +90,9 @@ const AdminLogin = () => {
     try {
       const normalizedEmail = regEmail.trim().toLowerCase();
 
-      const isValidAdmin = await validateAdminEmail(normalizedEmail);
-      if (!isValidAdmin) {
-        setRegError("This email is not authorized for admin access.");
-        setRegSubmitting(false);
-        return;
-      }
+      // Authorisation is enforced server-side on sign-in; anyone can create an
+      // account here but only whitelisted emails get admin access.
+
 
       const { error } = await supabase.auth.signUp({
         email: normalizedEmail,

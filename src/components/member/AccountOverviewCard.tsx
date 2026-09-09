@@ -60,11 +60,11 @@ const AccountOverviewCard = () => {
 
   const handleAvatar = async (file: File) => {
     if (!file.type.startsWith("image/")) {
-      toast({ title: "Not an image", description: "Please choose a JPG or PNG file.", variant: "destructive" });
+      toast({ title: "Not an image", description: "Please choose an image file (JPG, PNG, WEBP, GIF or HEIC).", variant: "destructive" });
       return;
     }
-    if (file.size > 5 * 1024 * 1024) {
-      toast({ title: "Image too large", description: "Please choose an image under 5 MB.", variant: "destructive" });
+    if (file.size > 2 * 1024 * 1024) {
+      toast({ title: "Image too large", description: "Please choose an image under 2 MB.", variant: "destructive" });
       return;
     }
     setUploading(true);
@@ -74,15 +74,17 @@ const AccountOverviewCard = () => {
       return;
     }
     const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
-    const path = `avatars/${session.user.id}/profile-${Date.now()}.${ext}`;
+    const path = `${session.user.id}/profile-${Date.now()}.${ext}`;
 
-    const { error: upErr } = await supabase.storage.from("app-files").upload(path, file, { upsert: true });
+    const { error: upErr } = await supabase.storage
+      .from("avatars")
+      .upload(path, file, { upsert: true, contentType: file.type || "application/octet-stream" });
     if (upErr) {
       setUploading(false);
       toast({ title: "Upload failed", description: upErr.message, variant: "destructive" });
       return;
     }
-    const { data: pub } = supabase.storage.from("app-files").getPublicUrl(path);
+    const { data: pub } = supabase.storage.from("avatars").getPublicUrl(path);
     const { error } = await updateProfile({ avatar_url: pub.publicUrl } as any);
     setUploading(false);
     if (error) {

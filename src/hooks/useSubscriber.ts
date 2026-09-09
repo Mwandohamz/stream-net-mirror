@@ -151,9 +151,22 @@ export const useSubscriber = () => {
         setLoading(false);
       });
 
+    // Lets other parts of the app (e.g. a completed payment) force a re-check.
+    const onRefresh = () => {
+      if (!mounted) return;
+      claimedRef.current = false;
+      setLoading(true);
+      void supabase.auth.getSession().then(({ data: { session } }) => {
+        if (!mounted) return;
+        void resolveAccessState(session?.user ?? null);
+      });
+    };
+    window.addEventListener("membership:refresh", onRefresh);
+
     return () => {
       mounted = false;
       clearTimeout(timeout);
+      window.removeEventListener("membership:refresh", onRefresh);
       authSub.unsubscribe();
     };
   }, [resolveAccessState]);
