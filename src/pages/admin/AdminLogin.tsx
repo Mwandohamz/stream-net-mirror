@@ -90,12 +90,9 @@ const AdminLogin = () => {
     try {
       const normalizedEmail = regEmail.trim().toLowerCase();
 
-      const isValidAdmin = await validateAdminEmail(normalizedEmail);
-      if (!isValidAdmin) {
-        setRegError("This email is not authorized for admin access.");
-        setRegSubmitting(false);
-        return;
-      }
+      // Authorisation is enforced server-side on sign-in; anyone can create an
+      // account here but only whitelisted emails get admin access.
+
 
       const { error } = await supabase.auth.signUp({
         email: normalizedEmail,
