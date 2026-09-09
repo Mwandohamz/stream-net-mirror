@@ -16,9 +16,11 @@ serve(async (req) => {
     return new Response("ok", { headers: corsHeaders });
   }
 
+  // Not signed in (or an anon-key-only call) is a normal "not an admin"
+  // answer — returning 401 makes the browser client throw instead.
   const unauthorized = () =>
     new Response(JSON.stringify({ valid: false }), {
-      status: 401,
+      status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
 
