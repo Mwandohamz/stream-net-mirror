@@ -61,7 +61,7 @@ const AdminSettings = () => {
     }
 
     setApkUploading(true);
-    const fileName = `streamnetmirror-${Date.now()}.apk`;
+    const fileName = `downloads/streamnetmirror-${Date.now()}.apk`;
 
     // Delete old file if exists
     if (apkFileName) {

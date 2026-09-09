@@ -3,9 +3,16 @@ import { supabase } from "@/integrations/supabase/client";
 const PROXY_URL_BASE = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/pawapay-proxy`;
 
 async function proxyCall(action: string, body: Record<string, any> = {}) {
+  const { data: { session } } = await supabase.auth.getSession();
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+  };
+  if (session?.access_token) headers.Authorization = `Bearer ${session.access_token}`;
+
   const res = await fetch(PROXY_URL_BASE, {
     method: "POST",
-    headers: { "Content-Type": "application/json", "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY },
+    headers,
     body: JSON.stringify({ action, ...body }),
   });
   if (!res.ok) {
