@@ -230,6 +230,48 @@ const Emails = () => {
           </CardContent>
         </Card>
 
+        <Card className="bg-card border-border">
+          <CardHeader>
+            <CardTitle className="text-foreground text-base">Accounts with no email activity ({neverEmailed.length})</CardTitle>
+            <CardDescription>
+              People who signed up but have not received anything from the app yet on this page of results.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-0 overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Country</TableHead>
+                  <TableHead>Joined</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {neverEmailed.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={4} className="py-6 text-center text-muted-foreground">
+                      Every account has received at least one email.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  neverEmailed.slice(0, 50).map((p) => (
+                    <TableRow key={p.id}>
+                      <TableCell className="text-foreground">{p.full_name || "—"}</TableCell>
+                      <TableCell className="text-muted-foreground">{p.email}</TableCell>
+                      <TableCell className="text-muted-foreground">{p.country_name || "—"}</TableCell>
+                      <TableCell className="text-muted-foreground text-xs whitespace-nowrap">
+                        {new Date(p.created_at).toLocaleDateString()}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+
+
         {total > 0 && (
           <div className="flex items-center justify-between text-sm text-muted-foreground">
             <p>
