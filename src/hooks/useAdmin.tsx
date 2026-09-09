@@ -4,20 +4,16 @@ import type { User } from "@supabase/supabase-js";
 
 const LOADING_TIMEOUT_MS = 8000;
 
-const validateAdminEmail = async (email: string): Promise<boolean> => {
-  const normalized = email.trim().toLowerCase();
-  if (!normalized) return false;
-
+/** Asks the backend whether the CURRENT signed-in account is an admin. */
+const validateAdminEmail = async (_email?: string): Promise<boolean> => {
   try {
-    const { data } = await supabase.functions.invoke("validate-admin-email", {
-      body: { email: normalized },
-    });
-
+    const { data } = await supabase.functions.invoke("validate-admin-email");
     return data?.valid === true;
   } catch {
     return false;
   }
 };
+
 
 const hasAdminRole = async (userId: string): Promise<boolean> => {
   const { data, error } = await supabase

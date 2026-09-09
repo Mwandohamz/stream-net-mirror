@@ -81,31 +81,141 @@ serve(async (req) => {
       });
     }
 
-    // INITIATE DEPOSIT
+    // INITIATE DEPOSIT — authenticated; price is computed server-side.
     if (action === "deposit") {
-      const { depositId, amount, currency, phoneNumber, provider, name, email, country, promoCode, discountApplied, planId, userId, amountUsd, fxRate, termsAccepted } = params;
+      const { depositId, currency, phoneNumber, provider, country, promoCode, planId, termsAccepted } = params;
 
-      // Insert payment record
+      // 1) Require a verified session; the payer is the signed-in account.
+      const token = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "").trim();
+      const authClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
+        global: { headers: { Authorization: `Bearer ${token}` } },
+      });
+      const { data: userData } = token ? await authClient.auth.getUser(token) : { data: { user: null } };
+      const authUser = userData?.user;
+      if (!authUser?.email) {
+        return new Response(JSON.stringify({ error: "Sign in required before paying" }), {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      if (!depositId || !currency || !phoneNumber || !provider) {
+        return new Response(JSON.stringify({ error: "Missing payment details" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("full_name, email")
+        .eq("id", authUser.id)
+        .maybeSingle();
+
+      // 2) Resolve the plan and its authoritative USD price.
+      let plan: any = null;
+      if (planId) {
+        const { data } = await supabase
+          .from("plans")
+          .select("id, price_usd, is_active")
+          .eq("id", planId)
+          .eq("is_active", true)
+          .maybeSingle();
+        plan = data;
+      }
+      if (!plan) {
+        const { data } = await supabase
+          .from("plans")
+          .select("id, price_usd, is_active")
+          .eq("is_active", true)
+          .order("sort_order", { ascending: true })
+          .limit(1)
+          .maybeSingle();
+        plan = data;
+      }
+      if (!plan?.price_usd) {
+        return new Response(JSON.stringify({ error: "No active plan available" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // 3) Validate the promo code server-side and apply its real discount.
+      let discountPercent = 0;
+      let validPromo: string | null = null;
+      if (promoCode) {
+        const { data: influencer } = await supabase
+          .from("influencers")
+          .select("promo_code, discount_percent")
+          .eq("is_active", true)
+          .ilike("promo_code", String(promoCode).trim().replace(/[\\%_]/g, (c: string) => `\\${c}`))
+          .maybeSingle();
+        const pct = Number(influencer?.discount_percent ?? 0);
+        if (influencer && pct > 0 && pct < 100) {
+          discountPercent = pct;
+          validPromo = influencer.promo_code;
+        }
+      }
+
+      const amountUsd = Number((Number(plan.price_usd) * (1 - discountPercent / 100)).toFixed(2));
+
+      // 4) Convert with a server-trusted FX rate (never the client's).
+      let fxRate = 1;
+      if (String(currency).toUpperCase() !== "USD") {
+        const { data: cached } = await supabase
+          .from("app_settings")
+          .select("value")
+          .eq("key", "fx_rates_cache")
+          .maybeSingle();
+        let rate: number | undefined;
+        try {
+          rate = JSON.parse(cached?.value ?? "{}")?.rates?.[String(currency).toUpperCase()];
+        } catch (_) {
+          rate = undefined;
+        }
+        if (!rate) {
+          const res = await fetch("https://open.er-api.com/v6/latest/USD");
+          const json = await res.json();
+          rate = json?.rates?.[String(currency).toUpperCase()];
+        }
+        if (!rate || !isFinite(Number(rate))) {
+          return new Response(JSON.stringify({ error: "Exchange rate unavailable, please try again" }), {
+            status: 503,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        fxRate = Number(rate);
+      }
+
+      const localAmount = (amountUsd * fxRate).toFixed(2);
+      const discountApplied = Number(
+        ((Number(plan.price_usd) - amountUsd) * fxRate).toFixed(2),
+      );
+
+      // Insert payment record from verified/server-derived values only.
       await supabase.from("payments").insert({
-        name,
-        email,
+        name: profile?.full_name || authUser.email,
+        email: authUser.email,
         phone: phoneNumber,
         provider,
-        amount: parseFloat(amount),
+        amount: parseFloat(localAmount),
         currency,
         country,
         status: "pending",
         deposit_id: depositId,
         transaction_id: `TXN-${Date.now()}`,
-        promo_code: promoCode || null,
-        discount_applied: discountApplied || 0,
-        plan_id: planId || null,
-        user_id: userId || null,
-        amount_usd: amountUsd ?? null,
-        fx_rate: fxRate ?? null,
+        promo_code: validPromo,
+        discount_applied: discountApplied,
+        plan_id: plan.id,
+        user_id: authUser.id,
+        amount_usd: amountUsd,
+        fx_rate: fxRate,
         expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
         terms_accepted_at: termsAccepted ? new Date().toISOString() : null,
       });
+
+      const amount = localAmount;
+
 
 
       const depositBody = {

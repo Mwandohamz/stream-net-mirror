@@ -42,9 +42,7 @@ const SignIn = () => {
           return;
         }
         try {
-          const { data: adminData } = await supabase.functions.invoke("validate-admin-email", {
-            body: { email: session.user.email },
-          });
+          const { data: adminData } = await supabase.functions.invoke("validate-admin-email");
           if (adminData?.valid) {
             navigate("/dashboard", { replace: true });
             return;
@@ -108,9 +106,7 @@ const SignIn = () => {
         }
 
         try {
-          const { data: adminData } = await supabase.functions.invoke("validate-admin-email", {
-            body: { email: data.user.email },
-          });
+          const { data: adminData } = await supabase.functions.invoke("validate-admin-email");
           if (adminData?.valid) {
             navigate("/dashboard", { replace: true });
             return;
