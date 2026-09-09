@@ -167,20 +167,12 @@ const Analytics = () => {
           </CardContent>
         </Card>
 
-        {/* Pagination */}
-        {totalCount > 0 && (
-          <div className="flex items-center justify-between text-sm text-muted-foreground">
-            <p>Showing {showingStart}–{showingEnd} of {totalCount} page views</p>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage(p => p - 1)} className="border-border text-foreground gap-1">
-                <ChevronLeft size={14} /> Previous
-              </Button>
-              <Button variant="outline" size="sm" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)} className="border-border text-foreground gap-1">
-                Next <ChevronRight size={14} />
-              </Button>
-            </div>
-          </div>
-        )}
+        <div className="flex items-center justify-between text-sm text-muted-foreground">
+          <p>Based on all {totalCount} recorded visits. Admin screens and our own testing are excluded.</p>
+          <Button variant="outline" size="sm" onClick={() => void fetchAnalytics()} className="border-border text-foreground">
+            Refresh
+          </Button>
+        </div>
       </div>
     </AdminLayout>
   );
