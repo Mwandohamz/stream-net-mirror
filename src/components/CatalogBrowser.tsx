@@ -112,10 +112,20 @@ const CatalogBrowser = ({ title, subtitle, items }: Props) => {
       </div>
 
       {filtered.length === 0 ? (
-        <p className="py-16 text-center text-sm text-muted-foreground">
-          Nothing matched “{query}”. Try another title — and remember members can request any show.
-        </p>
+        <div className="mx-auto max-w-lg space-y-3 py-14 text-center">
+          <p className="text-sm font-semibold text-foreground">
+            “{query}” isn’t in this preview list — but it’s still available to members.
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Once you pay, you get access to every streaming platform we mirror — Netflix, Disney+, HBO Max, Prime, Apple TV+,
+            JioHotstar, Paramount+ and live sports. That means every show and movie, including the one you just searched for.
+          </p>
+          <Button className="h-11 gap-1.5 bg-primary font-semibold text-primary-foreground" onClick={watch}>
+            <Play size={15} className="fill-current" /> Unlock everything
+          </Button>
+        </div>
       ) : (
+
         <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 md:gap-4 lg:grid-cols-5">
           {filtered.map((item) => (
             <Poster key={item.title} item={item} onOpen={() => setSelected(item)} onWatch={watch} />
