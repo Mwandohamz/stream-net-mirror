@@ -129,6 +129,7 @@ const App = () => (
           <PageViewTracker />
           <StatusStrip />
           <AnimatedRoutes />
+          <InstallPrompt />
         </BrowserRouter>
       </CurrencyProvider>
     </TooltipProvider>
