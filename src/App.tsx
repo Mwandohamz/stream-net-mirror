@@ -96,6 +96,8 @@ const AnimatedRoutes = () => {
         <Route path="/admin/content" element={<AdminRoute><AdminContent /></AdminRoute>} />
         <Route path="/influencer/:promoCode" element={<InfluencerDashboard />} />
         <Route path="/live-sports" element={<PageTransition><LiveSports /></PageTransition>} />
+        <Route path="/movies" element={<PageTransition><Movies /></PageTransition>} />
+        <Route path="/tv-series" element={<PageTransition><TVSeries /></PageTransition>} />
         <Route path="/support" element={<PageTransition><Support /></PageTransition>} />
 
         <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
