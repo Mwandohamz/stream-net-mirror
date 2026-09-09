@@ -19,22 +19,31 @@ const Analytics = () => {
   const [totalCount, setTotalCount] = useState(0);
 
   useEffect(() => {
-    fetchAnalytics();
-  }, [page]);
+    void fetchAnalytics();
+  }, []);
 
   const fetchAnalytics = async () => {
-    // Get total count
     const { count } = await supabase
       .from("page_views")
       .select("*", { count: "exact", head: true });
-    setTotalCount(count || 0);
+    const total = count || 0;
+    setTotalCount(total);
 
-    const { data: views } = await supabase
-      .from("page_views")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
-    const allViews = views || [];
+    // Read every row in batches so unique visitors and rates cover the whole
+    // history, not just the first page of results.
+    const BATCH = 1000;
+    const MAX = 20000;
+    const allViews: any[] = [];
+    for (let from = 0; from < Math.min(total, MAX); from += BATCH) {
+      const { data } = await supabase
+        .from("page_views")
+        .select("page, user_agent, session_id, created_at")
+        .order("created_at", { ascending: false })
+        .range(from, from + BATCH - 1);
+      if (!data || data.length === 0) break;
+      allViews.push(...data);
+    }
+
 
     const sessions = new Map<string, any[]>();
     allViews.forEach((v: any) => {
