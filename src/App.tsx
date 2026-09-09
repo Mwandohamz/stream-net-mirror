@@ -108,15 +108,8 @@ const AnimatedRoutes = () => {
   );
 };
 
-const StatusStrip = () => {
-  const location = useLocation();
-  if (
-    location.pathname.startsWith("/admin") ||
-    location.pathname.startsWith("/influencer") ||
-    location.pathname.startsWith("/dashboard")
-  ) return null;
-  return <MembershipBanner />;
-};
+// The membership status strip now lives inside the navbar stack (see Navbar.tsx).
+
 
 const App = () => (
   <ErrorBoundary>
@@ -127,7 +120,7 @@ const App = () => (
       <CurrencyProvider>
         <BrowserRouter>
           <PageViewTracker />
-          <StatusStrip />
+
           <AnimatedRoutes />
           <InstallPrompt />
         </BrowserRouter>
