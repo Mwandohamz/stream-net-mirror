@@ -23,7 +23,7 @@ const Poster = ({ item, onOpen, onWatch }: { item: CatalogItem; onOpen: () => vo
     viewport={{ once: true }}
     className="group relative overflow-hidden rounded-xl bg-secondary shadow-lg"
   >
-    <button onClick={onOpen} className="block w-full text-left" aria-label={`More info about ${item.title}`}>
+    <button onClick={onOpen} className="relative block w-full text-left" aria-label={`More info about ${item.title}`}>
       <img
         src={item.poster}
         alt={item.title}
@@ -31,7 +31,7 @@ const Poster = ({ item, onOpen, onWatch }: { item: CatalogItem; onOpen: () => vo
         decoding="async"
         className="aspect-[2/3] w-full object-cover transition-transform duration-300 group-hover:scale-105"
       />
-      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-background via-background/70 to-transparent p-2 md:p-3">
+      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-background via-background/85 to-transparent px-2 pb-2 pt-6 md:px-3">
         <p className="truncate text-xs font-semibold text-foreground md:text-sm">{item.title}</p>
         <div className="mt-0.5 flex items-center gap-1">
           <Star size={10} className="fill-primary text-primary" />
