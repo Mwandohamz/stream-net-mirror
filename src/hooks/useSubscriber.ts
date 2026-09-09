@@ -67,6 +67,8 @@ export const useSubscriber = () => {
       if (!claimedRef.current) {
         claimedRef.current = true;
         try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (!session?.access_token) throw new Error("no session");
           const { data: claim } = await supabase.functions.invoke("claim-payments");
           if ((claim as any)?.activated > 0) {
             const { data: fresh } = await supabase
