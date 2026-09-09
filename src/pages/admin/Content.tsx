@@ -41,6 +41,7 @@ const AdminContent = () => {
   const [linkEditing, setLinkEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [bulk, setBulk] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
 
   const saveCategory = async () => {
