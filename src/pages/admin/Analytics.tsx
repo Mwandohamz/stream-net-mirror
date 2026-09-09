@@ -95,10 +95,6 @@ const Analytics = () => {
     setDailyData(last14);
   };
 
-  const totalPages = Math.ceil(totalCount / PAGE_SIZE);
-  const showingStart = totalCount > 0 ? page * PAGE_SIZE + 1 : 0;
-  const showingEnd = Math.min((page + 1) * PAGE_SIZE, totalCount);
-
   return (
     <AdminLayout>
       <div className="space-y-6">
