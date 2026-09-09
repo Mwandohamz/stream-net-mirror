@@ -173,6 +173,7 @@ const Emails = () => {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>Account</TableHead>
                   <TableHead>Recipient</TableHead>
                   <TableHead>Type</TableHead>
                   <TableHead>Subject</TableHead>
@@ -184,17 +185,26 @@ const Emails = () => {
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center text-muted-foreground py-8">Loading...</TableCell>
+                    <TableCell colSpan={7} className="text-center text-muted-foreground py-8">Loading...</TableCell>
                   </TableRow>
                 ) : filtered.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
                       No emails sent yet
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filtered.map((r) => (
+                  filtered.map((r) => {
+                    const acct = accountFor(r);
+                    return (
                     <TableRow key={r.id}>
+                      <TableCell className="text-foreground">
+                        {acct ? (
+                          <span className="font-medium">{acct.full_name || acct.email}</span>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">No account yet</span>
+                        )}
+                      </TableCell>
                       <TableCell className="text-foreground font-medium">{r.recipient}</TableCell>
                       <TableCell className="capitalize text-muted-foreground">{r.email_type.replace(/_/g, " ")}</TableCell>
                       <TableCell className="text-muted-foreground">{r.subject || "—"}</TableCell>
@@ -212,7 +222,8 @@ const Emails = () => {
                         {new Date(r.created_at).toLocaleString()}
                       </TableCell>
                     </TableRow>
-                  ))
+                    );
+                  })
                 )}
               </TableBody>
             </Table>
