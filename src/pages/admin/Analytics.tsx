@@ -57,7 +57,7 @@ const Analytics = () => {
     const avgPages = sessions.size > 0 ? Math.round((allViews.length / sessions.size) * 10) / 10 : 0;
 
     setStats({
-      totalViews: totalCount || allViews.length,
+      totalViews: total || allViews.length,
       uniqueSessions: sessions.size,
       bounceRate,
       avgPagesPerSession: avgPages,
