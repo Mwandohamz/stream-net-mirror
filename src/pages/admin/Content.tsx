@@ -428,10 +428,33 @@ const AdminContent = () => {
                 <Label>Visible</Label>
               </div>
             </div>
+
+            {!linkEditing && (
+              <div className="space-y-1 rounded-lg border border-border bg-secondary/30 p-3">
+                <Label>Add several links at once</Label>
+                <p className="text-[11px] text-muted-foreground">
+                  One link per line: <span className="text-foreground">Title | URL | logo image URL (optional) | description (optional)</span>
+                </p>
+                <Textarea
+                  value={bulk}
+                  onChange={(e) => setBulk(e.target.value)}
+                  rows={4}
+                  placeholder={"Premier League | https://stream1.example | https://logo.png | All 380 matches\nLaLiga | https://stream2.example"}
+                />
+                <Button type="button" size="sm" variant="outline" className="mt-1 gap-1" onClick={() => void saveBulk()} disabled={saving || !bulk.trim()}>
+                  {saving ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />} Add all these links
+                </Button>
+              </div>
+            )}
           </div>
-          <DialogFooter>
+          <DialogFooter className="flex-wrap gap-2">
             <Button variant="ghost" onClick={() => setLinkOpen(false)}>Cancel</Button>
-            <Button onClick={saveLink} disabled={saving} className="bg-primary text-primary-foreground">
+            {!linkEditing && (
+              <Button variant="outline" onClick={() => void saveLink(true)} disabled={saving}>
+                Save & add another
+              </Button>
+            )}
+            <Button onClick={() => void saveLink()} disabled={saving} className="bg-primary text-primary-foreground">
               {saving ? <Loader2 size={14} className="animate-spin" /> : "Save"}
             </Button>
           </DialogFooter>
