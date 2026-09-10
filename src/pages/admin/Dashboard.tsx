@@ -13,122 +13,36 @@ import { formatCurrencyAmount, formatUsd } from "@/lib/currency";
 
 const SUCCESS_PAYMENT_STATUSES = ["completed", "success", "succeeded"];
 
+const EMPTY_STATS = {
+  totalRevenue: 0,
+  totalRevenueUsd: 0,
+  organicRevenue: 0,
+  influencerRevenue: 0,
+  totalPayments: 0,
+  completedPayments: 0,
+  todayPayments: 0,
+  totalPageViews: 0,
+  uniqueSessions: 0,
+  conversionRate: 0,
+  totalSubscribers: 0,
+  openTickets: 0,
+};
+
 const Dashboard = () => {
   const [showGuide, setShowGuide] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
-  const [stats, setStats] = useState({
-    totalRevenue: 0,
-    totalRevenueUsd: 0,
+  const refresh = useAdminRefresh();
 
-    organicRevenue: 0,
-    influencerRevenue: 0,
-    totalPayments: 0,
-    completedPayments: 0,
-    todayPayments: 0,
-    totalPageViews: 0,
-    uniqueSessions: 0,
-    conversionRate: 0,
-    totalSubscribers: 0,
-    openTickets: 0,
-  });
-  const [revenueData, setRevenueData] = useState<any[]>([]);
-  const [viewsData, setViewsData] = useState<any[]>([]);
-  const [recentPayments, setRecentPayments] = useState<any[]>([]);
+  const { data, isFetching } = useAdminQuery(["admin", "overview"], () =>
+    fetchAdminMetrics<{ stats: typeof EMPTY_STATS; days: any[]; recentPayments: any[] }>("overview")
+  );
 
-  useEffect(() => {
-    void fetchStats();
-  }, []);
+  const stats = data?.stats ?? EMPTY_STATS;
+  const revenueData = data?.days ?? [];
+  const viewsData = data?.days ?? [];
+  const recentPayments = data?.recentPayments ?? [];
+  const refreshing = isFetching;
+  const fetchStats = () => refresh(["admin", "overview"]);
 
-  const fetchStats = async () => {
-    setRefreshing(true);
-    const today = new Date().toISOString().split("T")[0];
-
-    try {
-      await supabase.functions.invoke("assign-admin-role");
-
-      const [
-        { data: allPayments, error: paymentsErr },
-        { data: todayData, error: todayErr },
-        { data: viewsData2, error: viewsErr },
-        { count: subscriberCount },
-        { count: openTicketCount },
-      ] = await Promise.all([
-        supabase.from("payments").select("*").order("created_at", { ascending: false }),
-        supabase.from("payments").select("id").gte("created_at", today),
-        supabase.from("page_views").select("created_at, session_id"),
-        supabase.from("subscribers").select("id", { count: "exact", head: true }),
-        supabase.from("support_tickets").select("id", { count: "exact", head: true }).eq("status", "open"),
-      ]);
-
-      if (paymentsErr) console.error("Dashboard payments query error:", paymentsErr);
-      if (todayErr) console.error("Dashboard today payments error:", todayErr);
-      if (viewsErr) console.error("Dashboard page_views error:", viewsErr);
-
-      const payments = allPayments || [];
-      const viewsArr = viewsData2 || [];
-      const totalViews = viewsArr.length;
-      const uniqueSessions = new Set(viewsArr.map((v: any) => v.session_id)).size;
-
-      const completedPayments = payments.filter((p: any) =>
-        SUCCESS_PAYMENT_STATUSES.includes(String(p.status || "").toLowerCase())
-      );
-      const totalRevenue = completedPayments.reduce((sum: number, p: any) => sum + Number(p.amount), 0);
-      const organicRevenue = completedPayments.filter((p: any) => !p.promo_code).reduce((sum: number, p: any) => sum + Number(p.amount), 0);
-      const influencerRevenue = completedPayments.filter((p: any) => !!p.promo_code).reduce((sum: number, p: any) => sum + Number(p.amount), 0);
-      const usdOf = (p: any) =>
-        p.amount_usd ? Number(p.amount_usd) : p.fx_rate ? Number(p.amount) / Number(p.fx_rate) : 0;
-      const totalRevenueUsd = completedPayments.reduce((sum: number, p: any) => sum + usdOf(p), 0);
-      const conversionRate = uniqueSessions > 0 ? ((completedPayments.length / uniqueSessions) * 100) : 0;
-
-      setStats({
-        totalRevenue,
-        totalRevenueUsd,
-        organicRevenue,
-        influencerRevenue,
-
-        totalPayments: payments.length,
-        completedPayments: completedPayments.length,
-        todayPayments: (todayData || []).length,
-        totalPageViews: totalViews,
-        uniqueSessions,
-        conversionRate: Math.round(conversionRate * 10) / 10,
-        totalSubscribers: subscriberCount || 0,
-        openTickets: openTicketCount || 0,
-      });
-
-      setRecentPayments(payments.slice(0, 10));
-
-      const last7 = Array.from({ length: 7 }, (_, i) => {
-        const d = new Date();
-        d.setDate(d.getDate() - (6 - i));
-        const dateStr = d.toISOString().split("T")[0];
-        const dayPayments = completedPayments.filter((p: any) => p.created_at?.startsWith(dateStr));
-        return {
-          date: d.toLocaleDateString("en", { weekday: "short" }),
-          revenue: dayPayments.reduce((s: number, p: any) => s + Number(p.amount), 0),
-          count: dayPayments.length,
-        };
-      });
-      setRevenueData(last7);
-
-      const viewsLast7 = Array.from({ length: 7 }, (_, i) => {
-        const d = new Date();
-        d.setDate(d.getDate() - (6 - i));
-        const dateStr = d.toISOString().split("T")[0];
-        const dayViews = viewsArr.filter((v: any) => v.created_at?.startsWith(dateStr));
-        return {
-          date: d.toLocaleDateString("en", { weekday: "short" }),
-          views: dayViews.length,
-          sessions: new Set(dayViews.map((v: any) => v.session_id)).size,
-        };
-      });
-      setViewsData(viewsLast7);
-    } catch (err) {
-      console.error("Dashboard fetchStats error:", err);
-    } finally {
-      setRefreshing(false);
-    }
-  };
 
   return (
     <AdminLayout>
