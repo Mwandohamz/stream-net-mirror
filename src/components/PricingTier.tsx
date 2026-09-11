@@ -16,6 +16,11 @@ import hboLogo from "@/assets/ott/hbo-max.jpg";
 import hotstarLogo from "@/assets/ott/jiohotstar.jpg";
 import appleTvLogo from "@/assets/ott/apple-tv.jpg";
 import paramountLogo from "@/assets/ott/paramount.jpg";
+import premierLeague from "@/assets/sports/premier-league.jpg.asset.json";
+import championsLeague from "@/assets/sports/uefa-champions-league.jpg.asset.json";
+import laLiga from "@/assets/sports/laliga.jpg.asset.json";
+import bundesliga from "@/assets/sports/bundesliga.jpg.asset.json";
+import skySports from "@/assets/sports/sky-sports-football.jpg.asset.json";
 
 const ottPlatforms = [
   { name: "Netflix", logo: netflixLogo },
@@ -24,6 +29,14 @@ const ottPlatforms = [
   { name: "JioHotstar", logo: hotstarLogo },
   { name: "Apple TV+", logo: appleTvLogo },
   { name: "Paramount+", logo: paramountLogo },
+];
+
+const defaultSportsLogos = [
+  { id: "premier-league", title: "Premier League", logo_url: premierLeague.url },
+  { id: "champions-league", title: "UEFA Champions League", logo_url: championsLeague.url },
+  { id: "la-liga", title: "LaLiga", logo_url: laLiga.url },
+  { id: "bundesliga", title: "Bundesliga", logo_url: bundesliga.url },
+  { id: "sky-sports", title: "Sky Sports", logo_url: skySports.url },
 ];
 
 const baseFeatures = [
@@ -49,7 +62,8 @@ const PricingTier = () => {
   const { categoryBySlug, linksFor } = useContent();
 
   const sportsCategory = categoryBySlug("live-sports");
-  const sportsLogos = (sportsCategory ? linksFor(sportsCategory.id) : []).filter((l) => l.logo_url).slice(0, 5);
+  const managedSportsLogos = (sportsCategory ? linksFor(sportsCategory.id) : []).filter((l) => l.logo_url).slice(0, 5);
+  const sportsLogos = managedSportsLogos.length > 0 ? managedSportsLogos : defaultSportsLogos;
 
   const goTo = (plan: Plan) => {
     if (isMember) return navigate(ctaHref);
@@ -141,14 +155,14 @@ const PricingTier = () => {
 
                     {/* Visual: league logos */}
                     {slugs.includes("live-sports") && sportsLogos.length > 0 && (
-                      <div>
+                      <div className="min-w-0">
                         <p className="mb-2 flex items-center gap-1 text-[10px] uppercase tracking-wider text-muted-foreground">
                           <Trophy size={11} className="text-primary" /> Live football
                         </p>
-                        <div className="flex flex-wrap gap-2">
+                        <div className="grid grid-cols-5 gap-2 sm:flex sm:flex-wrap">
                           {sportsLogos.map((l) => (
-                            <div key={l.id} className="h-9 w-9 overflow-hidden rounded-lg bg-secondary">
-                              <img src={l.logo_url!} alt={l.title} loading="lazy" decoding="async" className="h-full w-full object-cover" />
+                            <div key={l.id} className="aspect-square min-w-0 overflow-hidden rounded-lg bg-secondary sm:h-9 sm:w-9">
+                              <img src={l.logo_url ?? ""} alt={l.title} loading="lazy" decoding="async" className="h-full w-full object-cover" />
                             </div>
                           ))}
                         </div>

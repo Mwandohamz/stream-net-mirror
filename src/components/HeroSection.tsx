@@ -54,7 +54,7 @@ const HeroSection = () => {
                 Starting at just{" "}
                 <span className="line-through text-muted-foreground/60">{oldPriceLabel}</span>{" "}
                 <span className="text-primary font-bold">{priceLabel}</span> <span className="text-muted-foreground text-xs">{intervalLabel}</span>
-                {" "}— single payment, lifetime access.
+                {" "}— billed {intervalLabel || "for the selected period"}.
               </>
             )}
           </p>
@@ -74,7 +74,7 @@ const HeroSection = () => {
           </div>
 
           <p className="text-[10px] md:text-xs text-muted-foreground/60">
-            Ready to stream? Pay once and get unlimited access. No recurring fees.
+            Ready to stream? Create your account, choose a plan and pay securely.
           </p>
         </motion.div>
       </div>

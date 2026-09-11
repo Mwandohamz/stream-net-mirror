@@ -24,7 +24,14 @@ export function usePlans(includeInactive = false) {
     let query = supabase.from("plans" as any).select("*").order("sort_order", { ascending: true });
     if (!includeInactive) query = query.eq("is_active", true);
     const { data } = await query;
-    setPlans(((data as any[]) ?? []) as Plan[]);
+    const loaded = ((data as any[]) ?? []) as Plan[];
+    // Customer-facing views lead with the standard monthly option while the
+    // admin list keeps its configured order.
+    setPlans(includeInactive ? loaded : [...loaded].sort((a, b) => {
+      const aMonthly = a.interval === "month" && a.interval_count === 1;
+      const bMonthly = b.interval === "month" && b.interval_count === 1;
+      return Number(bMonthly) - Number(aMonthly) || a.sort_order - b.sort_order;
+    }));
     setLoading(false);
   }, [includeInactive]);
 
@@ -37,6 +44,7 @@ export function usePlans(includeInactive = false) {
 
 export function planIntervalLabel(plan: Pick<Plan, "interval" | "interval_count">): string {
   if (plan.interval === "lifetime") return "one-time";
-  const unit = plan.interval === "year" ? "year" : plan.interval === "week" ? "week" : "month";
+  const normalized = plan.interval.replace(/ly$/, "");
+  const unit = normalized === "year" ? "year" : normalized === "week" ? "week" : "month";
   return plan.interval_count > 1 ? `every ${plan.interval_count} ${unit}s` : `per ${unit}`;
 }
