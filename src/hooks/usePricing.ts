@@ -16,7 +16,7 @@ export function usePricing(currencyOverride?: string) {
   const { currency: displayCurrency } = useDisplayCurrency();
 
   const currency = (currencyOverride || displayCurrency || profile?.currency || "USD").toUpperCase();
-  const plan: Plan | null = plans.length > 0 ? plans[0] : null;
+  const plan: Plan | null = plans.find((candidate) => candidate.interval === "month" && candidate.interval_count === 1) ?? plans[0] ?? null;
   const priceUsd = plan ? Number(plan.price_usd) : null;
   const fxRate = rateFor(currency);
 

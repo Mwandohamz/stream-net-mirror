@@ -41,7 +41,7 @@ const AdminContent = () => {
   const [linkEditing, setLinkEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [bulk, setBulk] = useState("");
+  const [additionalUrls, setAdditionalUrls] = useState<string[]>([]);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const saveCategory = async () => {
@@ -89,9 +89,16 @@ const AdminContent = () => {
       sort_order: Number(linkForm.sort_order) || 0,
       is_active: linkForm.is_active,
     };
+    const extraUrls = additionalUrls.map((url) => url.trim()).filter(Boolean);
+    const rows = [payload, ...extraUrls.map((url, index) => ({
+      ...payload,
+      title: `${payload.title} ${index + 2}`,
+      url,
+      sort_order: payload.sort_order + index + 1,
+    }))];
     const { error } = linkEditing
       ? await supabase.from("content_links" as any).update(payload as any).eq("id", linkForm.id)
-      : await supabase.from("content_links" as any).insert(payload as any);
+      : await supabase.from("content_links" as any).insert(rows as any);
     setSaving(false);
     if (error) {
       toast({ title: "Could not save link", description: error.message, variant: "destructive" });
@@ -105,43 +112,11 @@ const AdminContent = () => {
         platform: f.platform,
         sort_order: Number(f.sort_order) + 1,
       }));
+      setAdditionalUrls([]);
     } else {
       setLinkOpen(false);
+      setAdditionalUrls([]);
     }
-    void reload();
-  };
-
-  /** Bulk add: one link per line, "Title | URL | optional logo URL | optional description". */
-  const saveBulk = async () => {
-    const rows = bulk
-      .split("\n")
-      .map((line) => line.split("|").map((p) => p.trim()))
-      .filter((p) => p[0] && p[1]);
-    if (rows.length === 0 || !linkForm.category_id) {
-      toast({ title: "Nothing to add", description: "Use one line per link: Title | URL", variant: "destructive" });
-      return;
-    }
-    setSaving(true);
-    const base = Number(linkForm.sort_order) || 0;
-    const payload = rows.map((p, i) => ({
-      category_id: linkForm.category_id,
-      title: p[0],
-      url: p[1],
-      logo_url: p[2] || null,
-      description: p[3] || null,
-      platform: linkForm.platform,
-      sort_order: base + i,
-      is_active: true,
-    }));
-    const { error } = await supabase.from("content_links" as any).insert(payload as any);
-    setSaving(false);
-    if (error) {
-      toast({ title: "Could not add links", description: error.message, variant: "destructive" });
-      return;
-    }
-    setBulk("");
-    setLinkOpen(false);
-    toast({ title: `${rows.length} links added` });
     void reload();
   };
 
@@ -223,6 +198,7 @@ const AdminContent = () => {
                     className="gap-1"
                     onClick={() => {
                       setLinkForm({ ...emptyLink, category_id: c.id, sort_order: linksFor(c.id).length + 1 });
+                      setAdditionalUrls([]);
                       setLinkEditing(false);
                       setLinkOpen(true);
                     }}
@@ -288,6 +264,7 @@ const AdminContent = () => {
                             is_active: l.is_active,
                           });
                           setLinkEditing(true);
+                          setAdditionalUrls([]);
                           setLinkOpen(true);
                         }}
                       >
@@ -379,6 +356,23 @@ const AdminContent = () => {
             <div className="space-y-1">
               <Label>URL</Label>
               <Input value={linkForm.url} onChange={(e) => setLinkForm({ ...linkForm, url: e.target.value })} placeholder="https://" />
+              {!linkEditing && additionalUrls.map((url, index) => (
+                <div key={index} className="flex gap-2 pt-2">
+                  <Input
+                    value={url}
+                    onChange={(e) => setAdditionalUrls((current) => current.map((item, itemIndex) => itemIndex === index ? e.target.value : item))}
+                    placeholder={`Additional URL ${index + 2}`}
+                  />
+                  <Button type="button" variant="ghost" size="icon" title="Remove URL" onClick={() => setAdditionalUrls((current) => current.filter((_, itemIndex) => itemIndex !== index))}>
+                    <Trash2 size={14} className="text-destructive" />
+                  </Button>
+                </div>
+              ))}
+              {!linkEditing && (
+                <Button type="button" size="sm" variant="outline" className="mt-2 gap-1" onClick={() => setAdditionalUrls((current) => [...current, ""])}>
+                  <Plus size={14} /> Add another URL
+                </Button>
+              )}
             </div>
             <div className="space-y-1">
               <Label>Logo</Label>
@@ -429,23 +423,6 @@ const AdminContent = () => {
               </div>
             </div>
 
-            {!linkEditing && (
-              <div className="space-y-1 rounded-lg border border-border bg-secondary/30 p-3">
-                <Label>Add several links at once</Label>
-                <p className="text-[11px] text-muted-foreground">
-                  One link per line: <span className="text-foreground">Title | URL | logo image URL (optional) | description (optional)</span>
-                </p>
-                <Textarea
-                  value={bulk}
-                  onChange={(e) => setBulk(e.target.value)}
-                  rows={4}
-                  placeholder={"Premier League | https://stream1.example | https://logo.png | All 380 matches\nLaLiga | https://stream2.example"}
-                />
-                <Button type="button" size="sm" variant="outline" className="mt-1 gap-1" onClick={() => void saveBulk()} disabled={saving || !bulk.trim()}>
-                  {saving ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />} Add all these links
-                </Button>
-              </div>
-            )}
           </div>
           <DialogFooter className="flex-wrap gap-2">
             <Button variant="ghost" onClick={() => setLinkOpen(false)}>Cancel</Button>
