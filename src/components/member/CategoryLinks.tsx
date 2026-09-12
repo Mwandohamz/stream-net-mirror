@@ -1,9 +1,32 @@
+import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, Copy, Link2, Lock } from "lucide-react";
+import { ExternalLink, Copy, Link2, Lock, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useContent, type ContentLink } from "@/hooks/useContent";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
+const ROTATION_ACK_KEY = "link-rotation-acknowledged";
+
+/** The notice is shown once per browser session so it never becomes annoying. */
+const rotationAcknowledged = () => {
+  try {
+    return sessionStorage.getItem(ROTATION_ACK_KEY) === "1";
+  } catch {
+    return false;
+  }
+};
+const rememberRotationAck = () => {
+  try {
+    sessionStorage.setItem(ROTATION_ACK_KEY, "1");
+  } catch {
+    /* private mode — just show it again next time */
+  }
+};
 
 const PLATFORM_LABEL: Record<string, string> = {
   web: "Web / Laptop",
@@ -23,6 +46,29 @@ interface Props {
 
 const LinkCard = ({ link, unlocked, onUnlockClick }: { link: ContentLink; unlocked: boolean; onUnlockClick?: () => void }) => {
   const { toast } = useToast();
+  const [pending, setPending] = useState<"open" | "copy" | null>(null);
+
+  const doOpen = () => window.open(link.url, "_blank", "noopener,noreferrer");
+  const doCopy = () => {
+    void navigator.clipboard.writeText(link.url);
+    toast({ title: "Link copied", description: link.title });
+  };
+
+  const request = (action: "open" | "copy") => {
+    if (rotationAcknowledged()) {
+      action === "open" ? doOpen() : doCopy();
+      return;
+    }
+    setPending(action);
+  };
+
+  const confirm = () => {
+    rememberRotationAck();
+    const action = pending;
+    setPending(null);
+    if (action === "open") doOpen();
+    if (action === "copy") doCopy();
+  };
 
   return (
     <div className="flex gap-3 rounded-lg border border-border bg-secondary/40 p-3">
@@ -43,19 +89,14 @@ const LinkCard = ({ link, unlocked, onUnlockClick }: { link: ContentLink; unlock
         {link.description && <p className="text-xs text-muted-foreground leading-relaxed">{link.description}</p>}
         {unlocked ? (
           <div className="flex flex-wrap gap-2 pt-1">
-            <a href={link.url} target="_blank" rel="noopener noreferrer">
-              <Button size="sm" className="h-8 gap-1 bg-primary text-primary-foreground">
-                <ExternalLink size={13} /> Open
-              </Button>
-            </a>
+            <Button size="sm" className="h-8 gap-1 bg-primary text-primary-foreground" onClick={() => request("open")}>
+              <ExternalLink size={13} /> Open
+            </Button>
             <Button
               size="sm"
               variant="outline"
               className="h-8 gap-1 border-border text-foreground"
-              onClick={() => {
-                navigator.clipboard.writeText(link.url);
-                toast({ title: "Link copied", description: link.title });
-              }}
+              onClick={() => request("copy")}
             >
               <Copy size={13} /> Copy
             </Button>
@@ -66,6 +107,25 @@ const LinkCard = ({ link, unlocked, onUnlockClick }: { link: ContentLink; unlock
           </Button>
         )}
       </div>
+
+      <AlertDialog open={!!pending} onOpenChange={(open) => !open && setPending(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <RefreshCw size={16} className="text-primary" /> These links change often
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Streaming links rotate and can stop working at any time — especially in a phone browser or on
+              iPhone. If this one stops loading, come back to your account here and use the refreshed link.
+              We keep testing and replacing them for you.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Not now</AlertDialogCancel>
+            <AlertDialogAction onClick={confirm}>Okay, I understand</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
