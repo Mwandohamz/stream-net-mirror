@@ -1,9 +1,32 @@
+import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, Copy, Link2, Lock } from "lucide-react";
+import { ExternalLink, Copy, Link2, Lock, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useContent, type ContentLink } from "@/hooks/useContent";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
+const ROTATION_ACK_KEY = "link-rotation-acknowledged";
+
+/** The notice is shown once per browser session so it never becomes annoying. */
+const rotationAcknowledged = () => {
+  try {
+    return sessionStorage.getItem(ROTATION_ACK_KEY) === "1";
+  } catch {
+    return false;
+  }
+};
+const rememberRotationAck = () => {
+  try {
+    sessionStorage.setItem(ROTATION_ACK_KEY, "1");
+  } catch {
+    /* private mode — just show it again next time */
+  }
+};
 
 const PLATFORM_LABEL: Record<string, string> = {
   web: "Web / Laptop",
