@@ -89,19 +89,14 @@ const LinkCard = ({ link, unlocked, onUnlockClick }: { link: ContentLink; unlock
         {link.description && <p className="text-xs text-muted-foreground leading-relaxed">{link.description}</p>}
         {unlocked ? (
           <div className="flex flex-wrap gap-2 pt-1">
-            <a href={link.url} target="_blank" rel="noopener noreferrer">
-              <Button size="sm" className="h-8 gap-1 bg-primary text-primary-foreground">
-                <ExternalLink size={13} /> Open
-              </Button>
-            </a>
+            <Button size="sm" className="h-8 gap-1 bg-primary text-primary-foreground" onClick={() => request("open")}>
+              <ExternalLink size={13} /> Open
+            </Button>
             <Button
               size="sm"
               variant="outline"
               className="h-8 gap-1 border-border text-foreground"
-              onClick={() => {
-                navigator.clipboard.writeText(link.url);
-                toast({ title: "Link copied", description: link.title });
-              }}
+              onClick={() => request("copy")}
             >
               <Copy size={13} /> Copy
             </Button>
@@ -112,6 +107,25 @@ const LinkCard = ({ link, unlocked, onUnlockClick }: { link: ContentLink; unlock
           </Button>
         )}
       </div>
+
+      <AlertDialog open={!!pending} onOpenChange={(open) => !open && setPending(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <RefreshCw size={16} className="text-primary" /> These links change often
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Streaming links rotate and can stop working at any time — especially in a phone browser or on
+              iPhone. If this one stops loading, come back to your account here and use the refreshed link.
+              We keep testing and replacing them for you.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Not now</AlertDialogCancel>
+            <AlertDialogAction onClick={confirm}>Okay, I understand</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
