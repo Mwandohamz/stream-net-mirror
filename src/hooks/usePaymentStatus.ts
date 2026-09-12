@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { checkDepositStatus } from "@/lib/pawapay";
+import { describePaymentFailure } from "@/lib/paymentErrors";
 
 type PaymentStatusResult = {
   status: "PENDING" | "COMPLETED" | "FAILED" | "TIMEOUT" | null;
@@ -38,7 +39,8 @@ export function usePaymentStatus(depositId: string | null) {
           setResult({ status: "COMPLETED", data: data?.[0] ?? data, error: null });
           stop();
         } else if (status === "FAILED") {
-          const reason = data?.[0]?.failureReason?.failureMessage ?? data?.failureReason?.failureMessage ?? "Payment failed";
+          const failure = data?.[0]?.failureReason ?? data?.failureReason ?? {};
+          const reason = describePaymentFailure(failure?.failureCode, failure?.failureMessage);
           setResult({ status: "FAILED", data: data?.[0] ?? data, error: reason });
           stop();
         }
