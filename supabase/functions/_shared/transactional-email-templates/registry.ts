@@ -12,6 +12,7 @@ export interface TemplateEntry {
 import { template as paymentConfirmation } from './payment-confirmation.tsx'
 import { template as subscriptionReminder } from './subscription-reminder.tsx'
 import { template as subscriptionExpired } from './subscription-expired.tsx'
+import { template as accountNotice } from './account-notice.tsx'
 
 /**
  * Template registry — maps template names to their React Email components.
@@ -21,4 +22,5 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'payment-confirmation': paymentConfirmation,
   'subscription-reminder': subscriptionReminder,
   'subscription-expired': subscriptionExpired,
+  'account-notice': accountNotice,
 }
