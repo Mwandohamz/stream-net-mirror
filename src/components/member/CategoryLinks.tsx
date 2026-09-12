@@ -46,6 +46,29 @@ interface Props {
 
 const LinkCard = ({ link, unlocked, onUnlockClick }: { link: ContentLink; unlocked: boolean; onUnlockClick?: () => void }) => {
   const { toast } = useToast();
+  const [pending, setPending] = useState<"open" | "copy" | null>(null);
+
+  const doOpen = () => window.open(link.url, "_blank", "noopener,noreferrer");
+  const doCopy = () => {
+    void navigator.clipboard.writeText(link.url);
+    toast({ title: "Link copied", description: link.title });
+  };
+
+  const request = (action: "open" | "copy") => {
+    if (rotationAcknowledged()) {
+      action === "open" ? doOpen() : doCopy();
+      return;
+    }
+    setPending(action);
+  };
+
+  const confirm = () => {
+    rememberRotationAck();
+    const action = pending;
+    setPending(null);
+    if (action === "open") doOpen();
+    if (action === "copy") doCopy();
+  };
 
   return (
     <div className="flex gap-3 rounded-lg border border-border bg-secondary/40 p-3">
