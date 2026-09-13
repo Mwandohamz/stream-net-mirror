@@ -1,11 +1,11 @@
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { Card, CardContent } from "@/components/ui/card";
-import { Search, Download, ChevronLeft, ChevronRight, Pencil, Trash2 } from "lucide-react";
+import { Search, Download, ChevronLeft, ChevronRight, Pencil, Trash2, RefreshCw } from "lucide-react";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
 } from "@/components/ui/dialog";
@@ -16,10 +16,12 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { useAdminQuery, useAdminRefresh, fetchAdminMetrics } from "@/hooks/useAdminQuery";
 import { formatCurrencyAmount, formatUsd } from "@/lib/currency";
 
 const PAGE_SIZE = 100;
 const STATUSES = ["completed", "pending", "failed", "refunded"];
+const QUERY_KEY = ["admin", "payments"];
 
 
 const Payments = () => {
