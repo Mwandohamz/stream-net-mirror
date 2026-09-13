@@ -68,6 +68,7 @@ const AdminUsers = () => {
   const [subPlanId, setSubPlanId] = useState("");
   const [subEnd, setSubEnd] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<AdminUser | null>(null);
+  const [detailsUser, setDetailsUser] = useState<AdminUser | null>(null);
 
   const call = async (payload: Record<string, unknown>) => {
     const { data, error } = await supabase.functions.invoke("admin-users", { body: payload });
