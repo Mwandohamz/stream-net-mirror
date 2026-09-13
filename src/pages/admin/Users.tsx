@@ -279,24 +279,21 @@ const AdminUsers = () => {
                   <TableHead>Name</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Country</TableHead>
-                  <TableHead>Phone</TableHead>
                   <TableHead>Subscription</TableHead>
-                  <TableHead>Payments</TableHead>
-                  <TableHead>Joined</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead className="text-right">View</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {loading && (
-                  <TableRow><TableCell colSpan={8} className="text-center py-10 text-muted-foreground">Loading users…</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={5} className="text-center py-10 text-muted-foreground">Loading users…</TableCell></TableRow>
                 )}
                 {!loading && filtered.length === 0 && (
-                  <TableRow><TableCell colSpan={8} className="text-center py-10 text-muted-foreground">No users found</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={5} className="text-center py-10 text-muted-foreground">No users found</TableCell></TableRow>
                 )}
                 {!loading && filtered.map((u) => {
                   const disabled = !!u.banned_until && new Date(u.banned_until) > new Date();
                   return (
-                    <TableRow key={u.id}>
+                    <TableRow key={u.id} className="cursor-pointer hover:bg-muted/30" onClick={() => setDetailsUser(u)}>
                       <TableCell className="font-medium">
                         <div className="flex items-center gap-2">
                           {u.profile?.full_name || "—"}
@@ -311,23 +308,11 @@ const AdminUsers = () => {
                           <span>{findCountry(u.profile.country_iso3)?.flag} {u.profile.country_name}</span>
                         ) : "—"}
                       </TableCell>
-                      <TableCell className="text-sm">{u.profile?.phone || "—"}</TableCell>
-                      <TableCell>{subscriptionBadge(u)}</TableCell>
-                      <TableCell className="text-sm">
-                        {u.payment_count}
-                        {u.total_paid_usd > 0 && (
-                          <span className="block text-[11px] text-muted-foreground">USD {u.total_paid_usd.toFixed(2)}</span>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">{new Date(u.created_at).toLocaleDateString()}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center justify-end gap-1">
-                          <Button variant="ghost" size="icon" title="Edit user" onClick={() => openEdit(u)}><Pencil size={15} /></Button>
-                          <Button variant="ghost" size="icon" title="Manage subscription" onClick={() => openSubscription(u)}><CalendarClock size={15} /></Button>
-                          <Button variant="ghost" size="icon" title="Toggle admin" onClick={() => void toggleAdmin(u)}><ShieldCheck size={15} className={u.roles.includes("admin") ? "text-primary" : ""} /></Button>
-                          <Button variant="ghost" size="icon" title={disabled ? "Enable account" : "Disable account"} onClick={() => void toggleDisabled(u)}><Ban size={15} className={disabled ? "text-destructive" : ""} /></Button>
-                          <Button variant="ghost" size="icon" title="Delete user" onClick={() => setDeleteTarget(u)}><Trash2 size={15} className="text-destructive" /></Button>
-                        </div>
+                      <TableCell onClick={(e) => e.stopPropagation()}>{subscriptionBadge(u)}</TableCell>
+                      <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                        <Button variant="ghost" size="icon" title="View details" onClick={() => setDetailsUser(u)}>
+                          <Eye size={16} />
+                        </Button>
                       </TableCell>
                     </TableRow>
                   );
