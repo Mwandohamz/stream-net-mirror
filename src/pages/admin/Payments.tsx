@@ -119,9 +119,11 @@ const Payments = () => {
     a.click();
   };
 
+  const totalCount = filtered.length;
   const totalPages = Math.ceil(totalCount / PAGE_SIZE);
   const showingStart = page * PAGE_SIZE + 1;
   const showingEnd = Math.min((page + 1) * PAGE_SIZE, totalCount);
+  const pageRows = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
 
   return (
     <AdminLayout>
