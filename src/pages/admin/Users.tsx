@@ -17,7 +17,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Search, Plus, Pencil, Trash2, ShieldCheck, Ban, CalendarClock, RefreshCw, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, Plus, Pencil, Trash2, ShieldCheck, Ban, CalendarClock, RefreshCw, ChevronLeft, ChevronRight, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import CountrySelect from "@/components/CountrySelect";
 import PhoneNumberField, { buildE164, splitLocalDigits } from "@/components/PhoneNumberField";
@@ -68,6 +68,7 @@ const AdminUsers = () => {
   const [subPlanId, setSubPlanId] = useState("");
   const [subEnd, setSubEnd] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<AdminUser | null>(null);
+  const [detailsUser, setDetailsUser] = useState<AdminUser | null>(null);
 
   const call = async (payload: Record<string, unknown>) => {
     const { data, error } = await supabase.functions.invoke("admin-users", { body: payload });
@@ -278,24 +279,21 @@ const AdminUsers = () => {
                   <TableHead>Name</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Country</TableHead>
-                  <TableHead>Phone</TableHead>
                   <TableHead>Subscription</TableHead>
-                  <TableHead>Payments</TableHead>
-                  <TableHead>Joined</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead className="text-right">View</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {loading && (
-                  <TableRow><TableCell colSpan={8} className="text-center py-10 text-muted-foreground">Loading users…</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={5} className="text-center py-10 text-muted-foreground">Loading users…</TableCell></TableRow>
                 )}
                 {!loading && filtered.length === 0 && (
-                  <TableRow><TableCell colSpan={8} className="text-center py-10 text-muted-foreground">No users found</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={5} className="text-center py-10 text-muted-foreground">No users found</TableCell></TableRow>
                 )}
                 {!loading && filtered.map((u) => {
                   const disabled = !!u.banned_until && new Date(u.banned_until) > new Date();
                   return (
-                    <TableRow key={u.id}>
+                    <TableRow key={u.id} className="cursor-pointer hover:bg-muted/30" onClick={() => setDetailsUser(u)}>
                       <TableCell className="font-medium">
                         <div className="flex items-center gap-2">
                           {u.profile?.full_name || "—"}
@@ -310,23 +308,11 @@ const AdminUsers = () => {
                           <span>{findCountry(u.profile.country_iso3)?.flag} {u.profile.country_name}</span>
                         ) : "—"}
                       </TableCell>
-                      <TableCell className="text-sm">{u.profile?.phone || "—"}</TableCell>
-                      <TableCell>{subscriptionBadge(u)}</TableCell>
-                      <TableCell className="text-sm">
-                        {u.payment_count}
-                        {u.total_paid_usd > 0 && (
-                          <span className="block text-[11px] text-muted-foreground">USD {u.total_paid_usd.toFixed(2)}</span>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">{new Date(u.created_at).toLocaleDateString()}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center justify-end gap-1">
-                          <Button variant="ghost" size="icon" title="Edit user" onClick={() => openEdit(u)}><Pencil size={15} /></Button>
-                          <Button variant="ghost" size="icon" title="Manage subscription" onClick={() => openSubscription(u)}><CalendarClock size={15} /></Button>
-                          <Button variant="ghost" size="icon" title="Toggle admin" onClick={() => void toggleAdmin(u)}><ShieldCheck size={15} className={u.roles.includes("admin") ? "text-primary" : ""} /></Button>
-                          <Button variant="ghost" size="icon" title={disabled ? "Enable account" : "Disable account"} onClick={() => void toggleDisabled(u)}><Ban size={15} className={disabled ? "text-destructive" : ""} /></Button>
-                          <Button variant="ghost" size="icon" title="Delete user" onClick={() => setDeleteTarget(u)}><Trash2 size={15} className="text-destructive" /></Button>
-                        </div>
+                      <TableCell onClick={(e) => e.stopPropagation()}>{subscriptionBadge(u)}</TableCell>
+                      <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                        <Button variant="ghost" size="icon" title="View details" onClick={() => setDetailsUser(u)}>
+                          <Eye size={16} />
+                        </Button>
                       </TableCell>
                     </TableRow>
                   );
@@ -417,6 +403,77 @@ const AdminUsers = () => {
             )}
             <Button onClick={() => void saveSubscription()} className="bg-primary text-primary-foreground hover:bg-primary/80">Save</Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* User details / actions */}
+      <Dialog open={!!detailsUser} onOpenChange={(open) => !open && setDetailsUser(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Account details</DialogTitle>
+            <DialogDescription>{detailsUser?.email}</DialogDescription>
+          </DialogHeader>
+          {detailsUser && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div className="space-y-1">
+                  <Label className="text-muted-foreground text-xs">Full name</Label>
+                  <p className="text-foreground font-medium">{detailsUser.profile?.full_name || "—"}</p>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-muted-foreground text-xs">Phone</Label>
+                  <p className="text-foreground">{detailsUser.profile?.phone || "—"}</p>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-muted-foreground text-xs">Country</Label>
+                  <p className="text-foreground">{detailsUser.profile?.country_name ? `${findCountry(detailsUser.profile.country_iso3)?.flag} ${detailsUser.profile.country_name}` : "—"}</p>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-muted-foreground text-xs">Email verified</Label>
+                  <p className="text-foreground">{detailsUser.email_confirmed_at ? new Date(detailsUser.email_confirmed_at).toLocaleDateString() : <span className="text-yellow-500">Not verified</span>}</p>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-muted-foreground text-xs">Joined</Label>
+                  <p className="text-foreground">{new Date(detailsUser.created_at).toLocaleDateString()}</p>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-muted-foreground text-xs">Last sign in</Label>
+                  <p className="text-foreground">{detailsUser.last_sign_in_at ? new Date(detailsUser.last_sign_in_at).toLocaleString() : "—"}</p>
+                </div>
+              </div>
+
+              <div className="rounded-lg border border-border bg-secondary/40 p-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label className="text-muted-foreground text-xs">Subscription</Label>
+                  {subscriptionBadge(detailsUser)}
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Payments made</span>
+                  <span className="text-foreground font-medium">{detailsUser.payment_count} {detailsUser.total_paid_usd > 0 && `(USD ${detailsUser.total_paid_usd.toFixed(2)})`}</span>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                <Button size="sm" variant="outline" className="gap-1" onClick={() => { setDetailsUser(null); openEdit(detailsUser); }}>
+                  <Pencil size={14} /> Edit
+                </Button>
+                <Button size="sm" variant="outline" className="gap-1" onClick={() => { setDetailsUser(null); openSubscription(detailsUser); }}>
+                  <CalendarClock size={14} /> Subscription
+                </Button>
+                <Button size="sm" variant="outline" className="gap-1" onClick={() => void toggleAdmin(detailsUser)}>
+                  <ShieldCheck size={14} className={detailsUser.roles.includes("admin") ? "text-primary" : ""} />
+                  {detailsUser.roles.includes("admin") ? "Remove admin" : "Make admin"}
+                </Button>
+                <Button size="sm" variant="outline" className="gap-1" onClick={() => void toggleDisabled(detailsUser)}>
+                  <Ban size={14} className={!!detailsUser.banned_until && new Date(detailsUser.banned_until) > new Date() ? "text-destructive" : ""} />
+                  {!!detailsUser.banned_until && new Date(detailsUser.banned_until) > new Date() ? "Enable" : "Disable"}
+                </Button>
+                <Button size="sm" variant="outline" className="gap-1 text-destructive border-destructive/40 hover:bg-destructive/10" onClick={() => { setDetailsUser(null); setDeleteTarget(detailsUser); }}>
+                  <Trash2 size={14} /> Delete
+                </Button>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
 

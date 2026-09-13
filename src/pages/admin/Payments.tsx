@@ -1,11 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { Card, CardContent } from "@/components/ui/card";
-import { Search, Download, ChevronLeft, ChevronRight, Pencil, Trash2 } from "lucide-react";
+import { Search, Download, ChevronLeft, ChevronRight, Pencil, Trash2, RefreshCw } from "lucide-react";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
 } from "@/components/ui/dialog";
@@ -16,24 +16,47 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { useAdminQuery, useAdminRefresh, fetchAdminMetrics } from "@/hooks/useAdminQuery";
 import { formatCurrencyAmount, formatUsd } from "@/lib/currency";
 
 const PAGE_SIZE = 100;
 const STATUSES = ["completed", "pending", "failed", "refunded"];
+const QUERY_KEY = ["admin", "payments"];
 
 
 const Payments = () => {
   const { toast } = useToast();
-  const [payments, setPayments] = useState<any[]>([]);
   const [search, setSearch] = useState("");
-  const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
-  const [totalCount, setTotalCount] = useState(0);
   const [editing, setEditing] = useState<any | null>(null);
   const [editStatus, setEditStatus] = useState("completed");
   const [editRef, setEditRef] = useState("");
   const [saving, setSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<any | null>(null);
+  const refresh = useAdminRefresh();
+
+  const { data, isLoading, isFetching } = useAdminQuery<{ payments: any[]; total: number }>(
+    QUERY_KEY,
+    () => fetchAdminMetrics("payments")
+  );
+
+  const payments = data?.payments ?? [];
+
+  useEffect(() => {
+    setPage(0);
+  }, [search]);
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return payments;
+    return payments.filter(
+      (p) =>
+        p.name?.toLowerCase().includes(q) ||
+        p.email?.toLowerCase().includes(q) ||
+        p.phone?.includes(q) ||
+        p.transaction_id?.includes(q)
+    );
+  }, [payments, search]);
 
   const openEdit = (p: any) => {
     setEditing(p);
@@ -55,7 +78,7 @@ const Payments = () => {
     }
     toast({ title: "Payment updated" });
     setEditing(null);
-    void fetchPayments();
+    refresh(QUERY_KEY);
   };
 
   const confirmDelete = async () => {
@@ -67,55 +90,8 @@ const Payments = () => {
     }
     toast({ title: "Payment deleted" });
     setDeleteTarget(null);
-    void fetchPayments();
+    refresh(QUERY_KEY);
   };
-
-
-  useEffect(() => {
-    void fetchPayments();
-  }, [page]);
-
-  useEffect(() => {
-    setPage(0);
-  }, [search]);
-
-  const fetchPayments = async () => {
-    setLoading(true);
-
-    try {
-      await supabase.functions.invoke("assign-admin-role");
-
-      const [countResult, dataResult] = await Promise.all([
-        supabase.from("payments").select("id", { count: "exact", head: true }),
-        supabase
-          .from("payments")
-          .select("*")
-          .order("created_at", { ascending: false })
-          .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1),
-      ]);
-
-      if (countResult.error || dataResult.error) {
-        console.error("Payments query error:", countResult.error || dataResult.error);
-      }
-
-      setTotalCount(countResult.count || 0);
-      setPayments(dataResult.data || []);
-    } catch (err) {
-      console.error("Payments fetch error:", err);
-      setPayments([]);
-      setTotalCount(0);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const filtered = payments.filter(
-    (p) =>
-      p.name?.toLowerCase().includes(search.toLowerCase()) ||
-      p.email?.toLowerCase().includes(search.toLowerCase()) ||
-      p.phone?.includes(search) ||
-      p.transaction_id?.includes(search)
-  );
 
   const exportCSV = async () => {
     const { data: allData } = await supabase
@@ -147,18 +123,25 @@ const Payments = () => {
     a.click();
   };
 
+  const totalCount = filtered.length;
   const totalPages = Math.ceil(totalCount / PAGE_SIZE);
   const showingStart = page * PAGE_SIZE + 1;
   const showingEnd = Math.min((page + 1) * PAGE_SIZE, totalCount);
+  const pageRows = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
 
   return (
     <AdminLayout>
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h1 className="netflix-title text-3xl text-foreground">PAYMENTS</h1>
-          <Button variant="outline" size="sm" className="gap-2 border-border text-foreground" onClick={exportCSV}>
-            <Download className="h-4 w-4" /> Export CSV
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" className="gap-2 border-border text-foreground" onClick={() => refresh(QUERY_KEY)}>
+              <RefreshCw className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`} /> Refresh
+            </Button>
+            <Button variant="outline" size="sm" className="gap-2 border-border text-foreground" onClick={exportCSV}>
+              <Download className="h-4 w-4" /> Export CSV
+            </Button>
+          </div>
         </div>
 
         <div className="relative max-w-sm">
@@ -192,16 +175,16 @@ const Payments = () => {
 
               </TableHeader>
               <TableBody>
-                {loading ? (
+                {isLoading ? (
                   <TableRow>
                     <TableCell colSpan={12} className="text-center text-muted-foreground py-8">Loading...</TableCell>
                   </TableRow>
-                ) : filtered.length === 0 ? (
+                ) : pageRows.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={12} className="text-center text-muted-foreground py-8">No payments found</TableCell>
                   </TableRow>
                 ) : (
-                  filtered.map((p) => {
+                  pageRows.map((p) => {
                     const normalizedStatus = String(p.status || "").toLowerCase();
                     const usd = p.amount_usd
                       ? Number(p.amount_usd)
