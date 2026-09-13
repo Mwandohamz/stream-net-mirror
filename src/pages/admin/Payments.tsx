@@ -42,6 +42,10 @@ const Payments = () => {
 
   const payments = data?.payments ?? [];
 
+  useEffect(() => {
+    setPage(0);
+  }, [search]);
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return payments;
