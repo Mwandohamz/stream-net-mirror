@@ -26,16 +26,33 @@ const QUERY_KEY = ["admin", "payments"];
 
 const Payments = () => {
   const { toast } = useToast();
-  const [payments, setPayments] = useState<any[]>([]);
   const [search, setSearch] = useState("");
-  const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
-  const [totalCount, setTotalCount] = useState(0);
   const [editing, setEditing] = useState<any | null>(null);
   const [editStatus, setEditStatus] = useState("completed");
   const [editRef, setEditRef] = useState("");
   const [saving, setSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<any | null>(null);
+  const refresh = useAdminRefresh();
+
+  const { data, isLoading, isFetching } = useAdminQuery<{ payments: any[]; total: number }>(
+    QUERY_KEY,
+    () => fetchAdminMetrics("payments")
+  );
+
+  const payments = data?.payments ?? [];
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return payments;
+    return payments.filter(
+      (p) =>
+        p.name?.toLowerCase().includes(q) ||
+        p.email?.toLowerCase().includes(q) ||
+        p.phone?.includes(q) ||
+        p.transaction_id?.includes(q)
+    );
+  }, [payments, search]);
 
   const openEdit = (p: any) => {
     setEditing(p);
@@ -57,7 +74,7 @@ const Payments = () => {
     }
     toast({ title: "Payment updated" });
     setEditing(null);
-    void fetchPayments();
+    refresh(QUERY_KEY);
   };
 
   const confirmDelete = async () => {
@@ -69,55 +86,8 @@ const Payments = () => {
     }
     toast({ title: "Payment deleted" });
     setDeleteTarget(null);
-    void fetchPayments();
+    refresh(QUERY_KEY);
   };
-
-
-  useEffect(() => {
-    void fetchPayments();
-  }, [page]);
-
-  useEffect(() => {
-    setPage(0);
-  }, [search]);
-
-  const fetchPayments = async () => {
-    setLoading(true);
-
-    try {
-      await supabase.functions.invoke("assign-admin-role");
-
-      const [countResult, dataResult] = await Promise.all([
-        supabase.from("payments").select("id", { count: "exact", head: true }),
-        supabase
-          .from("payments")
-          .select("*")
-          .order("created_at", { ascending: false })
-          .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1),
-      ]);
-
-      if (countResult.error || dataResult.error) {
-        console.error("Payments query error:", countResult.error || dataResult.error);
-      }
-
-      setTotalCount(countResult.count || 0);
-      setPayments(dataResult.data || []);
-    } catch (err) {
-      console.error("Payments fetch error:", err);
-      setPayments([]);
-      setTotalCount(0);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const filtered = payments.filter(
-    (p) =>
-      p.name?.toLowerCase().includes(search.toLowerCase()) ||
-      p.email?.toLowerCase().includes(search.toLowerCase()) ||
-      p.phone?.includes(search) ||
-      p.transaction_id?.includes(search)
-  );
 
   const exportCSV = async () => {
     const { data: allData } = await supabase
