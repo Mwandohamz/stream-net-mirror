@@ -171,16 +171,16 @@ const Payments = () => {
 
               </TableHeader>
               <TableBody>
-                {loading ? (
+                {isLoading ? (
                   <TableRow>
                     <TableCell colSpan={12} className="text-center text-muted-foreground py-8">Loading...</TableCell>
                   </TableRow>
-                ) : filtered.length === 0 ? (
+                ) : pageRows.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={12} className="text-center text-muted-foreground py-8">No payments found</TableCell>
                   </TableRow>
                 ) : (
-                  filtered.map((p) => {
+                  pageRows.map((p) => {
                     const normalizedStatus = String(p.status || "").toLowerCase();
                     const usd = p.amount_usd
                       ? Number(p.amount_usd)
