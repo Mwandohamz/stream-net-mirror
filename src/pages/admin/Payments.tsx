@@ -130,9 +130,14 @@ const Payments = () => {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h1 className="netflix-title text-3xl text-foreground">PAYMENTS</h1>
-          <Button variant="outline" size="sm" className="gap-2 border-border text-foreground" onClick={exportCSV}>
-            <Download className="h-4 w-4" /> Export CSV
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" className="gap-2 border-border text-foreground" onClick={() => refresh(QUERY_KEY)}>
+              <RefreshCw className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`} /> Refresh
+            </Button>
+            <Button variant="outline" size="sm" className="gap-2 border-border text-foreground" onClick={exportCSV}>
+              <Download className="h-4 w-4" /> Export CSV
+            </Button>
+          </div>
         </div>
 
         <div className="relative max-w-sm">
