@@ -406,6 +406,77 @@ const AdminUsers = () => {
         </DialogContent>
       </Dialog>
 
+      {/* User details / actions */}
+      <Dialog open={!!detailsUser} onOpenChange={(open) => !open && setDetailsUser(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Account details</DialogTitle>
+            <DialogDescription>{detailsUser?.email}</DialogDescription>
+          </DialogHeader>
+          {detailsUser && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div className="space-y-1">
+                  <Label className="text-muted-foreground text-xs">Full name</Label>
+                  <p className="text-foreground font-medium">{detailsUser.profile?.full_name || "—"}</p>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-muted-foreground text-xs">Phone</Label>
+                  <p className="text-foreground">{detailsUser.profile?.phone || "—"}</p>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-muted-foreground text-xs">Country</Label>
+                  <p className="text-foreground">{detailsUser.profile?.country_name ? `${findCountry(detailsUser.profile.country_iso3)?.flag} ${detailsUser.profile.country_name}` : "—"}</p>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-muted-foreground text-xs">Email verified</Label>
+                  <p className="text-foreground">{detailsUser.email_confirmed_at ? new Date(detailsUser.email_confirmed_at).toLocaleDateString() : <span className="text-yellow-500">Not verified</span>}</p>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-muted-foreground text-xs">Joined</Label>
+                  <p className="text-foreground">{new Date(detailsUser.created_at).toLocaleDateString()}</p>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-muted-foreground text-xs">Last sign in</Label>
+                  <p className="text-foreground">{detailsUser.last_sign_in_at ? new Date(detailsUser.last_sign_in_at).toLocaleString() : "—"}</p>
+                </div>
+              </div>
+
+              <div className="rounded-lg border border-border bg-secondary/40 p-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label className="text-muted-foreground text-xs">Subscription</Label>
+                  {subscriptionBadge(detailsUser)}
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Payments made</span>
+                  <span className="text-foreground font-medium">{detailsUser.payment_count} {detailsUser.total_paid_usd > 0 && `(USD ${detailsUser.total_paid_usd.toFixed(2)})`}</span>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                <Button size="sm" variant="outline" className="gap-1" onClick={() => { setDetailsUser(null); openEdit(detailsUser); }}>
+                  <Pencil size={14} /> Edit
+                </Button>
+                <Button size="sm" variant="outline" className="gap-1" onClick={() => { setDetailsUser(null); openSubscription(detailsUser); }}>
+                  <CalendarClock size={14} /> Subscription
+                </Button>
+                <Button size="sm" variant="outline" className="gap-1" onClick={() => void toggleAdmin(detailsUser)}>
+                  <ShieldCheck size={14} className={detailsUser.roles.includes("admin") ? "text-primary" : ""} />
+                  {detailsUser.roles.includes("admin") ? "Remove admin" : "Make admin"}
+                </Button>
+                <Button size="sm" variant="outline" className="gap-1" onClick={() => void toggleDisabled(detailsUser)}>
+                  <Ban size={14} className={!!detailsUser.banned_until && new Date(detailsUser.banned_until) > new Date() ? "text-destructive" : ""} />
+                  {!!detailsUser.banned_until && new Date(detailsUser.banned_until) > new Date() ? "Enable" : "Disable"}
+                </Button>
+                <Button size="sm" variant="outline" className="gap-1 text-destructive border-destructive/40 hover:bg-destructive/10" onClick={() => { setDetailsUser(null); setDeleteTarget(detailsUser); }}>
+                  <Trash2 size={14} /> Delete
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
