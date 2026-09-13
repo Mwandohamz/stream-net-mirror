@@ -17,7 +17,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Search, Plus, Pencil, Trash2, ShieldCheck, Ban, CalendarClock, RefreshCw, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, Plus, Pencil, Trash2, ShieldCheck, Ban, CalendarClock, RefreshCw, ChevronLeft, ChevronRight, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import CountrySelect from "@/components/CountrySelect";
 import PhoneNumberField, { buildE164, splitLocalDigits } from "@/components/PhoneNumberField";
