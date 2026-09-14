@@ -18,6 +18,7 @@ import { useMembership } from "@/hooks/useMembership";
 import CurrencySelector from "@/components/CurrencySelector";
 import { formatUsd } from "@/lib/currency";
 import { supabase } from "@/integrations/supabase/client";
+import { reportPurchase } from "@/lib/metaPurchase";
 
 const Payment = () => {
   const navigate = useNavigate();
