@@ -25,26 +25,42 @@
     <meta name="twitter:description" content="Access Netflix, Disney+, Prime Video, HBO Max & 50+ OTT platforms with a single payment. StreamNetMirror — your gateway to unlimited entertainment.">
     <meta name="twitter:image" content="https://storage.googleapis.com/gpt-engineer-file-uploads/yjSDGnEhqwQyJWElkmmbOWszLv53/social-images/social-1773352120964-Screenshot_2026-03-13_031800.webp">
 
-    <!-- Meta Pixel Code -->
+    <!-- Meta Pixel Code — loaded only outside consent-required regions -->
     <script>
-      !function(f,b,e,v,n,t,s)
-      {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-      n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-      if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-      n.queue=[];t=b.createElement(e);t.async=!0;
-      t.src=v;s=b.getElementsByTagName(e)[0];
-      s.parentNode.insertBefore(t,s)}(window, document,'script',
-      'https://connect.facebook.net/en_US/fbevents.js');
-      fbq('init', '1626933832469255');
-      fbq('track', 'PageView');
+      (function () {
+        var BLOCKED = ['AT','BE','BG','HR','CY','CZ','DK','EE','FI','FR','DE','GR','HU','IE','IT','LV','LT','LU','MT','NL','PL','PT','RO','SK','SI','ES','SE','GB','IS','LI','NO','CH','XX','T1'];
+        function load() {
+          !function(f,b,e,v,n,t,s)
+          {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+          n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+          if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+          n.queue=[];t=b.createElement(e);t.async=!0;
+          t.src=v;s=b.getElementsByTagName(e)[0];
+          s.parentNode.insertBefore(t,s)}(window, document,'script',
+          'https://connect.facebook.net/en_US/fbevents.js');
+          fbq('init', '1626933832469255');
+          fbq('track', 'PageView');
+          window.__metaPixelReady = true;
+        }
+        var done = false;
+        var timer = setTimeout(function () { done = true; }, 2000);
+        fetch('/cdn-cgi/trace', { cache: 'no-store' })
+          .then(function (r) { return r.ok ? r.text() : Promise.reject(); })
+          .then(function (t) {
+            if (done) return;
+            clearTimeout(timer);
+            var m = /(^|\n)loc=([A-Z0-9]+)/.exec(t);
+            var loc = m ? m[2] : 'XX';
+            if (BLOCKED.indexOf(loc) === -1) load();
+          })
+          .catch(function () { /* unknown region: stay blocked */ });
+      })();
     </script>
     <!-- End Meta Pixel Code -->
   </head>
 
   <body>
-    <noscript><img height="1" width="1" style="display:none"
-      src="https://www.facebook.com/tr?id=1626933832469255&ev=PageView&noscript=1"
-    /></noscript>
+
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
