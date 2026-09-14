@@ -24,6 +24,13 @@ const Privacy = () => {
           <p>We implement appropriate security measures. Payment processing is handled by trusted Mobile Money providers.</p>
           <h3 className="font-display text-xl text-foreground">4. Cookies</h3>
           <p>Our website may use cookies for analytics purposes to improve user experience.</p>
+          <p>
+            We also use the Meta (Facebook) pixel for advertising measurement. It shares pages viewed on this
+            site and, when a subscription payment is confirmed, the payment amount and currency with Meta
+            Platforms. We never share your name, email address, phone number or mobile money details with
+            Meta. The pixel is not loaded for visitors in regions where prior consent is required, and you can
+            opt out of interest-based advertising through your Meta ad settings or your browser.
+          </p>
           <h3 className="font-display text-xl text-foreground">5. Third-Party Links</h3>
           <p>Our website may contain links to third-party websites. We are not responsible for their privacy practices.</p>
           <h3 className="font-display text-xl text-foreground">6. Contact</h3>
