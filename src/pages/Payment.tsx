@@ -223,8 +223,10 @@ const Payment = () => {
       <PaymentModal
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
-        onSuccess={() => {
+        onSuccess={(depositId) => {
           setModalOpen(false);
+          // Only reports once the payment row is completed and linked to a subscription.
+          void reportPurchase(depositId);
           // Re-check membership so the dashboard opens already unlocked.
           window.dispatchEvent(new Event("membership:refresh"));
           navigate("/dashboard");

@@ -43,3 +43,29 @@ export const trackPageView = async (page: string) => {
     // Silent fail for analytics
   }
 };
+
+declare global {
+  interface Window {
+    fbq?: (...args: any[]) => void;
+  }
+}
+
+/**
+ * Sends a standard Meta event when the pixel is actually loaded.
+ * The pixel only loads outside consent-required regions, so this is a no-op there.
+ * Returns true when the event was handed to the pixel.
+ */
+export const trackMetaEvent = (
+  name: string,
+  params?: Record<string, string | number>,
+  eventId?: string,
+): boolean => {
+  try {
+    if (isInternalTraffic()) return false;
+    if (typeof window === "undefined" || typeof window.fbq !== "function") return false;
+    window.fbq("track", name, params ?? {}, eventId ? { eventID: eventId } : undefined);
+    return true;
+  } catch {
+    return false;
+  }
+};
