@@ -76,12 +76,12 @@ serve(async (req) => {
       .from("support_tickets")
       .insert({
         user_id: null,
-        guest_name: name.trim(),
-        guest_email: email.trim().toLowerCase(),
-        guest_phone: phone?.trim() || null,
-        payment_ref: paymentRef?.trim() || null,
-        subject: subject.trim(),
-        message: message.trim(),
+        guest_name: safeName,
+        guest_email: safeEmail,
+        guest_phone: safePhone || null,
+        payment_ref: safeRef || null,
+        subject: safeSubject,
+        message: safeMessage,
         status: "open",
       })
       .select("id")
