@@ -43,7 +43,7 @@ const HeroSection = () => {
               TV SHOWS &{" "}
             </span>
             {/* Premier League purple into Champions League blue */}
-            <span className="bg-gradient-to-r from-[#38003C] via-[#00A3E0] to-[#04F5FF] bg-clip-text text-transparent drop-shadow-[0_0_18px_rgba(0,163,224,0.45)]">
+            <span className="bg-gradient-to-r from-[#FF2882] via-[#00A3E0] to-[#04F5FF] bg-clip-text text-transparent drop-shadow-[0_0_18px_rgba(0,163,224,0.45)]">
               LIVE SPORTS
             </span>
           </h1>
