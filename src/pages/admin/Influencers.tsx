@@ -31,6 +31,15 @@ interface InfluencerStats {
   influencerShare: number;
 }
 
+interface CachedInfluencers {
+  influencers: Influencer[];
+  stats: Record<string, InfluencerStats>;
+  influencerRevenue: number;
+  organicRevenue: number;
+}
+
+const CACHE_KEY = "admin:influencers";
+
 const Influencers = () => {
   const { toast } = useToast();
   const cached = getAdminCache<CachedInfluencers>(CACHE_KEY);
