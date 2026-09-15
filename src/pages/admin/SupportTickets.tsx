@@ -46,7 +46,7 @@ const SupportTickets = () => {
   const [expandedTicket, setExpandedTicket] = useState<string | null>(null);
   const [replyText, setReplyText] = useState("");
   const [replySending, setReplySending] = useState(false);
-  const [userInfo, setUserInfo] = useState<Record<string, { name: string; email: string }>>({});
+  const [userInfo, setUserInfo] = useState<Record<string, { name: string; email: string }>>(cachedTickets?.userInfo ?? {});
 
   const [grantingAccess, setGrantingAccess] = useState<string | null>(null);
   const [grantResult, setGrantResult] = useState<Record<string, { password: string; email: string }>>({});
