@@ -23,8 +23,7 @@ serve(async (req) => {
     const { name, email, subject, message, phone, paymentRef } = payload as Record<string, unknown>;
 
     const errors: string[] = [];
-    const str = (v: unknown) => (typeof v === "string" ? v.trim() : "");
-    const require = (v: unknown, label: string, max: number) => {
+    const required = (v: unknown, label: string, max: number) => {
       if (typeof v !== "string") {
         errors.push(`${label} is required`);
         return "";
