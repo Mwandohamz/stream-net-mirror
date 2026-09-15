@@ -79,6 +79,138 @@ const Emails = () => {
   const [sending, setSending] = useState(false);
   const [lastRun, setLastRun] = useState<string | null>(null);
   const { toast } = useToast();
+  const { plans } = usePlans(true);
+
+  // ---- Targeted sending ----
+  const [recipients, setRecipients] = useState<Recipient[]>([]);
+  const [loadingRecipients, setLoadingRecipients] = useState(false);
+  const [rSearch, setRSearch] = useState("");
+  const [rCountry, setRCountry] = useState("all");
+  const [rPlan, setRPlan] = useState("all");
+  const [rState, setRState] = useState("all");
+  const [expiringDays, setExpiringDays] = useState("7");
+  const [selected, setSelected] = useState<string[]>([]);
+  const [templateKey, setTemplateKey] = useState("renewal-reminder");
+  const [subject, setSubject] = useState(TEMPLATE_PRESETS["renewal-reminder"].subject);
+  const [bodyText, setBodyText] = useState(TEMPLATE_PRESETS["renewal-reminder"].body);
+  const [sendingTargeted, setSendingTargeted] = useState(false);
+
+  const loadRecipients = async () => {
+    setLoadingRecipients(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("admin-users", {
+        body: { action: "list", page: 0, perPage: 500 },
+      });
+      if (error) throw new Error(error.message);
+      if ((data as any)?.error) throw new Error((data as any).error);
+      const list: Recipient[] = ((data as any).users ?? [])
+        .filter((u: any) => !!u.email)
+        .map((u: any) => {
+          const planId = u.subscription?.plan_id ?? null;
+          return {
+            id: u.id,
+            email: u.email,
+            name: u.profile?.full_name || u.email,
+            country: u.profile?.country_name || "",
+            planId,
+            planName: plans.find((p: any) => p.id === planId)?.name || (planId ? "Plan" : "No plan"),
+            status: u.subscription?.status || "none",
+            periodEnd: u.subscription?.current_period_end ?? null,
+          };
+        });
+      setRecipients(list);
+    } catch (err: any) {
+      toast({ title: "Could not load recipients", description: err?.message ?? "Unexpected error", variant: "destructive" });
+      setRecipients([]);
+    } finally {
+      setLoadingRecipients(false);
+    }
+  };
+
+  useEffect(() => {
+    void loadRecipients();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [plans.length]);
+
+  const countries = useMemo(
+    () => Array.from(new Set(recipients.map((r) => r.country).filter(Boolean))).sort(),
+    [recipients]
+  );
+
+  const matching = useMemo(() => {
+    const q = rSearch.trim().toLowerCase();
+    const now = Date.now();
+    const windowMs = (Number(expiringDays) || 0) * 86400000;
+    return recipients.filter((r) => {
+      if (q && !(r.name.toLowerCase().includes(q) || r.email.toLowerCase().includes(q))) return false;
+      if (rCountry !== "all" && r.country !== rCountry) return false;
+      if (rPlan !== "all" && r.planId !== rPlan) return false;
+      if (rState !== "all") {
+        const end = r.periodEnd ? new Date(r.periodEnd).getTime() : null;
+        const isActive = r.status === "active" && end !== null && end > now;
+        if (rState === "active" && !isActive) return false;
+        if (rState === "expiring" && !(isActive && end! - now <= windowMs)) return false;
+        if (rState === "expired" && !(end !== null && end <= now)) return false;
+        if (rState === "none" && r.status !== "none") return false;
+      }
+      return true;
+    });
+  }, [recipients, rSearch, rCountry, rPlan, rState, expiringDays]);
+
+  const allMatchingSelected = matching.length > 0 && matching.every((r) => selected.includes(r.email));
+
+  const toggleAll = () => {
+    setSelected(allMatchingSelected ? [] : matching.map((r) => r.email));
+  };
+
+  const toggleOne = (email: string) => {
+    setSelected((prev) => (prev.includes(email) ? prev.filter((e) => e !== email) : [...prev, email]));
+  };
+
+  const applyTemplate = (key: string) => {
+    setTemplateKey(key);
+    const preset = TEMPLATE_PRESETS[key];
+    if (preset) {
+      setSubject(preset.subject);
+      setBodyText(preset.body);
+    }
+  };
+
+  const sendTargeted = async () => {
+    if (selected.length === 0) {
+      toast({ title: "Pick at least one recipient", variant: "destructive" });
+      return;
+    }
+    if (!subject.trim() || !bodyText.trim()) {
+      toast({ title: "Add a subject and a message", variant: "destructive" });
+      return;
+    }
+    setSendingTargeted(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("admin-send-email", {
+        body: {
+          emails: selected,
+          subject: subject.trim(),
+          heading: subject.trim(),
+          body: bodyText.trim(),
+          emailType: templateKey,
+        },
+      });
+      if (error) throw new Error(error.message);
+      if ((data as any)?.error) throw new Error((data as any).error);
+      toast({
+        title: "Emails sent",
+        description: `${(data as any).sent} sent, ${(data as any).failed} failed, ${(data as any).suppressed} skipped`,
+      });
+      setSelected([]);
+      void fetchRows();
+    } catch (err: any) {
+      toast({ title: "Could not send", description: err?.message ?? "Unexpected error", variant: "destructive" });
+    } finally {
+      setSendingTargeted(false);
+    }
+  };
+
 
   const sendReminders = async () => {
     setSending(true);
