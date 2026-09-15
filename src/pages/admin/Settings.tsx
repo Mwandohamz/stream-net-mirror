@@ -28,11 +28,20 @@ const AdminSettings = () => {
 
   // Load current APK info from settings
   useEffect(() => {
+    let cancelled = false;
     if (settings.apk_file_name) {
       setApkFileName(settings.apk_file_name);
-      const { data } = supabase.storage.from("app-files").getPublicUrl(settings.apk_file_name);
-      setApkUrl(data.publicUrl);
+      // The bucket is private: use a short-lived signed link.
+      supabase.storage
+        .from("app-files")
+        .createSignedUrl(settings.apk_file_name, 3600)
+        .then(({ data }) => {
+          if (!cancelled) setApkUrl(data?.signedUrl ?? null);
+        });
     }
+    return () => {
+      cancelled = true;
+    };
   }, [settings.apk_file_name]);
 
   const handlePasswordChange = async () => {
@@ -78,8 +87,8 @@ const AdminSettings = () => {
     } else {
       await updateSetting("apk_file_name", fileName);
       setApkFileName(fileName);
-      const { data } = supabase.storage.from("app-files").getPublicUrl(fileName);
-      setApkUrl(data.publicUrl);
+      const { data } = await supabase.storage.from("app-files").createSignedUrl(fileName, 3600);
+      setApkUrl(data?.signedUrl ?? null);
       toast.success("APK uploaded successfully!");
     }
     setApkUploading(false);

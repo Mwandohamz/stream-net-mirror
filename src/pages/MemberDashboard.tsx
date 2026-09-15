@@ -30,6 +30,16 @@ import hotstarLogo from "@/assets/ott/jiohotstar.jpg";
 import appleTvLogo from "@/assets/ott/apple-tv.jpg";
 import paramountLogo from "@/assets/ott/paramount.jpg";
 
+/** App downloads are members-only, so fetch a short-lived signed link on demand. */
+async function openApkDownload(fileName: string) {
+  const { data, error } = await supabase.storage
+    .from("app-files")
+    .createSignedUrl(fileName, 300, { download: true });
+  if (error || !data?.signedUrl) return false;
+  window.location.href = data.signedUrl;
+  return true;
+}
+
 const ottPlatforms = [
   { name: "Netflix", logo: netflixLogo },
   { name: "Disney+", logo: disneyLogo },
@@ -527,14 +537,16 @@ const MemberDashboard = () => {
                   <p className="text-foreground font-medium text-sm">Android APK</p>
                   <p className="text-xs text-muted-foreground mb-3">Best experience — direct download</p>
                   {settings.apk_file_name ? (
-                    <a
-                      href={supabase.storage.from("app-files").getPublicUrl(settings.apk_file_name).data.publicUrl}
-                      download
+                    <Button
+                      size="sm"
+                      className="w-full bg-primary text-primary-foreground gap-1"
+                      onClick={async () => {
+                        const ok = await openApkDownload(settings.apk_file_name);
+                        if (!ok) toast({ title: "Download unavailable", description: "Please refresh and try again.", variant: "destructive" });
+                      }}
                     >
-                      <Button size="sm" className="w-full bg-primary text-primary-foreground gap-1">
-                        <Download size={14} /> Download APK
-                      </Button>
-                    </a>
+                      <Download size={14} /> Download APK
+                    </Button>
                   ) : (
                     <a href={portalUrl} target="_blank" rel="noopener noreferrer">
                       <Button size="sm" className="w-full bg-primary text-primary-foreground gap-1">
@@ -620,15 +632,17 @@ const MemberDashboard = () => {
                   </p>
                 </div>
                 {settings.apk_file_name ? (
-                  <a
-                    href={supabase.storage.from("app-files").getPublicUrl(settings.apk_file_name).data.publicUrl}
-                    download
-                    className="block mt-3"
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="w-full mt-3 border-green-500/30 text-foreground gap-1 hover:bg-green-500/10"
+                    onClick={async () => {
+                      const ok = await openApkDownload(settings.apk_file_name);
+                      if (!ok) toast({ title: "Download unavailable", description: "Please refresh and try again.", variant: "destructive" });
+                    }}
                   >
-                    <Button size="sm" variant="outline" className="w-full border-green-500/30 text-foreground gap-1 hover:bg-green-500/10">
-                      <Download size={14} className="text-green-400" /> Download TV APK
-                    </Button>
-                  </a>
+                    <Download size={14} className="text-green-400" /> Download TV APK
+                  </Button>
                 ) : (
                   <a href={portalUrl} target="_blank" rel="noopener noreferrer" className="block mt-3">
                     <Button size="sm" variant="outline" className="w-full border-green-500/30 text-foreground gap-1 hover:bg-green-500/10">
