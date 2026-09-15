@@ -86,7 +86,8 @@ const Analytics = () => {
       else if (/windows|macintosh|linux/.test(ua)) devices.Desktop++;
       else devices.Other++;
     });
-    setDeviceData(Object.entries(devices).filter(([, v]) => v > 0).map(([name, value]) => ({ name, value })));
+    const nextDeviceData = Object.entries(devices).filter(([, v]) => v > 0).map(([name, value]) => ({ name, value }));
+    setDeviceData(nextDeviceData);
 
     const last14 = Array.from({ length: 14 }, (_, i) => {
       const d = new Date();
