@@ -1,14 +1,53 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Search, ChevronLeft, ChevronRight, RefreshCw, Send } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Search, ChevronLeft, ChevronRight, RefreshCw, Send, Users as UsersIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { usePlans } from "@/hooks/usePlans";
 
 const PAGE_SIZE = 100;
+
+type Recipient = {
+  id: string;
+  email: string;
+  name: string;
+  country: string;
+  planId: string | null;
+  planName: string;
+  status: string;
+  periodEnd: string | null;
+};
+
+const TEMPLATE_PRESETS: Record<string, { label: string; subject: string; body: string }> = {
+  "renewal-reminder": {
+    label: "Renewal reminder",
+    subject: "Your StreamNet Mirror access ends soon",
+    body: "Hi there,\n\nYour streaming access is coming to an end soon. Renew now to keep watching without interruption.\n\nThanks for being with us.",
+  },
+  "expiry-notice": {
+    label: "Expiry notice",
+    subject: "Your StreamNet Mirror access has ended",
+    body: "Hi there,\n\nYour streaming access has ended. You can renew any time and be back watching in a couple of minutes.\n\nSee you soon.",
+  },
+  "payment-confirmation": {
+    label: "Payment confirmation",
+    subject: "We received your payment",
+    body: "Hi there,\n\nThank you — your payment came through and your access is active. Open your dashboard to start watching.",
+  },
+  "account-notice": {
+    label: "Announcement / account notice",
+    subject: "",
+    body: "",
+  },
+};
 
 type EmailRow = {
   id: string;
