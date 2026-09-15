@@ -65,7 +65,7 @@ serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    void str;
+    
 
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
