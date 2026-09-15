@@ -87,8 +87,8 @@ const AdminSettings = () => {
     } else {
       await updateSetting("apk_file_name", fileName);
       setApkFileName(fileName);
-      const { data } = supabase.storage.from("app-files").getPublicUrl(fileName);
-      setApkUrl(data.publicUrl);
+      const { data } = await supabase.storage.from("app-files").createSignedUrl(fileName, 3600);
+      setApkUrl(data?.signedUrl ?? null);
       toast.success("APK uploaded successfully!");
     }
     setApkUploading(false);
