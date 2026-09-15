@@ -100,7 +100,8 @@ serve(async (req) => {
     // EXPIRE A PENDING DEPOSIT (10 minute payment window)
     if (action === "expire") {
       const { depositId, reason } = params;
-      if (depositId) {
+      if (!(await ownsDeposit(depositId))) return forbidden();
+      {
         await supabase
           .from("payments")
           .update({
