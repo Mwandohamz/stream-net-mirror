@@ -1,14 +1,53 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Search, ChevronLeft, ChevronRight, RefreshCw, Send } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Search, ChevronLeft, ChevronRight, RefreshCw, Send, Users as UsersIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { usePlans } from "@/hooks/usePlans";
 
 const PAGE_SIZE = 100;
+
+type Recipient = {
+  id: string;
+  email: string;
+  name: string;
+  country: string;
+  planId: string | null;
+  planName: string;
+  status: string;
+  periodEnd: string | null;
+};
+
+const TEMPLATE_PRESETS: Record<string, { label: string; subject: string; body: string }> = {
+  "renewal-reminder": {
+    label: "Renewal reminder",
+    subject: "Your StreamNet Mirror access ends soon",
+    body: "Hi there,\n\nYour streaming access is coming to an end soon. Renew now to keep watching without interruption.\n\nThanks for being with us.",
+  },
+  "expiry-notice": {
+    label: "Expiry notice",
+    subject: "Your StreamNet Mirror access has ended",
+    body: "Hi there,\n\nYour streaming access has ended. You can renew any time and be back watching in a couple of minutes.\n\nSee you soon.",
+  },
+  "payment-confirmation": {
+    label: "Payment confirmation",
+    subject: "We received your payment",
+    body: "Hi there,\n\nThank you — your payment came through and your access is active. Open your dashboard to start watching.",
+  },
+  "account-notice": {
+    label: "Announcement / account notice",
+    subject: "",
+    body: "",
+  },
+};
 
 type EmailRow = {
   id: string;
@@ -40,6 +79,138 @@ const Emails = () => {
   const [sending, setSending] = useState(false);
   const [lastRun, setLastRun] = useState<string | null>(null);
   const { toast } = useToast();
+  const { plans } = usePlans(true);
+
+  // ---- Targeted sending ----
+  const [recipients, setRecipients] = useState<Recipient[]>([]);
+  const [loadingRecipients, setLoadingRecipients] = useState(false);
+  const [rSearch, setRSearch] = useState("");
+  const [rCountry, setRCountry] = useState("all");
+  const [rPlan, setRPlan] = useState("all");
+  const [rState, setRState] = useState("all");
+  const [expiringDays, setExpiringDays] = useState("7");
+  const [selected, setSelected] = useState<string[]>([]);
+  const [templateKey, setTemplateKey] = useState("renewal-reminder");
+  const [subject, setSubject] = useState(TEMPLATE_PRESETS["renewal-reminder"].subject);
+  const [bodyText, setBodyText] = useState(TEMPLATE_PRESETS["renewal-reminder"].body);
+  const [sendingTargeted, setSendingTargeted] = useState(false);
+
+  const loadRecipients = async () => {
+    setLoadingRecipients(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("admin-users", {
+        body: { action: "list", page: 0, perPage: 500 },
+      });
+      if (error) throw new Error(error.message);
+      if ((data as any)?.error) throw new Error((data as any).error);
+      const list: Recipient[] = ((data as any).users ?? [])
+        .filter((u: any) => !!u.email)
+        .map((u: any) => {
+          const planId = u.subscription?.plan_id ?? null;
+          return {
+            id: u.id,
+            email: u.email,
+            name: u.profile?.full_name || u.email,
+            country: u.profile?.country_name || "",
+            planId,
+            planName: plans.find((p: any) => p.id === planId)?.name || (planId ? "Plan" : "No plan"),
+            status: u.subscription?.status || "none",
+            periodEnd: u.subscription?.current_period_end ?? null,
+          };
+        });
+      setRecipients(list);
+    } catch (err: any) {
+      toast({ title: "Could not load recipients", description: err?.message ?? "Unexpected error", variant: "destructive" });
+      setRecipients([]);
+    } finally {
+      setLoadingRecipients(false);
+    }
+  };
+
+  useEffect(() => {
+    void loadRecipients();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [plans.length]);
+
+  const countries = useMemo(
+    () => Array.from(new Set(recipients.map((r) => r.country).filter(Boolean))).sort(),
+    [recipients]
+  );
+
+  const matching = useMemo(() => {
+    const q = rSearch.trim().toLowerCase();
+    const now = Date.now();
+    const windowMs = (Number(expiringDays) || 0) * 86400000;
+    return recipients.filter((r) => {
+      if (q && !(r.name.toLowerCase().includes(q) || r.email.toLowerCase().includes(q))) return false;
+      if (rCountry !== "all" && r.country !== rCountry) return false;
+      if (rPlan !== "all" && r.planId !== rPlan) return false;
+      if (rState !== "all") {
+        const end = r.periodEnd ? new Date(r.periodEnd).getTime() : null;
+        const isActive = r.status === "active" && end !== null && end > now;
+        if (rState === "active" && !isActive) return false;
+        if (rState === "expiring" && !(isActive && end! - now <= windowMs)) return false;
+        if (rState === "expired" && !(end !== null && end <= now)) return false;
+        if (rState === "none" && r.status !== "none") return false;
+      }
+      return true;
+    });
+  }, [recipients, rSearch, rCountry, rPlan, rState, expiringDays]);
+
+  const allMatchingSelected = matching.length > 0 && matching.every((r) => selected.includes(r.email));
+
+  const toggleAll = () => {
+    setSelected(allMatchingSelected ? [] : matching.map((r) => r.email));
+  };
+
+  const toggleOne = (email: string) => {
+    setSelected((prev) => (prev.includes(email) ? prev.filter((e) => e !== email) : [...prev, email]));
+  };
+
+  const applyTemplate = (key: string) => {
+    setTemplateKey(key);
+    const preset = TEMPLATE_PRESETS[key];
+    if (preset) {
+      setSubject(preset.subject);
+      setBodyText(preset.body);
+    }
+  };
+
+  const sendTargeted = async () => {
+    if (selected.length === 0) {
+      toast({ title: "Pick at least one recipient", variant: "destructive" });
+      return;
+    }
+    if (!subject.trim() || !bodyText.trim()) {
+      toast({ title: "Add a subject and a message", variant: "destructive" });
+      return;
+    }
+    setSendingTargeted(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("admin-send-email", {
+        body: {
+          emails: selected,
+          subject: subject.trim(),
+          heading: subject.trim(),
+          body: bodyText.trim(),
+          emailType: templateKey,
+        },
+      });
+      if (error) throw new Error(error.message);
+      if ((data as any)?.error) throw new Error((data as any).error);
+      toast({
+        title: "Emails sent",
+        description: `${(data as any).sent} sent, ${(data as any).failed} failed, ${(data as any).suppressed} skipped`,
+      });
+      setSelected([]);
+      void fetchRows();
+    } catch (err: any) {
+      toast({ title: "Could not send", description: err?.message ?? "Unexpected error", variant: "destructive" });
+    } finally {
+      setSendingTargeted(false);
+    }
+  };
+
 
   const sendReminders = async () => {
     setSending(true);
@@ -127,6 +298,160 @@ const Emails = () => {
               Payment confirmations, renewal reminders and account emails all appear here with their delivery result.
             </CardDescription>
           </CardHeader>
+        </Card>
+
+        <Card className="bg-card border-border">
+          <CardHeader>
+            <CardTitle className="text-foreground text-base flex items-center gap-2">
+              <UsersIcon className="h-4 w-4" /> Send an email to chosen members
+            </CardTitle>
+            <CardDescription>
+              Narrow the list down, tick who should receive it, edit the wording and send.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid gap-3 md:grid-cols-4">
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">Search</Label>
+                <Input
+                  placeholder="Name or email"
+                  value={rSearch}
+                  onChange={(e) => setRSearch(e.target.value)}
+                  className="bg-secondary border-border text-foreground"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">Country</Label>
+                <Select value={rCountry} onValueChange={setRCountry}>
+                  <SelectTrigger className="bg-secondary border-border text-foreground"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All countries</SelectItem>
+                    {countries.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">Plan</Label>
+                <Select value={rPlan} onValueChange={setRPlan}>
+                  <SelectTrigger className="bg-secondary border-border text-foreground"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All plans</SelectItem>
+                    {plans.map((p: any) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">Access</Label>
+                <Select value={rState} onValueChange={setRState}>
+                  <SelectTrigger className="bg-secondary border-border text-foreground"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Everyone</SelectItem>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="expiring">Ending soon</SelectItem>
+                    <SelectItem value="expired">Ended</SelectItem>
+                    <SelectItem value="none">Never subscribed</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {rState === "expiring" && (
+              <div className="space-y-1 w-40">
+                <Label className="text-xs text-muted-foreground">Ending within (days)</Label>
+                <Input
+                  type="number" min={1} max={90}
+                  value={expiringDays}
+                  onChange={(e) => setExpiringDays(e.target.value)}
+                  className="bg-secondary border-border text-foreground"
+                />
+              </div>
+            )}
+
+            <div className="flex items-center justify-between text-sm">
+              <p className="text-muted-foreground">
+                {loadingRecipients ? "Loading accounts..." : `${matching.length} match • ${selected.length} selected`}
+              </p>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" className="border-border text-foreground" onClick={toggleAll}>
+                  {allMatchingSelected ? "Clear all" : "Select all matching"}
+                </Button>
+                <Button variant="outline" size="sm" className="border-border text-foreground gap-2" onClick={loadRecipients}>
+                  <RefreshCw className={`h-4 w-4 ${loadingRecipients ? "animate-spin" : ""}`} /> Reload
+                </Button>
+              </div>
+            </div>
+
+            <div className="max-h-64 overflow-y-auto rounded-md border border-border">
+              {matching.length === 0 ? (
+                <p className="p-4 text-sm text-muted-foreground">No accounts match these filters.</p>
+              ) : (
+                matching.map((r) => (
+                  <label
+                    key={r.id}
+                    className="flex items-center gap-3 border-b border-border/50 px-3 py-2 last:border-0 cursor-pointer hover:bg-secondary/50"
+                  >
+                    <Checkbox checked={selected.includes(r.email)} onCheckedChange={() => toggleOne(r.email)} />
+                    <span className="flex-1 min-w-0">
+                      <span className="block text-sm text-foreground truncate">{r.name}</span>
+                      <span className="block text-xs text-muted-foreground truncate">{r.email}</span>
+                    </span>
+                    <span className="text-xs text-muted-foreground whitespace-nowrap">{r.country || "—"}</span>
+                    <span className="text-xs text-muted-foreground whitespace-nowrap">{r.planName}</span>
+                    <span className="text-xs text-muted-foreground whitespace-nowrap">
+                      {r.periodEnd ? new Date(r.periodEnd).toLocaleDateString() : "—"}
+                    </span>
+                  </label>
+                ))
+              )}
+            </div>
+
+            <div className="grid gap-3 md:grid-cols-2">
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">Template</Label>
+                <Select value={templateKey} onValueChange={applyTemplate}>
+                  <SelectTrigger className="bg-secondary border-border text-foreground"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(TEMPLATE_PRESETS).map(([k, v]) => (
+                      <SelectItem key={k} value={k}>{v.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">Subject</Label>
+                <Input
+                  value={subject}
+                  onChange={(e) => setSubject(e.target.value)}
+                  placeholder="Subject line"
+                  className="bg-secondary border-border text-foreground"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">Message</Label>
+              <Textarea
+                value={bodyText}
+                onChange={(e) => setBodyText(e.target.value)}
+                rows={6}
+                placeholder="Write the message members will read..."
+                className="bg-secondary border-border text-foreground"
+              />
+            </div>
+
+            <div className="rounded-md border border-border bg-background/40 p-4">
+              <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Preview</p>
+              <p className="text-sm font-semibold text-foreground">{subject || "(no subject yet)"}</p>
+              <p className="mt-2 whitespace-pre-wrap text-sm text-muted-foreground">
+                {bodyText || "(no message yet)"}
+              </p>
+            </div>
+
+            <Button onClick={sendTargeted} disabled={sendingTargeted} className="gap-2">
+              <Send className="h-4 w-4" />
+              {sendingTargeted ? "Sending..." : `Send to ${selected.length} recipient${selected.length === 1 ? "" : "s"}`}
+            </Button>
+          </CardContent>
         </Card>
 
         <Card className="bg-card border-border">
