@@ -66,18 +66,19 @@ const SupportTickets = () => {
 
     // Fetch user info from subscribers for non-guest tickets
     const userIds = [...new Set(tix.filter(t => t.user_id).map(t => t.user_id!))];
+    let info: Record<string, { name: string; email: string }> = {};
     if (userIds.length > 0) {
       const { data: subs } = await supabase
         .from("subscribers")
         .select("user_id, name, email")
         .in("user_id", userIds);
-      const info: Record<string, { name: string; email: string }> = {};
       (subs || []).forEach((s: any) => {
         info[s.user_id] = { name: s.name, email: s.email };
       });
       setUserInfo(info);
     }
 
+    setAdminCache(TICKETS_CACHE_KEY, { tickets: tix, userInfo: info });
     setLoading(false);
   };
 
