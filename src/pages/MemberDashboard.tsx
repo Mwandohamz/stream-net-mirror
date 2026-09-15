@@ -30,6 +30,16 @@ import hotstarLogo from "@/assets/ott/jiohotstar.jpg";
 import appleTvLogo from "@/assets/ott/apple-tv.jpg";
 import paramountLogo from "@/assets/ott/paramount.jpg";
 
+/** App downloads are members-only, so fetch a short-lived signed link on demand. */
+async function openApkDownload(fileName: string) {
+  const { data, error } = await supabase.storage
+    .from("app-files")
+    .createSignedUrl(fileName, 300, { download: true });
+  if (error || !data?.signedUrl) return false;
+  window.location.href = data.signedUrl;
+  return true;
+}
+
 const ottPlatforms = [
   { name: "Netflix", logo: netflixLogo },
   { name: "Disney+", logo: disneyLogo },
