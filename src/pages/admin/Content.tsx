@@ -90,9 +90,10 @@ const AdminContent = () => {
       is_active: linkForm.is_active,
     };
     const extraUrls = additionalUrls.map((url) => url.trim()).filter(Boolean);
+    // Extra URLs keep the same title/platform so they show up as extra buttons
+    // on the same card instead of appearing as separate platforms.
     const rows = [payload, ...extraUrls.map((url, index) => ({
       ...payload,
-      title: `${payload.title} ${index + 2}`,
       url,
       sort_order: payload.sort_order + index + 1,
     }))];
