@@ -99,6 +99,13 @@ const Analytics = () => {
       };
     });
     setDailyData(last14);
+    setAdminCache(CACHE_KEY, {
+      stats: nextStats,
+      pageData: nextPageData,
+      deviceData: nextDeviceData,
+      dailyData: last14,
+      totalCount: total,
+    });
   };
 
   return (
