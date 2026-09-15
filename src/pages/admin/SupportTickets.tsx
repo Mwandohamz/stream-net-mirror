@@ -39,9 +39,10 @@ interface UserGroup {
 }
 
 const SupportTickets = () => {
-  const [tickets, setTickets] = useState<Ticket[]>([]);
+  const cachedTickets = getAdminCache<{ tickets: Ticket[]; userInfo: Record<string, { name: string; email: string }> }>(TICKETS_CACHE_KEY);
+  const [tickets, setTickets] = useState<Ticket[]>(cachedTickets?.tickets ?? []);
   const [ticketMessages, setTicketMessages] = useState<Record<string, TicketMessage[]>>({});
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!cachedTickets);
   const [expandedTicket, setExpandedTicket] = useState<string | null>(null);
   const [replyText, setReplyText] = useState("");
   const [replySending, setReplySending] = useState(false);
