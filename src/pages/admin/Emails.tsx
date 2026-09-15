@@ -302,6 +302,160 @@ const Emails = () => {
 
         <Card className="bg-card border-border">
           <CardHeader>
+            <CardTitle className="text-foreground text-base flex items-center gap-2">
+              <UsersIcon className="h-4 w-4" /> Send an email to chosen members
+            </CardTitle>
+            <CardDescription>
+              Narrow the list down, tick who should receive it, edit the wording and send.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid gap-3 md:grid-cols-4">
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">Search</Label>
+                <Input
+                  placeholder="Name or email"
+                  value={rSearch}
+                  onChange={(e) => setRSearch(e.target.value)}
+                  className="bg-secondary border-border text-foreground"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">Country</Label>
+                <Select value={rCountry} onValueChange={setRCountry}>
+                  <SelectTrigger className="bg-secondary border-border text-foreground"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All countries</SelectItem>
+                    {countries.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">Plan</Label>
+                <Select value={rPlan} onValueChange={setRPlan}>
+                  <SelectTrigger className="bg-secondary border-border text-foreground"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All plans</SelectItem>
+                    {plans.map((p: any) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">Access</Label>
+                <Select value={rState} onValueChange={setRState}>
+                  <SelectTrigger className="bg-secondary border-border text-foreground"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Everyone</SelectItem>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="expiring">Ending soon</SelectItem>
+                    <SelectItem value="expired">Ended</SelectItem>
+                    <SelectItem value="none">Never subscribed</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {rState === "expiring" && (
+              <div className="space-y-1 w-40">
+                <Label className="text-xs text-muted-foreground">Ending within (days)</Label>
+                <Input
+                  type="number" min={1} max={90}
+                  value={expiringDays}
+                  onChange={(e) => setExpiringDays(e.target.value)}
+                  className="bg-secondary border-border text-foreground"
+                />
+              </div>
+            )}
+
+            <div className="flex items-center justify-between text-sm">
+              <p className="text-muted-foreground">
+                {loadingRecipients ? "Loading accounts..." : `${matching.length} match • ${selected.length} selected`}
+              </p>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" className="border-border text-foreground" onClick={toggleAll}>
+                  {allMatchingSelected ? "Clear all" : "Select all matching"}
+                </Button>
+                <Button variant="outline" size="sm" className="border-border text-foreground gap-2" onClick={loadRecipients}>
+                  <RefreshCw className={`h-4 w-4 ${loadingRecipients ? "animate-spin" : ""}`} /> Reload
+                </Button>
+              </div>
+            </div>
+
+            <div className="max-h-64 overflow-y-auto rounded-md border border-border">
+              {matching.length === 0 ? (
+                <p className="p-4 text-sm text-muted-foreground">No accounts match these filters.</p>
+              ) : (
+                matching.map((r) => (
+                  <label
+                    key={r.id}
+                    className="flex items-center gap-3 border-b border-border/50 px-3 py-2 last:border-0 cursor-pointer hover:bg-secondary/50"
+                  >
+                    <Checkbox checked={selected.includes(r.email)} onCheckedChange={() => toggleOne(r.email)} />
+                    <span className="flex-1 min-w-0">
+                      <span className="block text-sm text-foreground truncate">{r.name}</span>
+                      <span className="block text-xs text-muted-foreground truncate">{r.email}</span>
+                    </span>
+                    <span className="text-xs text-muted-foreground whitespace-nowrap">{r.country || "—"}</span>
+                    <span className="text-xs text-muted-foreground whitespace-nowrap">{r.planName}</span>
+                    <span className="text-xs text-muted-foreground whitespace-nowrap">
+                      {r.periodEnd ? new Date(r.periodEnd).toLocaleDateString() : "—"}
+                    </span>
+                  </label>
+                ))
+              )}
+            </div>
+
+            <div className="grid gap-3 md:grid-cols-2">
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">Template</Label>
+                <Select value={templateKey} onValueChange={applyTemplate}>
+                  <SelectTrigger className="bg-secondary border-border text-foreground"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(TEMPLATE_PRESETS).map(([k, v]) => (
+                      <SelectItem key={k} value={k}>{v.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">Subject</Label>
+                <Input
+                  value={subject}
+                  onChange={(e) => setSubject(e.target.value)}
+                  placeholder="Subject line"
+                  className="bg-secondary border-border text-foreground"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">Message</Label>
+              <Textarea
+                value={bodyText}
+                onChange={(e) => setBodyText(e.target.value)}
+                rows={6}
+                placeholder="Write the message members will read..."
+                className="bg-secondary border-border text-foreground"
+              />
+            </div>
+
+            <div className="rounded-md border border-border bg-background/40 p-4">
+              <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Preview</p>
+              <p className="text-sm font-semibold text-foreground">{subject || "(no subject yet)"}</p>
+              <p className="mt-2 whitespace-pre-wrap text-sm text-muted-foreground">
+                {bodyText || "(no message yet)"}
+              </p>
+            </div>
+
+            <Button onClick={sendTargeted} disabled={sendingTargeted} className="gap-2">
+              <Send className="h-4 w-4" />
+              {sendingTargeted ? "Sending..." : `Send to ${selected.length} recipient${selected.length === 1 ? "" : "s"}`}
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-card border-border">
+          <CardHeader>
             <CardTitle className="text-foreground text-base">Renewal reminders</CardTitle>
             <CardDescription>
               Send reminder emails to everyone whose access ends within the number of days below.
