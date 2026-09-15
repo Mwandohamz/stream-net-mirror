@@ -77,24 +77,25 @@ const AdminUsers = () => {
     return data as any;
   };
 
+  // Cached per page so moving between admin sections is instant.
+  const { data, isLoading, isFetching, error } = useAdminQuery<{ users: AdminUser[]; total?: number }>(
+    ["admin", "users", page],
+    () => call({ action: "list", page, perPage: PAGE_SIZE }),
+  );
+  const refresh = useAdminRefresh();
+  const users = data?.users ?? [];
+  const total = data?.total ?? users.length;
+  const loading = isLoading;
+
   const fetchUsers = async () => {
-    setLoading(true);
-    try {
-      const data = await call({ action: "list", page, perPage: PAGE_SIZE });
-      setUsers(data.users ?? []);
-      setTotal(data.total ?? data.users?.length ?? 0);
-    } catch (err: any) {
-      toast({ title: "Could not load users", description: err.message, variant: "destructive" });
-      setUsers([]);
-    } finally {
-      setLoading(false);
-    }
+    await refresh(["admin", "users"]);
   };
 
   useEffect(() => {
-    void fetchUsers();
+    if (error) toast({ title: "Could not load users", description: (error as Error).message, variant: "destructive" });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page]);
+  }, [error]);
+
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
