@@ -56,7 +56,7 @@ const SupportTickets = () => {
   }, []);
 
   const fetchTickets = async () => {
-    setLoading(true);
+    if (!getAdminCache(TICKETS_CACHE_KEY)) setLoading(true);
     const { data } = await supabase
       .from("support_tickets" as any)
       .select("*")
