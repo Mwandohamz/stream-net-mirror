@@ -74,6 +74,12 @@ const Influencers = () => {
     setStats(statsMap);
     setTotalInfluencerRevenue(infRev);
     setTotalOrganicRevenue(orgRev);
+    setAdminCache<CachedInfluencers>(CACHE_KEY, {
+      influencers: influencerList,
+      stats: statsMap,
+      influencerRevenue: infRev,
+      organicRevenue: orgRev,
+    });
     setLoading(false);
   };
 
