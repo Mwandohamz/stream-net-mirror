@@ -33,9 +33,10 @@ interface InfluencerStats {
 
 const Influencers = () => {
   const { toast } = useToast();
-  const [influencers, setInfluencers] = useState<Influencer[]>([]);
-  const [stats, setStats] = useState<Record<string, InfluencerStats>>({});
-  const [loading, setLoading] = useState(true);
+  const cached = getAdminCache<CachedInfluencers>(CACHE_KEY);
+  const [influencers, setInfluencers] = useState<Influencer[]>(cached?.influencers ?? []);
+  const [stats, setStats] = useState<Record<string, InfluencerStats>>(cached?.stats ?? {});
+  const [loading, setLoading] = useState(!cached);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ full_name: "", email: "", phone: "" as string | undefined, discount_percent: "10", revenue_share_percent: "20" });
   const [saving, setSaving] = useState(false);
