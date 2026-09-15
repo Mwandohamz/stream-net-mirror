@@ -53,11 +53,8 @@ const emptyForm = {
 const AdminUsers = () => {
   const { toast } = useToast();
   const { plans } = usePlans(true);
-  const [users, setUsers] = useState<AdminUser[]>([]);
-  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
-  const [total, setTotal] = useState(0);
 
   const [form, setForm] = useState(emptyForm);
   const [editing, setEditing] = useState(false);
