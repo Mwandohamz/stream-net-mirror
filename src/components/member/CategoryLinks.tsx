@@ -44,31 +44,35 @@ interface Props {
   onUnlockClick?: () => void;
 }
 
-const LinkCard = ({ link, unlocked, onUnlockClick }: { link: ContentLink; unlocked: boolean; onUnlockClick?: () => void }) => {
+/** One card can carry several URLs for the same title — each becomes its own button. */
+const LinkCard = ({ links, unlocked, onUnlockClick }: { links: ContentLink[]; unlocked: boolean; onUnlockClick?: () => void }) => {
   const { toast } = useToast();
-  const [pending, setPending] = useState<"open" | "copy" | null>(null);
+  const link = links[0];
+  const [pending, setPending] = useState<{ action: "open" | "copy"; url: string } | null>(null);
 
-  const doOpen = () => window.open(link.url, "_blank", "noopener,noreferrer");
-  const doCopy = () => {
-    void navigator.clipboard.writeText(link.url);
+  const doOpen = (url: string) => window.open(url, "_blank", "noopener,noreferrer");
+  const doCopy = (url: string) => {
+    void navigator.clipboard.writeText(url);
     toast({ title: "Link copied", description: link.title });
   };
 
-  const request = (action: "open" | "copy") => {
+  const request = (action: "open" | "copy", url: string) => {
     if (rotationAcknowledged()) {
-      action === "open" ? doOpen() : doCopy();
+      action === "open" ? doOpen(url) : doCopy(url);
       return;
     }
-    setPending(action);
+    setPending({ action, url });
   };
 
   const confirm = () => {
     rememberRotationAck();
-    const action = pending;
+    const p = pending;
     setPending(null);
-    if (action === "open") doOpen();
-    if (action === "copy") doCopy();
+    if (!p) return;
+    if (p.action === "open") doOpen(p.url);
+    if (p.action === "copy") doCopy(p.url);
   };
+
 
   return (
     <div className="flex gap-3 rounded-lg border border-border bg-secondary/40 p-3">
