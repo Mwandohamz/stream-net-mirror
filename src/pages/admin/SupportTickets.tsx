@@ -7,6 +7,9 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Send, ChevronDown, ChevronRight, UserPlus, Copy, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
+import { getAdminCache, setAdminCache } from "@/lib/adminCache";
+
+const TICKETS_CACHE_KEY = "admin:support-tickets";
 
 interface Ticket {
   id: string;
