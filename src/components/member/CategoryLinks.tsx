@@ -93,14 +93,21 @@ const LinkCard = ({ links, unlocked, onUnlockClick }: { links: ContentLink[]; un
         {link.description && <p className="text-xs text-muted-foreground leading-relaxed">{link.description}</p>}
         {unlocked ? (
           <div className="flex flex-wrap gap-2 pt-1">
-            <Button size="sm" className="h-8 gap-1 bg-primary text-primary-foreground" onClick={() => request("open")}>
-              <ExternalLink size={13} /> Open
-            </Button>
+            {links.map((l, i) => (
+              <Button
+                key={l.id}
+                size="sm"
+                className="h-8 gap-1 bg-primary text-primary-foreground"
+                onClick={() => request("open", l.url)}
+              >
+                <ExternalLink size={13} /> {links.length > 1 ? `Open link ${i + 1}` : "Open"}
+              </Button>
+            ))}
             <Button
               size="sm"
               variant="outline"
               className="h-8 gap-1 border-border text-foreground"
-              onClick={() => request("copy")}
+              onClick={() => request("copy", link.url)}
             >
               <Copy size={13} /> Copy
             </Button>
