@@ -71,12 +71,11 @@ const Analytics = () => {
       const pg = v.page || "unknown";
       pageCounts.set(pg, (pageCounts.get(pg) || 0) + 1);
     });
-    setPageData(
-      Array.from(pageCounts.entries())
-        .map(([pg, count]) => ({ page: pg.replace(/^\//, "") || "home", count }))
-        .sort((a, b) => b.count - a.count)
-        .slice(0, 10)
-    );
+    const nextPageData = Array.from(pageCounts.entries())
+      .map(([pg, count]) => ({ page: pg.replace(/^\//, "") || "home", count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10);
+    setPageData(nextPageData);
 
     const devices: Record<string, number> = { Mobile: 0, Desktop: 0, Tablet: 0, Other: 0 };
     allViews.forEach((v: any) => {
