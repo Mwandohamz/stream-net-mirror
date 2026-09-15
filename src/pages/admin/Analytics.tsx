@@ -9,12 +9,17 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 
 const COLORS = ["hsl(0 85% 50%)", "hsl(270 60% 55%)", "hsl(200 80% 50%)", "hsl(120 60% 45%)", "hsl(40 90% 55%)"];
 
+const CACHE_KEY = "admin:analytics";
+
 const Analytics = () => {
-  const [stats, setStats] = useState({ totalViews: 0, uniqueSessions: 0, bounceRate: 0, avgPagesPerSession: 0 });
-  const [pageData, setPageData] = useState<any[]>([]);
-  const [deviceData, setDeviceData] = useState<any[]>([]);
-  const [dailyData, setDailyData] = useState<any[]>([]);
-  const [totalCount, setTotalCount] = useState(0);
+  // Reading the whole page-view history is slow, so the last result is reused
+  // while a fresh one loads in the background.
+  const cached = getAdminCache<any>(CACHE_KEY);
+  const [stats, setStats] = useState(cached?.stats ?? { totalViews: 0, uniqueSessions: 0, bounceRate: 0, avgPagesPerSession: 0 });
+  const [pageData, setPageData] = useState<any[]>(cached?.pageData ?? []);
+  const [deviceData, setDeviceData] = useState<any[]>(cached?.deviceData ?? []);
+  const [dailyData, setDailyData] = useState<any[]>(cached?.dailyData ?? []);
+  const [totalCount, setTotalCount] = useState(cached?.totalCount ?? 0);
 
   useEffect(() => {
     void fetchAnalytics();
