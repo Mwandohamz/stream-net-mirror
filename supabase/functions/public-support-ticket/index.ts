@@ -12,14 +12,61 @@ serve(async (req) => {
   }
 
   try {
-    const { name, email, subject, message, phone, paymentRef } = await req.json();
-
-    if (!name || !email || !subject || !message) {
-      return new Response(
-        JSON.stringify({ error: "Missing required fields: name, email, subject, message" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    const payload = await req.json().catch(() => null);
+    if (!payload || typeof payload !== "object") {
+      return new Response(JSON.stringify({ error: "Invalid request body" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
+
+    const { name, email, subject, message, phone, paymentRef } = payload as Record<string, unknown>;
+
+    const errors: string[] = [];
+    const str = (v: unknown) => (typeof v === "string" ? v.trim() : "");
+    const require = (v: unknown, label: string, max: number) => {
+      if (typeof v !== "string") {
+        errors.push(`${label} is required`);
+        return "";
+      }
+      const value = v.trim();
+      if (!value) errors.push(`${label} is required`);
+      else if (value.length > max) errors.push(`${label} must be ${max} characters or fewer`);
+      return value;
+    };
+    const optional = (v: unknown, label: string, max: number) => {
+      if (v === undefined || v === null || v === "") return "";
+      if (typeof v !== "string") {
+        errors.push(`${label} must be text`);
+        return "";
+      }
+      const value = v.trim();
+      if (value.length > max) errors.push(`${label} must be ${max} characters or fewer`);
+      return value;
+    };
+
+    const safeName = require(name, "Name", 100);
+    const safeEmail = require(email, "Email", 254).toLowerCase();
+    const safeSubject = require(subject, "Subject", 100);
+    const safeMessage = require(message, "Message", 2000);
+    const safePhone = optional(phone, "Phone", 20);
+    const safeRef = optional(paymentRef, "Payment reference", 100);
+
+    if (safeEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(safeEmail)) {
+      errors.push("Email address is not valid");
+    }
+    if (safePhone && !/^[+0-9()\s-]{6,20}$/.test(safePhone)) {
+      errors.push("Phone number is not valid");
+    }
+
+    if (errors.length) {
+      return new Response(JSON.stringify({ error: errors.join(", ") }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    void str;
+
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
