@@ -45,13 +45,13 @@ const Influencers = () => {
   const [newPassword, setNewPassword] = useState("");
   const [savingPw, setSavingPw] = useState(false);
 
-  const [totalInfluencerRevenue, setTotalInfluencerRevenue] = useState(0);
-  const [totalOrganicRevenue, setTotalOrganicRevenue] = useState(0);
+  const [totalInfluencerRevenue, setTotalInfluencerRevenue] = useState(cached?.influencerRevenue ?? 0);
+  const [totalOrganicRevenue, setTotalOrganicRevenue] = useState(cached?.organicRevenue ?? 0);
 
   useEffect(() => { fetchAll(); }, []);
 
   const fetchAll = async () => {
-    setLoading(true);
+    if (!getAdminCache(CACHE_KEY)) setLoading(true);
     const { data: inf } = await supabase.from("influencers" as any).select("*").order("created_at", { ascending: false });
     const influencerList = (inf || []) as unknown as Influencer[];
     setInfluencers(influencerList);
