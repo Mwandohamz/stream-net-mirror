@@ -120,13 +120,8 @@ serve(async (req) => {
     if (action === "deposit") {
       const { depositId, currency, phoneNumber, provider, country, promoCode, planId, termsAccepted } = params;
 
-      // 1) Require a verified session; the payer is the signed-in account.
-      const token = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "").trim();
-      const authClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
-        global: { headers: { Authorization: `Bearer ${token}` } },
-      });
-      const { data: userData } = token ? await authClient.auth.getUser(token) : { data: { user: null } };
-      const authUser = userData?.user;
+      // 1) The payer is the signed-in account (session already verified above).
+      const authUser = sessionUser;
       if (!authUser?.email) {
         return new Response(JSON.stringify({ error: "Sign in required before paying" }), {
           status: 401,
