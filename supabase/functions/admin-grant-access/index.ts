@@ -79,8 +79,14 @@ serve(async (req) => {
       );
     }
 
-    // Generate a temp password
-    const tempPassword = "Temp" + Math.random().toString(36).slice(2, 8) + "!" + Math.floor(Math.random() * 100);
+    // Generate a high-entropy temporary password from a cryptographic source
+    const ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%^&*";
+    const randomChars = (count: number) => {
+      const bytes = new Uint8Array(count);
+      crypto.getRandomValues(bytes);
+      return Array.from(bytes, (b) => ALPHABET[b % ALPHABET.length]).join("");
+    };
+    const tempPassword = randomChars(20);
 
     // Check if user already exists in auth
     const { data: existingUsers } = await adminClient.auth.admin.listUsers();
