@@ -288,7 +288,8 @@ serve(async (req) => {
     // CHECK DEPOSIT STATUS
     if (action === "status") {
       const { depositId } = params;
-      const res = await fetch(`${PAWAPAY_BASE}/v1/deposits/${depositId}`, {
+      if (!(await ownsDeposit(depositId))) return forbidden();
+      const res = await fetch(`${PAWAPAY_BASE}/v1/deposits/${encodeURIComponent(depositId)}`, {
         headers: pawapayHeaders,
       });
       const data = await res.json();
