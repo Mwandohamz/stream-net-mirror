@@ -632,15 +632,17 @@ const MemberDashboard = () => {
                   </p>
                 </div>
                 {settings.apk_file_name ? (
-                  <a
-                    href={supabase.storage.from("app-files").getPublicUrl(settings.apk_file_name).data.publicUrl}
-                    download
-                    className="block mt-3"
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="w-full mt-3 border-green-500/30 text-foreground gap-1 hover:bg-green-500/10"
+                    onClick={async () => {
+                      const ok = await openApkDownload(settings.apk_file_name);
+                      if (!ok) toast({ title: "Download unavailable", description: "Please refresh and try again.", variant: "destructive" });
+                    }}
                   >
-                    <Button size="sm" variant="outline" className="w-full border-green-500/30 text-foreground gap-1 hover:bg-green-500/10">
-                      <Download size={14} className="text-green-400" /> Download TV APK
-                    </Button>
-                  </a>
+                    <Download size={14} className="text-green-400" /> Download TV APK
+                  </Button>
                 ) : (
                   <a href={portalUrl} target="_blank" rel="noopener noreferrer" className="block mt-3">
                     <Button size="sm" variant="outline" className="w-full border-green-500/30 text-foreground gap-1 hover:bg-green-500/10">
