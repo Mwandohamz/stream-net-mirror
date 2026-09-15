@@ -12,14 +12,60 @@ serve(async (req) => {
   }
 
   try {
-    const { name, email, subject, message, phone, paymentRef } = await req.json();
-
-    if (!name || !email || !subject || !message) {
-      return new Response(
-        JSON.stringify({ error: "Missing required fields: name, email, subject, message" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    const payload = await req.json().catch(() => null);
+    if (!payload || typeof payload !== "object") {
+      return new Response(JSON.stringify({ error: "Invalid request body" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
+
+    const { name, email, subject, message, phone, paymentRef } = payload as Record<string, unknown>;
+
+    const errors: string[] = [];
+    const required = (v: unknown, label: string, max: number) => {
+      if (typeof v !== "string") {
+        errors.push(`${label} is required`);
+        return "";
+      }
+      const value = v.trim();
+      if (!value) errors.push(`${label} is required`);
+      else if (value.length > max) errors.push(`${label} must be ${max} characters or fewer`);
+      return value;
+    };
+    const optional = (v: unknown, label: string, max: number) => {
+      if (v === undefined || v === null || v === "") return "";
+      if (typeof v !== "string") {
+        errors.push(`${label} must be text`);
+        return "";
+      }
+      const value = v.trim();
+      if (value.length > max) errors.push(`${label} must be ${max} characters or fewer`);
+      return value;
+    };
+
+    const safeName = required(name, "Name", 100);
+    const safeEmail = required(email, "Email", 254).toLowerCase();
+    const safeSubject = required(subject, "Subject", 100);
+    const safeMessage = required(message, "Message", 2000);
+    const safePhone = optional(phone, "Phone", 20);
+    const safeRef = optional(paymentRef, "Payment reference", 100);
+
+    if (safeEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(safeEmail)) {
+      errors.push("Email address is not valid");
+    }
+    if (safePhone && !/^[+0-9()\s-]{6,20}$/.test(safePhone)) {
+      errors.push("Phone number is not valid");
+    }
+
+    if (errors.length) {
+      return new Response(JSON.stringify({ error: errors.join(", ") }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    
+
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -29,12 +75,12 @@ serve(async (req) => {
       .from("support_tickets")
       .insert({
         user_id: null,
-        guest_name: name.trim(),
-        guest_email: email.trim().toLowerCase(),
-        guest_phone: phone?.trim() || null,
-        payment_ref: paymentRef?.trim() || null,
-        subject: subject.trim(),
-        message: message.trim(),
+        guest_name: safeName,
+        guest_email: safeEmail,
+        guest_phone: safePhone || null,
+        payment_ref: safeRef || null,
+        subject: safeSubject,
+        message: safeMessage,
         status: "open",
       })
       .select("id")
