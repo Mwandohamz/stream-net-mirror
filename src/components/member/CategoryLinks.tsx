@@ -155,6 +155,22 @@ const CategoryLinks = ({ slug, unlocked = true, onUnlockClick }: Props) => {
 
   const links = linksFor(category.id);
 
+  // Links sharing a title and platform are the same item with backup URLs:
+  // show them as one card with several buttons.
+  const groups: ContentLink[][] = [];
+  const groupIndex = new Map<string, number>();
+  for (const l of links) {
+    const key = `${l.title.trim().toLowerCase()}|${l.platform}`;
+    const at = groupIndex.get(key);
+    if (at === undefined) {
+      groupIndex.set(key, groups.length);
+      groups.push([l]);
+    } else {
+      groups[at].push(l);
+    }
+  }
+
+
   return (
     <Card className="bg-card border-border">
       <CardContent className="p-5 space-y-4">
