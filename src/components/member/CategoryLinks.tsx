@@ -185,8 +185,8 @@ const CategoryLinks = ({ slug, unlocked = true, onUnlockClick }: Props) => {
           <p className="text-sm text-muted-foreground">No links published here yet — we add and verify new ones regularly.</p>
         ) : (
           <div className="grid gap-3 sm:grid-cols-2">
-            {links.map((l) => (
-              <LinkCard key={l.id} link={l} unlocked={unlocked} onUnlockClick={onUnlockClick} />
+            {groups.map((g) => (
+              <LinkCard key={g[0].id} links={g} unlocked={unlocked} onUnlockClick={onUnlockClick} />
             ))}
           </div>
         )}
