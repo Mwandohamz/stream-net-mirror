@@ -59,12 +59,13 @@ const Analytics = () => {
     const bounceRate = sessions.size > 0 ? Math.round((bounces / sessions.size) * 100) : 0;
     const avgPages = sessions.size > 0 ? Math.round((allViews.length / sessions.size) * 10) / 10 : 0;
 
-    setStats({
+    const nextStats = {
       totalViews: total || allViews.length,
       uniqueSessions: sessions.size,
       bounceRate,
       avgPagesPerSession: avgPages,
-    });
+    };
+    setStats(nextStats);
 
     const pageCounts = new Map<string, number>();
     allViews.forEach((v: any) => {
