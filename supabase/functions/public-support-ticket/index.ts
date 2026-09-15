@@ -44,10 +44,10 @@ serve(async (req) => {
       return value;
     };
 
-    const safeName = require(name, "Name", 100);
-    const safeEmail = require(email, "Email", 254).toLowerCase();
-    const safeSubject = require(subject, "Subject", 100);
-    const safeMessage = require(message, "Message", 2000);
+    const safeName = required(name, "Name", 100);
+    const safeEmail = required(email, "Email", 254).toLowerCase();
+    const safeSubject = required(subject, "Subject", 100);
+    const safeMessage = required(message, "Message", 2000);
     const safePhone = optional(phone, "Phone", 20);
     const safeRef = optional(paymentRef, "Payment reference", 100);
 
