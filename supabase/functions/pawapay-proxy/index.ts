@@ -36,6 +36,40 @@ serve(async (req) => {
       "Content-Type": "application/json",
     };
 
+    const unauthorized = () =>
+      new Response(JSON.stringify({ error: "Sign in required" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+
+    // Every action requires a verified session.
+    const token = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "").trim();
+    if (!token) return unauthorized();
+    const authClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
+      global: { headers: { Authorization: `Bearer ${token}` } },
+    });
+    const { data: userData } = await authClient.auth.getUser(token);
+    const sessionUser = userData?.user;
+    if (!sessionUser?.id) return unauthorized();
+
+    // The caller may only touch deposits belonging to their own account.
+    const ownsDeposit = async (depositId: string) => {
+      if (!depositId) return false;
+      const { data } = await supabase
+        .from("payments")
+        .select("id")
+        .eq("deposit_id", depositId)
+        .eq("user_id", sessionUser.id)
+        .maybeSingle();
+      return !!data;
+    };
+    const forbidden = () =>
+      new Response(JSON.stringify({ error: "Not found" }), {
+        status: 404,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+
+
     // ACTIVE CONFIGURATION
     if (action === "active-conf") {
       const { country } = params;
