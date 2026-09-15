@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import AdminLayout from "@/components/admin/AdminLayout";
 import StatCard from "@/components/admin/StatCard";
+import { getAdminCache, setAdminCache } from "@/lib/adminCache";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Eye, Users, Globe, TrendingDown } from "lucide-react";
@@ -9,12 +10,17 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 
 const COLORS = ["hsl(0 85% 50%)", "hsl(270 60% 55%)", "hsl(200 80% 50%)", "hsl(120 60% 45%)", "hsl(40 90% 55%)"];
 
+const CACHE_KEY = "admin:analytics";
+
 const Analytics = () => {
-  const [stats, setStats] = useState({ totalViews: 0, uniqueSessions: 0, bounceRate: 0, avgPagesPerSession: 0 });
-  const [pageData, setPageData] = useState<any[]>([]);
-  const [deviceData, setDeviceData] = useState<any[]>([]);
-  const [dailyData, setDailyData] = useState<any[]>([]);
-  const [totalCount, setTotalCount] = useState(0);
+  // Reading the whole page-view history is slow, so the last result is reused
+  // while a fresh one loads in the background.
+  const cached = getAdminCache<any>(CACHE_KEY);
+  const [stats, setStats] = useState(cached?.stats ?? { totalViews: 0, uniqueSessions: 0, bounceRate: 0, avgPagesPerSession: 0 });
+  const [pageData, setPageData] = useState<any[]>(cached?.pageData ?? []);
+  const [deviceData, setDeviceData] = useState<any[]>(cached?.deviceData ?? []);
+  const [dailyData, setDailyData] = useState<any[]>(cached?.dailyData ?? []);
+  const [totalCount, setTotalCount] = useState(cached?.totalCount ?? 0);
 
   useEffect(() => {
     void fetchAnalytics();
@@ -54,24 +60,24 @@ const Analytics = () => {
     const bounceRate = sessions.size > 0 ? Math.round((bounces / sessions.size) * 100) : 0;
     const avgPages = sessions.size > 0 ? Math.round((allViews.length / sessions.size) * 10) / 10 : 0;
 
-    setStats({
+    const nextStats = {
       totalViews: total || allViews.length,
       uniqueSessions: sessions.size,
       bounceRate,
       avgPagesPerSession: avgPages,
-    });
+    };
+    setStats(nextStats);
 
     const pageCounts = new Map<string, number>();
     allViews.forEach((v: any) => {
       const pg = v.page || "unknown";
       pageCounts.set(pg, (pageCounts.get(pg) || 0) + 1);
     });
-    setPageData(
-      Array.from(pageCounts.entries())
-        .map(([pg, count]) => ({ page: pg.replace(/^\//, "") || "home", count }))
-        .sort((a, b) => b.count - a.count)
-        .slice(0, 10)
-    );
+    const nextPageData = Array.from(pageCounts.entries())
+      .map(([pg, count]) => ({ page: pg.replace(/^\//, "") || "home", count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10);
+    setPageData(nextPageData);
 
     const devices: Record<string, number> = { Mobile: 0, Desktop: 0, Tablet: 0, Other: 0 };
     allViews.forEach((v: any) => {
@@ -81,7 +87,8 @@ const Analytics = () => {
       else if (/windows|macintosh|linux/.test(ua)) devices.Desktop++;
       else devices.Other++;
     });
-    setDeviceData(Object.entries(devices).filter(([, v]) => v > 0).map(([name, value]) => ({ name, value })));
+    const nextDeviceData = Object.entries(devices).filter(([, v]) => v > 0).map(([name, value]) => ({ name, value }));
+    setDeviceData(nextDeviceData);
 
     const last14 = Array.from({ length: 14 }, (_, i) => {
       const d = new Date();
@@ -93,6 +100,13 @@ const Analytics = () => {
       };
     });
     setDailyData(last14);
+    setAdminCache(CACHE_KEY, {
+      stats: nextStats,
+      pageData: nextPageData,
+      deviceData: nextDeviceData,
+      dailyData: last14,
+      totalCount: total,
+    });
   };
 
   return (

@@ -7,6 +7,9 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Send, ChevronDown, ChevronRight, UserPlus, Copy, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
+import { getAdminCache, setAdminCache } from "@/lib/adminCache";
+
+const TICKETS_CACHE_KEY = "admin:support-tickets";
 
 interface Ticket {
   id: string;
@@ -39,13 +42,14 @@ interface UserGroup {
 }
 
 const SupportTickets = () => {
-  const [tickets, setTickets] = useState<Ticket[]>([]);
+  const cachedTickets = getAdminCache<{ tickets: Ticket[]; userInfo: Record<string, { name: string; email: string }> }>(TICKETS_CACHE_KEY);
+  const [tickets, setTickets] = useState<Ticket[]>(cachedTickets?.tickets ?? []);
   const [ticketMessages, setTicketMessages] = useState<Record<string, TicketMessage[]>>({});
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!cachedTickets);
   const [expandedTicket, setExpandedTicket] = useState<string | null>(null);
   const [replyText, setReplyText] = useState("");
   const [replySending, setReplySending] = useState(false);
-  const [userInfo, setUserInfo] = useState<Record<string, { name: string; email: string }>>({});
+  const [userInfo, setUserInfo] = useState<Record<string, { name: string; email: string }>>(cachedTickets?.userInfo ?? {});
 
   const [grantingAccess, setGrantingAccess] = useState<string | null>(null);
   const [grantResult, setGrantResult] = useState<Record<string, { password: string; email: string }>>({});
@@ -55,7 +59,7 @@ const SupportTickets = () => {
   }, []);
 
   const fetchTickets = async () => {
-    setLoading(true);
+    if (!getAdminCache(TICKETS_CACHE_KEY)) setLoading(true);
     const { data } = await supabase
       .from("support_tickets" as any)
       .select("*")
@@ -65,18 +69,19 @@ const SupportTickets = () => {
 
     // Fetch user info from subscribers for non-guest tickets
     const userIds = [...new Set(tix.filter(t => t.user_id).map(t => t.user_id!))];
+    let info: Record<string, { name: string; email: string }> = {};
     if (userIds.length > 0) {
       const { data: subs } = await supabase
         .from("subscribers")
         .select("user_id, name, email")
         .in("user_id", userIds);
-      const info: Record<string, { name: string; email: string }> = {};
       (subs || []).forEach((s: any) => {
         info[s.user_id] = { name: s.name, email: s.email };
       });
       setUserInfo(info);
     }
 
+    setAdminCache(TICKETS_CACHE_KEY, { tickets: tix, userInfo: info });
     setLoading(false);
   };
 

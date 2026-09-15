@@ -44,31 +44,35 @@ interface Props {
   onUnlockClick?: () => void;
 }
 
-const LinkCard = ({ link, unlocked, onUnlockClick }: { link: ContentLink; unlocked: boolean; onUnlockClick?: () => void }) => {
+/** One card can carry several URLs for the same title — each becomes its own button. */
+const LinkCard = ({ links, unlocked, onUnlockClick }: { links: ContentLink[]; unlocked: boolean; onUnlockClick?: () => void }) => {
   const { toast } = useToast();
-  const [pending, setPending] = useState<"open" | "copy" | null>(null);
+  const link = links[0];
+  const [pending, setPending] = useState<{ action: "open" | "copy"; url: string } | null>(null);
 
-  const doOpen = () => window.open(link.url, "_blank", "noopener,noreferrer");
-  const doCopy = () => {
-    void navigator.clipboard.writeText(link.url);
+  const doOpen = (url: string) => window.open(url, "_blank", "noopener,noreferrer");
+  const doCopy = (url: string) => {
+    void navigator.clipboard.writeText(url);
     toast({ title: "Link copied", description: link.title });
   };
 
-  const request = (action: "open" | "copy") => {
+  const request = (action: "open" | "copy", url: string) => {
     if (rotationAcknowledged()) {
-      action === "open" ? doOpen() : doCopy();
+      action === "open" ? doOpen(url) : doCopy(url);
       return;
     }
-    setPending(action);
+    setPending({ action, url });
   };
 
   const confirm = () => {
     rememberRotationAck();
-    const action = pending;
+    const p = pending;
     setPending(null);
-    if (action === "open") doOpen();
-    if (action === "copy") doCopy();
+    if (!p) return;
+    if (p.action === "open") doOpen(p.url);
+    if (p.action === "copy") doCopy(p.url);
   };
+
 
   return (
     <div className="flex gap-3 rounded-lg border border-border bg-secondary/40 p-3">
@@ -89,14 +93,21 @@ const LinkCard = ({ link, unlocked, onUnlockClick }: { link: ContentLink; unlock
         {link.description && <p className="text-xs text-muted-foreground leading-relaxed">{link.description}</p>}
         {unlocked ? (
           <div className="flex flex-wrap gap-2 pt-1">
-            <Button size="sm" className="h-8 gap-1 bg-primary text-primary-foreground" onClick={() => request("open")}>
-              <ExternalLink size={13} /> Open
-            </Button>
+            {links.map((l, i) => (
+              <Button
+                key={l.id}
+                size="sm"
+                className="h-8 gap-1 bg-primary text-primary-foreground"
+                onClick={() => request("open", l.url)}
+              >
+                <ExternalLink size={13} /> {links.length > 1 ? `Open link ${i + 1}` : "Open"}
+              </Button>
+            ))}
             <Button
               size="sm"
               variant="outline"
               className="h-8 gap-1 border-border text-foreground"
-              onClick={() => request("copy")}
+              onClick={() => request("copy", link.url)}
             >
               <Copy size={13} /> Copy
             </Button>
@@ -144,6 +155,22 @@ const CategoryLinks = ({ slug, unlocked = true, onUnlockClick }: Props) => {
 
   const links = linksFor(category.id);
 
+  // Links sharing a title and platform are the same item with backup URLs:
+  // show them as one card with several buttons.
+  const groups: ContentLink[][] = [];
+  const groupIndex = new Map<string, number>();
+  for (const l of links) {
+    const key = `${l.title.trim().toLowerCase()}|${l.platform}`;
+    const at = groupIndex.get(key);
+    if (at === undefined) {
+      groupIndex.set(key, groups.length);
+      groups.push([l]);
+    } else {
+      groups[at].push(l);
+    }
+  }
+
+
   return (
     <Card className="bg-card border-border">
       <CardContent className="p-5 space-y-4">
@@ -158,8 +185,8 @@ const CategoryLinks = ({ slug, unlocked = true, onUnlockClick }: Props) => {
           <p className="text-sm text-muted-foreground">No links published here yet — we add and verify new ones regularly.</p>
         ) : (
           <div className="grid gap-3 sm:grid-cols-2">
-            {links.map((l) => (
-              <LinkCard key={l.id} link={l} unlocked={unlocked} onUnlockClick={onUnlockClick} />
+            {groups.map((g) => (
+              <LinkCard key={g[0].id} links={g} unlocked={unlocked} onUnlockClick={onUnlockClick} />
             ))}
           </div>
         )}

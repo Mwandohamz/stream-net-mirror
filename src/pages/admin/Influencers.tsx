@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Plus, Trash2, Copy, ToggleLeft, ToggleRight, DollarSign, Users, TrendingUp, KeyRound } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import StatCard from "@/components/admin/StatCard";
+import { getAdminCache, setAdminCache } from "@/lib/adminCache";
 import PhoneInput, { isValidPhoneNumber, parsePhoneNumber } from "react-phone-number-input";
 import "react-phone-number-input/style.css";
 
@@ -31,11 +32,21 @@ interface InfluencerStats {
   influencerShare: number;
 }
 
+interface CachedInfluencers {
+  influencers: Influencer[];
+  stats: Record<string, InfluencerStats>;
+  influencerRevenue: number;
+  organicRevenue: number;
+}
+
+const CACHE_KEY = "admin:influencers";
+
 const Influencers = () => {
   const { toast } = useToast();
-  const [influencers, setInfluencers] = useState<Influencer[]>([]);
-  const [stats, setStats] = useState<Record<string, InfluencerStats>>({});
-  const [loading, setLoading] = useState(true);
+  const cached = getAdminCache<CachedInfluencers>(CACHE_KEY);
+  const [influencers, setInfluencers] = useState<Influencer[]>(cached?.influencers ?? []);
+  const [stats, setStats] = useState<Record<string, InfluencerStats>>(cached?.stats ?? {});
+  const [loading, setLoading] = useState(!cached);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ full_name: "", email: "", phone: "" as string | undefined, discount_percent: "10", revenue_share_percent: "20" });
   const [saving, setSaving] = useState(false);
@@ -44,13 +55,13 @@ const Influencers = () => {
   const [newPassword, setNewPassword] = useState("");
   const [savingPw, setSavingPw] = useState(false);
 
-  const [totalInfluencerRevenue, setTotalInfluencerRevenue] = useState(0);
-  const [totalOrganicRevenue, setTotalOrganicRevenue] = useState(0);
+  const [totalInfluencerRevenue, setTotalInfluencerRevenue] = useState(cached?.influencerRevenue ?? 0);
+  const [totalOrganicRevenue, setTotalOrganicRevenue] = useState(cached?.organicRevenue ?? 0);
 
   useEffect(() => { fetchAll(); }, []);
 
   const fetchAll = async () => {
-    setLoading(true);
+    if (!getAdminCache(CACHE_KEY)) setLoading(true);
     const { data: inf } = await supabase.from("influencers" as any).select("*").order("created_at", { ascending: false });
     const influencerList = (inf || []) as unknown as Influencer[];
     setInfluencers(influencerList);
@@ -73,6 +84,12 @@ const Influencers = () => {
     setStats(statsMap);
     setTotalInfluencerRevenue(infRev);
     setTotalOrganicRevenue(orgRev);
+    setAdminCache<CachedInfluencers>(CACHE_KEY, {
+      influencers: influencerList,
+      stats: statsMap,
+      influencerRevenue: infRev,
+      organicRevenue: orgRev,
+    });
     setLoading(false);
   };
 
