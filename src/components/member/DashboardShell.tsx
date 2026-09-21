@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,30 +9,21 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { LayoutDashboard, Clapperboard, Trophy, Download, CreditCard, LifeBuoy, LogOut, Settings, Home, Film, Tv, Compass } from "lucide-react";
+import { LayoutDashboard, Clapperboard, Trophy, LogOut, Settings, Home, Film, CirclePlay } from "lucide-react";
 import LogoShowcase from "@/components/LogoShowcase";
 import CountdownBadge from "@/components/CountdownBadge";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useProfile";
 import { useSubscriber, subscriptionAccessEnd } from "@/hooks/useSubscriber";
 
-export type DashboardTab = "overview" | "streaming" | "sports" | "downloads" | "billing" | "support";
+export type DashboardTab = "dashboard" | "movies" | "watch" | "football" | "account";
 
 export const DASHBOARD_TABS: { id: DashboardTab; label: string; short: string; icon: typeof Home }[] = [
-  { id: "overview", label: "Overview", short: "Home", icon: LayoutDashboard },
-  { id: "streaming", label: "Streaming", short: "Stream", icon: Clapperboard },
-  { id: "sports", label: "Live Sports", short: "Sports", icon: Trophy },
-  { id: "downloads", label: "Downloads", short: "Get", icon: Download },
-  { id: "billing", label: "Billing", short: "Billing", icon: CreditCard },
-  { id: "support", label: "Support", short: "Help", icon: LifeBuoy },
-];
-
-/** Public pages, presented inside the dashboard so members never feel signed out. */
-const EXPLORE_LINKS: { label: string; href: string; icon: typeof Home }[] = [
-  { label: "Home", href: "/", icon: Home },
-  { label: "Movies", href: "/#trending", icon: Film },
-  { label: "TV Series", href: "/#trending", icon: Tv },
-  { label: "Live Sports page", href: "/live-sports", icon: Compass },
+  { id: "dashboard", label: "Dashboard", short: "Dashboard", icon: LayoutDashboard },
+  { id: "movies", label: "Movies & Series", short: "Movies", icon: Clapperboard },
+  { id: "watch", label: "Watch", short: "Watch", icon: CirclePlay },
+  { id: "football", label: "Football", short: "Football", icon: Trophy },
+  { id: "account", label: "Account", short: "Account", icon: Settings },
 ];
 
 
@@ -62,20 +53,20 @@ const DashboardShell = ({ tab, onTabChange, children }: Props) => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="theme-dashboard min-h-screen bg-background font-sans">
       {/* Top bar */}
       <header className="fixed top-0 left-0 right-0 z-40 h-14 border-b border-border bg-background/95 backdrop-blur">
         <div className="flex h-full items-center justify-between px-3 md:px-5">
-          <Link to="/" className="flex items-center gap-2">
+          <div className="flex items-center gap-2">
             <LogoShowcase size="md" />
-            <span className="netflix-title text-sm md:text-lg text-primary">STREAMNETMIRROR</span>
-          </Link>
+            <span className="dashboard-heading text-sm font-bold md:text-base">STREAMNETMIRROR</span>
+          </div>
 
           <div className="flex items-center gap-2">
             {accessEnd && <CountdownBadge target={accessEnd} prefix="Ends in" className="hidden sm:inline-flex" />}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-2 rounded-full border border-border p-1 pr-2" aria-label="Open profile menu">
+                <Button variant="ghost" className="h-10 gap-2 rounded-full border border-border p-1 pr-2" aria-label="Open profile menu">
                   <Avatar className="h-7 w-7">
                     <AvatarImage src={(profile as any)?.avatar_url || undefined} alt={profile?.full_name || "Profile"} />
                     <AvatarFallback className="bg-secondary text-[11px]">{initials}</AvatarFallback>
@@ -83,25 +74,14 @@ const DashboardShell = ({ tab, onTabChange, children }: Props) => {
                   <span className="hidden sm:block max-w-[120px] truncate text-xs text-foreground">
                     {profile?.full_name || profile?.email || "Account"}
                   </span>
-                </button>
+                </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56 bg-popover">
                 <DropdownMenuLabel className="truncate">{profile?.email}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => onTabChange("overview")}>
+                <DropdownMenuItem onClick={() => onTabChange("account")}>
                   <Settings className="mr-2 h-4 w-4" /> Account settings
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onTabChange("billing")}>
-                  <CreditCard className="mr-2 h-4 w-4" /> Billing
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground">Browse the site</DropdownMenuLabel>
-                {EXPLORE_LINKS.map((l) => (
-                  <DropdownMenuItem key={l.label} onClick={() => navigate(l.href)}>
-                    <l.icon className="mr-2 h-4 w-4" /> {l.label}
-                  </DropdownMenuItem>
-                ))}
-                <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={signOut}>
                   <LogOut className="mr-2 h-4 w-4" /> Sign out
                 </DropdownMenuItem>
@@ -112,33 +92,21 @@ const DashboardShell = ({ tab, onTabChange, children }: Props) => {
       </header>
 
       {/* Desktop sidebar */}
-      <aside className="fixed left-0 top-14 bottom-0 z-30 hidden w-56 flex-col justify-between overflow-y-auto border-r border-border bg-card/40 p-3 md:flex">
+      <aside className="fixed left-0 top-14 bottom-0 z-30 hidden w-60 flex-col justify-between overflow-y-auto border-r border-border bg-card/60 p-4 md:flex">
         <div>
-          <p className="px-3 pb-1 pt-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">My account</p>
+          <p className="px-3 pb-3 pt-2 text-[10px] font-semibold uppercase text-muted-foreground/70">Member app</p>
           <nav className="space-y-1">
             {DASHBOARD_TABS.map((t) => (
-              <button
+              <Button
+                variant="ghost"
                 key={t.id}
                 onClick={() => onTabChange(t.id)}
-                className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors ${
-                  tab === t.id ? "bg-primary/15 text-primary font-medium" : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                className={`h-11 w-full justify-start gap-3 rounded-lg px-3 text-sm transition-colors ${
+                  tab === t.id ? "bg-primary text-primary-foreground font-semibold" : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
                 }`}
               >
-                <t.icon size={16} /> {t.label}
-              </button>
-            ))}
-          </nav>
-
-          <p className="px-3 pb-1 pt-5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">Browse the site</p>
-          <nav className="space-y-1">
-            {EXPLORE_LINKS.map((l) => (
-              <Link
-                key={l.label}
-                to={l.href}
-                className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
-              >
-                <l.icon size={16} /> {l.label}
-              </Link>
+                <t.icon size={18} /> {t.label}
+              </Button>
             ))}
           </nav>
         </div>
@@ -148,40 +116,27 @@ const DashboardShell = ({ tab, onTabChange, children }: Props) => {
       </aside>
 
 
-      {/* Mobile segmented switcher */}
-      <div className="fixed top-14 left-0 right-0 z-30 overflow-x-auto border-b border-border bg-background/95 px-3 py-2 backdrop-blur md:hidden">
-        <div className="flex gap-2">
-          {DASHBOARD_TABS.map((t) => (
-            <button
-              key={t.id}
-              onClick={() => onTabChange(t.id)}
-              className={`whitespace-nowrap rounded-full border px-3 py-1.5 text-xs ${
-                tab === t.id ? "border-primary bg-primary/15 text-primary" : "border-border text-muted-foreground"
-              }`}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <main className="px-3 pb-28 pt-28 md:ml-56 md:px-6 md:pb-10 md:pt-20">
-        <div className="mx-auto max-w-3xl space-y-6">{children}</div>
+      <main className="px-3 pb-28 pt-20 md:ml-60 md:px-8 md:pb-10 md:pt-24">
+        <div className="mx-auto max-w-5xl space-y-6">{children}</div>
       </main>
 
       {/* Mobile bottom navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 z-40 grid grid-cols-6 border-t border-border bg-background/95 backdrop-blur md:hidden">
-        {DASHBOARD_TABS.map((t) => (
-          <button
+      <nav className="fixed bottom-0 left-0 right-0 z-40 grid h-[72px] grid-cols-5 border-t border-border bg-background/95 px-1 backdrop-blur md:hidden" aria-label="Dashboard navigation">
+        {DASHBOARD_TABS.map((t, index) => (
+          <Button
+            variant="ghost"
             key={t.id}
             onClick={() => onTabChange(t.id)}
-            className={`flex flex-col items-center gap-0.5 py-2 text-[10px] ${
+            className={`relative h-[72px] min-w-0 flex-col items-center gap-1 rounded-none px-0 text-[10px] ${
+              t.id === "watch" ? "-top-4" : ""} ${
               tab === t.id ? "text-primary" : "text-muted-foreground"
             }`}
           >
-            <t.icon size={18} />
-            {t.short}
-          </button>
+            <span className={t.id === "watch" ? "grid h-12 w-12 place-items-center rounded-full border-4 border-background bg-primary text-primary-foreground shadow-lg" : "grid h-7 place-items-center"}>
+              <t.icon size={t.id === "watch" ? 23 : 20} className={t.id === "watch" ? "fill-current" : ""} />
+            </span>
+            <span className={index === 2 ? "font-semibold text-primary" : "truncate"}>{t.short}</span>
+          </Button>
         ))}
       </nav>
     </div>
