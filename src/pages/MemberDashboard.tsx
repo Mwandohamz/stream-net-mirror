@@ -12,24 +12,16 @@ import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
 import {
   ExternalLink, Download, Globe, Smartphone, Monitor,
-  MessageCircle, Send, LogOut, Shield, Play, ChevronRight,
+  MessageCircle, Send, LogOut, Play, ChevronRight,
   AlertTriangle, CheckCircle2, Info, RefreshCw, Laptop, Lock, Eye, EyeOff, Settings,
   Copy, Share2
 } from "lucide-react";
-import Footer from "@/components/Footer";
 import DashboardShell, { type DashboardTab } from "@/components/member/DashboardShell";
 import CategoryLinks from "@/components/member/CategoryLinks";
 import WatchHub from "@/components/member/WatchHub";
 import { useToast } from "@/hooks/use-toast";
 import { useAppSettings } from "@/hooks/useAppSettings";
 
-
-import netflixLogo from "@/assets/ott/netflix.jpg";
-import disneyLogo from "@/assets/ott/disney-plus.jpg";
-import hboLogo from "@/assets/ott/hbo-max.jpg";
-import hotstarLogo from "@/assets/ott/jiohotstar.jpg";
-import appleTvLogo from "@/assets/ott/apple-tv.jpg";
-import paramountLogo from "@/assets/ott/paramount.jpg";
 
 /** App downloads are members-only, so fetch a short-lived signed link on demand. */
 async function openApkDownload(fileName: string) {
@@ -40,15 +32,6 @@ async function openApkDownload(fileName: string) {
   window.location.href = data.signedUrl;
   return true;
 }
-
-const ottPlatforms = [
-  { name: "Netflix", logo: netflixLogo },
-  { name: "Disney+", logo: disneyLogo },
-  { name: "HBO Max", logo: hboLogo },
-  { name: "JioHotstar", logo: hotstarLogo },
-  { name: "Apple TV+", logo: appleTvLogo },
-  { name: "Paramount+", logo: paramountLogo },
-];
 
 interface Ticket {
   id: string;
@@ -76,11 +59,9 @@ const MemberDashboard = () => {
   const portalUrl = settings.portal_url || "/payment";
 
   const [userName, setUserName] = useState("");
-  const [showPortal, setShowPortal] = useState(false);
   const [ticketSubject, setTicketSubject] = useState("");
   const [ticketMessage, setTicketMessage] = useState("");
   const [ticketLoading, setTicketLoading] = useState(false);
-  const [showBackupLinks, setShowBackupLinks] = useState(false);
   const [showTempPasswordBanner, setShowTempPasswordBanner] = useState(false);
 
   const [tickets, setTickets] = useState<Ticket[]>([]);
@@ -103,10 +84,6 @@ const MemberDashboard = () => {
   const [tab, setTab] = useState<DashboardTab>(validInitialTab);
   const membership = useMembership();
 
-
-  const streamingLink1 = settings.streaming_link_1 || "";
-  const streamingLink2 = settings.streaming_link_2 || "";
-  const streamingLink3 = settings.streaming_link_3 || "";
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {

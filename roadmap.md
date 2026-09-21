@@ -11,4 +11,4 @@
 - [x] Deploy changed backend functions and verify database and build.
 - [x] Rebrand the member dashboard with five destinations and a central Watch action.
 - [x] Add the six-platform Watch hub with paid/unpaid link handling.
-- [ ] Verify the redesigned member dashboard on mobile and desktop.
+- [x] Verify the redesigned member dashboard on mobile and desktop.

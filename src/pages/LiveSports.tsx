@@ -66,7 +66,7 @@ const LiveSports = () => {
       }))
     : LEAGUES;
 
-  const go = () => navigate(isMember ? "/dashboard?tab=sports" : "/signup");
+  const go = () => navigate(isMember ? "/dashboard?tab=football" : "/signup");
 
   return (
     <div className="theme-sports min-h-screen bg-background">
