@@ -8,7 +8,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useContent, type ContentLink } from "@/hooks/useContent";
 import netflixLogo from "@/assets/ott/netflix.jpg";
-import primeLogo from "@/assets/ott/amazon-prime.jpg";
 import skyLogo from "@/assets/sports/sky-sports-football.jpg.asset.json";
 import uefaLogo from "@/assets/sports/uefa-champions-league.jpg.asset.json";
 import eplLogo from "@/assets/sports/premier-league.jpg.asset.json";
@@ -24,7 +23,7 @@ type FeaturedPlatform = {
 
 const FEATURED: FeaturedPlatform[] = [
   { name: "Netflix", aliases: ["netflix", "netmirror"], logo: netflixLogo },
-  { name: "Prime Video", aliases: ["prime", "amazon"], logo: primeLogo },
+  { name: "Prime Video", aliases: ["prime", "amazon"], logo: "" },
   { name: "Sky Sports", aliases: ["sky sports", "sky"], logo: skyLogo.url },
   { name: "UEFA", aliases: ["uefa", "champions league", "ucl"], logo: uefaLogo.url },
   { name: "EPL", aliases: ["premier league", "epl"], logo: eplLogo.url },
@@ -108,7 +107,11 @@ const WatchHub = ({ unlocked, onUnlockClick }: { unlocked: boolean; onUnlockClic
         {featuredGroups.map(({ platform, links: platformLinks }) => (
           <article key={platform.name} className="group flex min-h-[190px] flex-col overflow-hidden rounded-lg border border-border bg-card shadow-sm transition-transform duration-200 hover:-translate-y-0.5">
             <div className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden bg-secondary p-4">
-              <img src={platformLinks[0]?.logo_url || platform.logo} alt="" className="h-20 w-20 rounded-lg object-contain md:h-24 md:w-24" loading="lazy" decoding="async" />
+              {platformLinks[0]?.logo_url || platform.logo ? (
+                <img src={platformLinks[0]?.logo_url || platform.logo} alt="" className="h-20 w-20 rounded-lg object-contain md:h-24 md:w-24" loading="lazy" decoding="async" />
+              ) : (
+                <span className="dashboard-heading grid h-20 w-20 place-items-center rounded-lg bg-background text-center text-lg font-bold text-primary">PRIME<br />VIDEO</span>
+              )}
               {!unlocked && <span className="absolute right-3 top-3 grid h-8 w-8 place-items-center rounded-full border border-border bg-background/90 text-muted-foreground"><Lock size={14} /></span>}
             </div>
             <div className="space-y-3 p-3">

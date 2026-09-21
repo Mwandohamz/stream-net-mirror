@@ -9,7 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { LayoutDashboard, Clapperboard, Trophy, LogOut, Settings, Home, Film, CirclePlay } from "lucide-react";
+import { LayoutDashboard, Clapperboard, Trophy, LogOut, Settings, Home, CirclePlay } from "lucide-react";
 import LogoShowcase from "@/components/LogoShowcase";
 import CountdownBadge from "@/components/CountdownBadge";
 import { supabase } from "@/integrations/supabase/client";
