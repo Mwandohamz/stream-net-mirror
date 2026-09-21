@@ -343,6 +343,8 @@ const MemberDashboard = () => {
             <CategoryLinks slug="netmirror" unlocked={membership.isMember} onUnlockClick={() => navigate("/payment")} />
           )}
 
+          {tab === "account" && <AccountOverviewCard />}
+
           {/* Payment Receipt */}
           {tab === "account" && paymentReceipt && (
             <Card className="bg-card border-border">
@@ -417,11 +419,16 @@ const MemberDashboard = () => {
                       size="sm"
                       className="w-full bg-primary text-primary-foreground gap-1"
                       onClick={async () => {
+                        if (!membership.isMember) {
+                          navigate("/payment");
+                          return;
+                        }
                         const ok = await openApkDownload(settings.apk_file_name);
-                        if (!ok) toast({ title: "Download unavailable", description: "Please refresh and try again.", variant: "destructive" });
+                        if (!ok) toast({ title: "Download unavailable", description: "We couldn't prepare the download. Please try again shortly.", variant: "destructive" });
                       }}
                     >
-                      <Download size={14} /> Download APK
+                      {membership.isMember ? <Download size={14} /> : <Lock size={14} />}
+                      {membership.isMember ? "Download APK" : "Unlock download"}
                     </Button>
                   ) : (
                     <a href={portalUrl} target="_blank" rel="noopener noreferrer">
@@ -513,11 +520,16 @@ const MemberDashboard = () => {
                     variant="outline"
                     className="w-full mt-3 border-green-500/30 text-foreground gap-1 hover:bg-green-500/10"
                     onClick={async () => {
+                      if (!membership.isMember) {
+                        navigate("/payment");
+                        return;
+                      }
                       const ok = await openApkDownload(settings.apk_file_name);
-                      if (!ok) toast({ title: "Download unavailable", description: "Please refresh and try again.", variant: "destructive" });
+                      if (!ok) toast({ title: "Download unavailable", description: "We couldn't prepare the download. Please try again shortly.", variant: "destructive" });
                     }}
                   >
-                    <Download size={14} className="text-green-400" /> Download TV APK
+                    {membership.isMember ? <Download size={14} className="text-green-400" /> : <Lock size={14} />}
+                    {membership.isMember ? "Download TV APK" : "Unlock TV download"}
                   </Button>
                 ) : (
                   <a href={portalUrl} target="_blank" rel="noopener noreferrer" className="block mt-3">

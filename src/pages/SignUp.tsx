@@ -17,6 +17,8 @@ import type { WorldCountry } from "@/data/allCountries";
 const SignUp = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const nextParam = searchParams.get("next");
+  const safeNext = nextParam && /^\/(?!\/)/.test(nextParam) ? nextParam : null;
   const { toast } = useToast();
 
   const [name, setName] = useState(searchParams.get("name") || "");
@@ -32,9 +34,10 @@ const SignUp = () => {
   // Someone who already has a verified, signed-in account never needs this form.
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) navigate("/dashboard", { replace: true });
+      if (!session?.user) return;
+      navigate(safeNext || "/dashboard", { replace: true });
     });
-  }, [navigate]);
+  }, [navigate, safeNext]);
 
 
 
@@ -64,7 +67,7 @@ const SignUp = () => {
             country_name: country?.name,
             currency: country?.currency,
           },
-          emailRedirectTo: `${window.location.origin}/dashboard`,
+          emailRedirectTo: `${window.location.origin}${safeNext ? `/signup?next=${encodeURIComponent(safeNext)}` : "/dashboard"}`,
         },
       });
 
@@ -78,7 +81,7 @@ const SignUp = () => {
       // take them straight into their dashboard.
       if (data.session) {
         toast({ title: "Welcome!", description: "Your account is ready." });
-        navigate("/dashboard", { replace: true });
+        navigate(safeNext || "/dashboard", { replace: true });
         return;
       }
 
@@ -114,7 +117,7 @@ const SignUp = () => {
                   We sent a verification link to <span className="text-foreground">{email}</span>. Verify your email,
                   sign in, then choose your plan to unlock streaming.
                 </p>
-                <Button onClick={() => navigate("/signin")} className="w-full bg-primary text-primary-foreground hover:bg-primary/80">
+                <Button onClick={() => navigate(safeNext ? `/signin?next=${encodeURIComponent(safeNext)}` : "/signin")} className="w-full bg-primary text-primary-foreground hover:bg-primary/80">
                   Go to Sign In
                 </Button>
               </CardContent>
@@ -206,7 +209,7 @@ const SignUp = () => {
 
                 <p className="text-xs text-muted-foreground text-center">
                   Already have an account?{" "}
-                  <button onClick={() => navigate("/signin")} className="text-primary hover:underline">Sign In</button>
+                  <button onClick={() => navigate(safeNext ? `/signin?next=${encodeURIComponent(safeNext)}` : "/signin")} className="text-primary hover:underline">Sign In</button>
                 </p>
                 <p className="text-xs text-muted-foreground text-center">
                   Having trouble?{" "}
