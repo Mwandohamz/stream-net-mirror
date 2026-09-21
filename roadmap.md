@@ -9,6 +9,6 @@
 - [x] Add secure targeted account-email selection, filters, editable templates, and activity logging.
 - [x] Replace bulk link textarea with reliable multiple URL fields per content item.
 - [x] Deploy changed backend functions and verify database and build.
-- [ ] Rebrand the member dashboard with five destinations and a central Watch action.
-- [ ] Add the six-platform Watch hub with paid/unpaid link handling.
-- [ ] Verify the redesigned member dashboard on mobile and desktop.
+- [x] Rebrand the member dashboard with five destinations and a central Watch action.
+- [x] Add the six-platform Watch hub with paid/unpaid link handling.
+- [x] Verify the redesigned member dashboard on mobile and desktop.

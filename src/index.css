@@ -2,7 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&display=swap');
+@import '@fontsource-variable/outfit';
+@import '@fontsource-variable/figtree';
 
 @layer base {
   :root {
@@ -82,6 +83,35 @@
 
   .theme-sports .netflix-title {
     text-shadow: 0 2px 14px hsl(205 100% 55% / 0.35);
+  }
+
+  .theme-dashboard {
+    --background: 225 36% 4%;
+    --foreground: 210 33% 98%;
+    --card: 224 36% 13%;
+    --card-foreground: 210 33% 98%;
+    --popover: 224 36% 10%;
+    --popover-foreground: 210 33% 98%;
+    --primary: 197 100% 44%;
+    --primary-foreground: 225 36% 4%;
+    --secondary: 224 34% 16%;
+    --secondary-foreground: 210 33% 98%;
+    --muted: 224 27% 18%;
+    --muted-foreground: 215 17% 70%;
+    --accent: 357 83% 49%;
+    --accent-foreground: 0 0% 100%;
+    --border: 221 25% 24%;
+    --input: 221 25% 24%;
+    --ring: 197 100% 44%;
+    font-family: 'Figtree Variable', sans-serif;
+  }
+
+  .theme-dashboard .dashboard-heading,
+  .theme-dashboard h1,
+  .theme-dashboard h2,
+  .theme-dashboard h3 {
+    font-family: 'Outfit Variable', sans-serif;
+    letter-spacing: 0;
   }
 }
 

@@ -12,23 +12,16 @@ import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
 import {
   ExternalLink, Download, Globe, Smartphone, Monitor,
-  MessageCircle, Send, LogOut, Shield, Play, ChevronRight,
+  MessageCircle, Send, LogOut, Play, ChevronRight,
   AlertTriangle, CheckCircle2, Info, RefreshCw, Laptop, Lock, Eye, EyeOff, Settings,
   Copy, Share2
 } from "lucide-react";
-import Footer from "@/components/Footer";
 import DashboardShell, { type DashboardTab } from "@/components/member/DashboardShell";
 import CategoryLinks from "@/components/member/CategoryLinks";
+import WatchHub from "@/components/member/WatchHub";
 import { useToast } from "@/hooks/use-toast";
 import { useAppSettings } from "@/hooks/useAppSettings";
 
-
-import netflixLogo from "@/assets/ott/netflix.jpg";
-import disneyLogo from "@/assets/ott/disney-plus.jpg";
-import hboLogo from "@/assets/ott/hbo-max.jpg";
-import hotstarLogo from "@/assets/ott/jiohotstar.jpg";
-import appleTvLogo from "@/assets/ott/apple-tv.jpg";
-import paramountLogo from "@/assets/ott/paramount.jpg";
 
 /** App downloads are members-only, so fetch a short-lived signed link on demand. */
 async function openApkDownload(fileName: string) {
@@ -39,15 +32,6 @@ async function openApkDownload(fileName: string) {
   window.location.href = data.signedUrl;
   return true;
 }
-
-const ottPlatforms = [
-  { name: "Netflix", logo: netflixLogo },
-  { name: "Disney+", logo: disneyLogo },
-  { name: "HBO Max", logo: hboLogo },
-  { name: "JioHotstar", logo: hotstarLogo },
-  { name: "Apple TV+", logo: appleTvLogo },
-  { name: "Paramount+", logo: paramountLogo },
-];
 
 interface Ticket {
   id: string;
@@ -75,11 +59,9 @@ const MemberDashboard = () => {
   const portalUrl = settings.portal_url || "/payment";
 
   const [userName, setUserName] = useState("");
-  const [showPortal, setShowPortal] = useState(false);
   const [ticketSubject, setTicketSubject] = useState("");
   const [ticketMessage, setTicketMessage] = useState("");
   const [ticketLoading, setTicketLoading] = useState(false);
-  const [showBackupLinks, setShowBackupLinks] = useState(false);
   const [showTempPasswordBanner, setShowTempPasswordBanner] = useState(false);
 
   const [tickets, setTickets] = useState<Ticket[]>([]);
@@ -95,13 +77,13 @@ const MemberDashboard = () => {
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showAccountSettings, setShowAccountSettings] = useState(false);
-  const [tab, setTab] = useState<DashboardTab>("overview");
+  const initialTab = new URLSearchParams(window.location.search).get("tab");
+  const validInitialTab = (["dashboard", "movies", "watch", "football", "account"] as DashboardTab[]).includes(initialTab as DashboardTab)
+    ? initialTab as DashboardTab
+    : "watch";
+  const [tab, setTab] = useState<DashboardTab>(validInitialTab);
   const membership = useMembership();
 
-
-  const streamingLink1 = settings.streaming_link_1 || "";
-  const streamingLink2 = settings.streaming_link_2 || "";
-  const streamingLink3 = settings.streaming_link_3 || "";
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
@@ -239,6 +221,7 @@ const MemberDashboard = () => {
   return (
     <DashboardShell tab={tab} onTabChange={setTab}>
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-3xl mx-auto space-y-6">
+          {tab === "dashboard" && (<>
           {/* Welcome hero */}
           <div className="relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-primary/15 via-card to-card p-5 md:p-6">
             <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-primary/20 blur-3xl" />
@@ -270,7 +253,7 @@ const MemberDashboard = () => {
                 <Button
                   size="sm"
                   className="gap-1 bg-primary text-primary-foreground hover:bg-primary/80"
-                  onClick={() => setTab("streaming")}
+                  onClick={() => setTab("watch")}
                 >
                   <Play size={14} /> Start watching
                 </Button>
@@ -299,9 +282,6 @@ const MemberDashboard = () => {
               </div>
             </div>
           </div>
-
-
-          {(tab === "overview" || tab === "streaming") && (<>
 
 
           {/* Account & subscription overview */}
@@ -353,103 +333,18 @@ const MemberDashboard = () => {
               </div>
             </CardContent>
           </Card>
+          </>)}
 
-          {/* Streaming Portal Access */}
-          <Card className="bg-card border-primary/30 border-2">
-            <CardContent className="p-5 md:p-8 space-y-4">
-              <div className="flex items-center gap-2">
-                <Play size={20} className="text-primary fill-primary" />
-                <h2 className="netflix-title text-xl md:text-2xl text-foreground">START STREAMING</h2>
-              </div>
+          {tab === "watch" && (
+            <WatchHub unlocked={membership.isMember} onUnlockClick={() => navigate("/payment")} />
+          )}
 
-              <div className="bg-secondary/60 rounded-lg p-4 space-y-3">
-                <h3 className="text-sm font-semibold text-foreground">How to use StreamNetMirror:</h3>
-                <ol className="space-y-2 text-xs md:text-sm text-muted-foreground list-decimal list-inside">
-                  <li>Click the <span className="text-primary font-semibold">"Launch Streaming Portal"</span> button below</li>
-                  <li>You'll be redirected to the official StreamNetMirror portal</li>
-                  <li>Sign in using <span className="text-primary font-semibold">Google Authentication</span> for the best experience</li>
-                  <li>Browse and stream from 50+ platforms including Netflix, Disney+, HBO Max, and more</li>
-                </ol>
-              </div>
-
-              <div className="bg-primary/5 border border-primary/20 rounded-lg p-3 flex items-start gap-2">
-                <AlertTriangle size={16} className="text-primary mt-0.5 shrink-0" />
-                <p className="text-[10px] md:text-xs text-muted-foreground">
-                  <strong className="text-foreground">For mobile users:</strong> You may be prompted to download the official app.
-                  Please accept and grant the necessary permissions to install the application for the best streaming experience.
-                </p>
-              </div>
-
-              {!membership.isMember ? (
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/5 p-3">
-                    <Lock size={16} className="text-primary shrink-0" />
-                    <p className="text-xs text-muted-foreground">
-                      Your portal access is locked until your subscription is active. Everything else in your account stays available.
-                    </p>
-                  </div>
-                  <Button
-                    onClick={() => navigate("/payment")}
-                    className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/80 font-semibold text-base gap-2"
-                  >
-                    <Lock size={18} /> Unlock streaming
-                  </Button>
-                </div>
-              ) : !showPortal ? (
-                <Button
-                  onClick={() => setShowPortal(true)}
-                  className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/80 font-semibold text-base gap-2 active:scale-95 transition-transform"
-                >
-                  <Shield size={18} /> I Understand — Show Portal Access
-                </Button>
-              ) : (
-                <a href={portalUrl} target="_blank" rel="noopener noreferrer" className="block">
-                  <Button className="w-full h-14 bg-primary text-primary-foreground hover:bg-primary/80 font-semibold text-lg gap-2 active:scale-95 transition-transform">
-                    Launch Streaming Portal <ChevronRight size={20} />
-                  </Button>
-                </a>
-              )}
-
-            </CardContent>
-          </Card>
-
-          {/* Official Backup Links */}
-          {(streamingLink1 || streamingLink2 || streamingLink3) && (
-            <Card className="bg-card border-border">
-              <CardContent className="p-4">
-                <Button
-                  variant="outline"
-                  onClick={() => setShowBackupLinks(!showBackupLinks)}
-                  className="w-full border-border text-foreground gap-2"
-                >
-                  <Globe size={16} className="text-primary" />
-                  {showBackupLinks ? "Hide" : "Show"} Official Backup Links
-                  <ChevronRight size={16} className={`ml-auto transition-transform ${showBackupLinks ? "rotate-90" : ""}`} />
-                </Button>
-                {showBackupLinks && (
-                  <div className="mt-3 space-y-2">
-                    <p className="text-xs text-muted-foreground">If the main portal is down, try these official backup links:</p>
-                    {[
-                      { label: "Official Link 1", url: streamingLink1 },
-                      { label: "Official Link 2", url: streamingLink2 },
-                      { label: "Official Link 3", url: streamingLink3 },
-                    ].filter(l => l.url).map((link, i) => (
-                      <a key={i} href={link.url} target="_blank" rel="noopener noreferrer" className="block">
-                        <Button variant="outline" size="sm" className="w-full border-border text-foreground gap-2 justify-start">
-                          <ExternalLink size={14} className="text-primary" />
-                          {link.label}
-                          <span className="text-xs text-muted-foreground ml-auto truncate max-w-[200px]">{link.url}</span>
-                        </Button>
-                      </a>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+          {tab === "movies" && (
+            <CategoryLinks slug="netmirror" unlocked={membership.isMember} onUnlockClick={() => navigate("/payment")} />
           )}
 
           {/* Payment Receipt */}
-          {paymentReceipt && (
+          {tab === "account" && paymentReceipt && (
             <Card className="bg-card border-border">
               <CardHeader>
                 <CardTitle className="netflix-title text-lg text-foreground flex items-center gap-2">
@@ -500,27 +395,8 @@ const MemberDashboard = () => {
             </Card>
           )}
 
-          {/* Platforms grid */}
-          <Card className="bg-card border-border">
-            <CardHeader>
-              <CardTitle className="netflix-title text-lg text-foreground">PLATFORMS YOU CAN ACCESS</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
-                {ottPlatforms.map((p) => (
-                  <div key={p.name} className="flex flex-col items-center gap-1">
-                    <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg overflow-hidden bg-secondary">
-                      <img src={p.logo} alt={p.name} loading="lazy" decoding="async" className="w-full h-full object-cover" />
-                    </div>
-                    <span className="text-[9px] text-muted-foreground">{p.name}</span>
-                  </div>
-                ))}
-              </div>
-              <p className="text-[10px] text-muted-foreground text-center mt-3">+ 44 more streaming platforms available</p>
-            </CardContent>
-          </Card>
-
           {/* Download Section */}
+          {tab === "account" && (
           <Card className="bg-card border-border">
             <CardHeader>
               <CardTitle className="netflix-title text-lg text-foreground">DOWNLOAD & ACCESS</CardTitle>
@@ -653,10 +529,9 @@ const MemberDashboard = () => {
               </div>
             </CardContent>
           </Card>
+          )}
 
-          </>)}
-
-          {tab === "sports" && (
+          {tab === "football" && (
             <CategoryLinks
               slug="live-sports"
               unlocked={membership.isMember}
@@ -664,15 +539,8 @@ const MemberDashboard = () => {
             />
           )}
 
-          {tab === "downloads" && (
-            <CategoryLinks
-              slug="downloads"
-              unlocked={membership.isMember}
-              onUnlockClick={() => navigate("/payment")}
-            />
-          )}
-
-          {(tab === "overview" || tab === "billing" || tab === "support") && (<>
+          {tab === "account" && (<>
+          <CategoryLinks slug="downloads" unlocked={membership.isMember} onUnlockClick={() => navigate("/payment")} />
           {/* Account Settings */}
 
 
