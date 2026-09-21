@@ -19,15 +19,16 @@ type FeaturedPlatform = {
   name: string;
   aliases: string[];
   logo: string;
+  monogram: string;
 };
 
 const FEATURED: FeaturedPlatform[] = [
-  { name: "Netflix", aliases: ["netflix", "netmirror"], logo: netflixLogo },
-  { name: "Prime Video", aliases: ["prime", "amazon"], logo: "" },
-  { name: "Sky Sports", aliases: ["sky sports", "sky"], logo: skyLogo.url },
-  { name: "UEFA", aliases: ["uefa", "champions league", "ucl"], logo: uefaLogo.url },
-  { name: "EPL", aliases: ["premier league", "epl"], logo: eplLogo.url },
-  { name: "LaLiga", aliases: ["laliga", "la liga"], logo: laligaLogo.url },
+  { name: "Netflix", aliases: ["netflix", "netmirror"], logo: netflixLogo, monogram: "N" },
+  { name: "Prime Video", aliases: ["prime", "amazon"], logo: "", monogram: "prime video" },
+  { name: "Sky Sports", aliases: ["sky sports", "sky"], logo: skyLogo.url, monogram: "SKY" },
+  { name: "UEFA", aliases: ["uefa", "champions league", "ucl"], logo: uefaLogo.url, monogram: "UEFA" },
+  { name: "EPL", aliases: ["premier league", "epl"], logo: eplLogo.url, monogram: "EPL" },
+  { name: "LaLiga", aliases: ["laliga", "la liga"], logo: laligaLogo.url, monogram: "LALIGA" },
 ];
 
 const keyFor = (link: ContentLink) => `${link.title.trim().toLowerCase()}|${link.platform}`;
@@ -107,11 +108,10 @@ const WatchHub = ({ unlocked, onUnlockClick }: { unlocked: boolean; onUnlockClic
         {featuredGroups.map(({ platform, links: platformLinks }) => (
           <article key={platform.name} className="group flex min-h-[190px] flex-col overflow-hidden rounded-lg border border-border bg-card shadow-sm transition-transform duration-200 hover:-translate-y-0.5">
             <div className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden bg-secondary p-4">
+              <span className="dashboard-heading grid h-20 w-20 place-items-center rounded-lg bg-background px-2 text-center text-base font-bold uppercase text-primary md:h-24 md:w-24">{platform.monogram}</span>
               {platformLinks[0]?.logo_url || platform.logo ? (
-                <img src={platformLinks[0]?.logo_url || platform.logo} alt="" className="h-20 w-20 rounded-lg object-contain md:h-24 md:w-24" loading="lazy" decoding="async" />
-              ) : (
-                <span className="dashboard-heading grid h-20 w-20 place-items-center rounded-lg bg-background text-center text-lg font-bold text-primary">PRIME<br />VIDEO</span>
-              )}
+                <img src={platformLinks[0]?.logo_url || platform.logo} alt="" className="absolute h-20 w-20 rounded-lg bg-background object-contain md:h-24 md:w-24" loading="lazy" decoding="async" onError={(event) => { event.currentTarget.style.display = "none"; }} />
+              ) : null}
               {!unlocked && <span className="absolute right-3 top-3 grid h-8 w-8 place-items-center rounded-full border border-border bg-background/90 text-muted-foreground"><Lock size={14} /></span>}
             </div>
             <div className="space-y-3 p-3">
@@ -139,7 +139,7 @@ const WatchHub = ({ unlocked, onUnlockClick }: { unlocked: boolean; onUnlockClic
                 key={group[0].id}
                 variant="outline"
                 className="h-auto min-h-14 justify-start gap-3 px-3 py-2 text-left"
-                onClick={() => choosePlatform({ name: group[0].title, aliases: [], logo: group[0].logo_url || "" }, group)}
+                onClick={() => choosePlatform({ name: group[0].title, aliases: [], logo: group[0].logo_url || "", monogram: group[0].title.slice(0, 8) }, group)}
               >
                 {group[0].logo_url ? <img src={group[0].logo_url} alt="" className="h-9 w-9 rounded object-contain" /> : <Link2 size={20} className="text-primary" />}
                 <span className="min-w-0 flex-1 truncate">{group[0].title}</span>
