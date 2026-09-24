@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { App as CapacitorApp } from "@capacitor/app";
-import { Keyboard } from "@capacitor/keyboard";
+import { Keyboard, KeyboardResize } from "@capacitor/keyboard";
 import { SplashScreen } from "@capacitor/splash-screen";
 import { StatusBar, Style } from "@capacitor/status-bar";
 import { isNativeApp } from "@/lib/native";
@@ -19,7 +19,7 @@ const NativeAppLifecycle = () => {
     void StatusBar.setOverlaysWebView({ overlay: false });
     void StatusBar.setStyle({ style: Style.Dark });
     void StatusBar.setBackgroundColor({ color: "#07090f" });
-    void Keyboard.setResizeMode({ mode: "native" });
+    void Keyboard.setResizeMode({ mode: KeyboardResize.Native });
 
     const keyboardShow = Keyboard.addListener("keyboardWillShow", () => {
       document.documentElement.classList.add("native-keyboard-open");

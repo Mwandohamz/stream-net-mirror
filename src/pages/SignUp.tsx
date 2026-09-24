@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { motion } from "framer-motion";
 import { Mail, User, Lock, AlertCircle, CheckCircle2, Globe, Eye, EyeOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
