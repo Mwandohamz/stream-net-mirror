@@ -2,6 +2,22 @@
 
 export type TelegramChatId = string | number;
 
+export type TelegramFailureType =
+  | "configuration"
+  | "validation"
+  | "timeout"
+  | "network"
+  | "telegram_api";
+
+export interface TelegramFailureDetails {
+  type: TelegramFailureType;
+  message: string;
+  httpStatus?: number;
+  telegramErrorCode?: number;
+  telegramDescription?: string;
+  retryAfterSeconds?: number;
+}
+
 export type TelegramSendResult =
   | {
       success: true;
@@ -11,14 +27,7 @@ export type TelegramSendResult =
   | {
       success: false;
       chatId: TelegramChatId;
-      error: {
-        type: "configuration" | "validation" | "timeout" | "network" | "telegram_api";
-        message: string;
-        httpStatus?: number;
-        telegramErrorCode?: number;
-        telegramDescription?: string;
-        retryAfterSeconds?: number;
-      };
+      error: TelegramFailureDetails;
     };
 
 interface TelegramApiResponse {
@@ -35,11 +44,9 @@ const DEFAULT_TIMEOUT_MS = 10_000;
 
 function failure(
   chatId: TelegramChatId,
-  type: TelegramSendResult extends { success: false; error: infer E }
-    ? E extends { type: infer T } ? T : never
-    : never,
+  type: TelegramFailureType,
   message: string,
-  details: Partial<Extract<TelegramSendResult, { success: false }>["error"]> = {},
+  details: Partial<TelegramFailureDetails> = {},
 ): TelegramSendResult {
   return { success: false, chatId, error: { type, message, ...details } };
 }
