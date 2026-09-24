@@ -1,9 +1,9 @@
+@import '@fontsource-variable/outfit';
+@import '@fontsource-variable/figtree';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-@import '@fontsource-variable/outfit';
-@import '@fontsource-variable/figtree';
 
 @layer base {
   :root {
