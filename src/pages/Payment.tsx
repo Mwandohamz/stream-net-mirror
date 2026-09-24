@@ -19,6 +19,7 @@ import CurrencySelector from "@/components/CurrencySelector";
 import { formatUsd } from "@/lib/currency";
 import { supabase } from "@/integrations/supabase/client";
 import { reportPurchase } from "@/lib/metaPurchase";
+import LogoShowcase from "@/components/LogoShowcase";
 
 const Payment = () => {
   const navigate = useNavigate();
@@ -34,6 +35,7 @@ const Payment = () => {
   const [promoChecking, setPromoChecking] = useState(false);
   const [termsOk, setTermsOk] = useState(false);
   const [termsOpen, setTermsOpen] = useState(false);
+  const [selectedPlanId, setSelectedPlanId] = useState(planIdParam || "");
 
   const { profile } = useProfile();
   const { plans } = usePlans();
@@ -47,7 +49,13 @@ const Payment = () => {
     }
   }, [state, navigate, planIdParam]);
 
-  const plan = (planIdParam && plans.find((p) => p.id === planIdParam)) || defaultPlan;
+  useEffect(() => {
+    if (selectedPlanId || plans.length === 0) return;
+    const monthly = plans.find((candidate) => candidate.interval === "month" && candidate.interval_count === 1);
+    setSelectedPlanId((monthly ?? plans[0]).id);
+  }, [plans, selectedPlanId]);
+
+  const plan = plans.find((candidate) => candidate.id === selectedPlanId) || defaultPlan;
   const priceUsd = plan ? Number(plan.price_usd) : null;
   const discountedUsd = priceUsd !== null && promoValid ? priceUsd * (1 - promoDiscount / 100) : priceUsd;
 
@@ -95,13 +103,39 @@ const Payment = () => {
 
           <Card className="bg-card border-border">
             <CardHeader className="text-center">
-              <img src="/logo-hexagon.png" alt="StreamNetMirror" className="h-12 w-12 mx-auto mb-2" />
+              <div className="mx-auto mb-2 flex justify-center"><LogoShowcase size="md" /></div>
               <CardTitle className="netflix-title text-3xl text-foreground">GET STARTED</CardTitle>
               <CardDescription className="text-muted-foreground">
                 Enter your details to proceed to payment
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-5">
+              {plans.length > 0 && (
+                <div className="space-y-2">
+                  <Label className="text-sm text-foreground">Choose a plan</Label>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    {plans.map((availablePlan) => {
+                      const selected = availablePlan.id === plan?.id;
+                      return (
+                        <Button
+                          key={availablePlan.id}
+                          type="button"
+                          variant="outline"
+                          onClick={() => setSelectedPlanId(availablePlan.id)}
+                          className={`h-auto min-h-16 items-start justify-between gap-2 px-3 py-2 text-left ${selected ? "border-primary bg-primary/10" : "border-border bg-secondary/40"}`}
+                        >
+                          <span className="min-w-0">
+                            <span className="block truncate text-sm font-semibold text-foreground">{availablePlan.name}</span>
+                            <span className="block text-xs text-muted-foreground">{planIntervalLabel(availablePlan)}</span>
+                          </span>
+                          <span className="shrink-0 text-sm font-semibold text-primary">{formatPrice(Number(availablePlan.price_usd))}</span>
+                        </Button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
               {/* Price display */}
               <div className="bg-primary/10 border border-primary/20 rounded-lg p-4 text-center">
                 <p className="text-sm text-muted-foreground">{plan?.name ?? "Plan"} · Total Amount</p>

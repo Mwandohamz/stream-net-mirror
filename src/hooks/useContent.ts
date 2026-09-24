@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
+type ContentSnapshot = { categories: ContentCategory[]; links: ContentLink[]; at: number };
+const contentCache = new Map<string, ContentSnapshot>();
+const CONTENT_CACHE_MS = 5 * 60_000;
+
 export interface ContentCategory {
   id: string;
   slug: string;
@@ -28,12 +32,19 @@ export interface ContentLink {
  * Everything here is managed by the admin — never hardcoded in the UI.
  */
 export function useContent(includeInactive = false) {
-  const [categories, setCategories] = useState<ContentCategory[]>([]);
-  const [links, setLinks] = useState<ContentLink[]>([]);
-  const [loading, setLoading] = useState(true);
+  const cacheKey = includeInactive ? "admin" : "member";
+  const initial = contentCache.get(cacheKey);
+  const [categories, setCategories] = useState<ContentCategory[]>(initial?.categories ?? []);
+  const [links, setLinks] = useState<ContentLink[]>(initial?.links ?? []);
+  const [loading, setLoading] = useState(!initial);
 
   const load = useCallback(async () => {
-    setLoading(true);
+    const cached = contentCache.get(cacheKey);
+    if (!cached) setLoading(true);
+    if (cached && Date.now() - cached.at < CONTENT_CACHE_MS) {
+      setLoading(false);
+      return;
+    }
     let catQuery = supabase.from("content_categories" as any).select("*").order("sort_order");
     if (!includeInactive) catQuery = catQuery.eq("is_active", true);
 
@@ -44,10 +55,13 @@ export function useContent(includeInactive = false) {
       : supabase.rpc("list_content_links" as any);
 
     const [cats, lks] = await Promise.all([catQuery, linkPromise]);
-    setCategories(((cats.data as any[]) ?? []) as ContentCategory[]);
-    setLinks(((lks.data as any[]) ?? []) as ContentLink[]);
+    const nextCategories = ((cats.data as any[]) ?? []) as ContentCategory[];
+    const nextLinks = ((lks.data as any[]) ?? []) as ContentLink[];
+    contentCache.set(cacheKey, { categories: nextCategories, links: nextLinks, at: Date.now() });
+    setCategories(nextCategories);
+    setLinks(nextLinks);
     setLoading(false);
-  }, [includeInactive]);
+  }, [cacheKey, includeInactive]);
 
 
   useEffect(() => {

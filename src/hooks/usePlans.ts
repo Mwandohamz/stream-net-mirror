@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
+const planCache = new Map<string, { value: Plan[]; at: number }>();
+const PLAN_CACHE_MS = 5 * 60_000;
+
 export interface Plan {
   id: string;
   name: string;
@@ -16,24 +19,33 @@ export interface Plan {
 
 
 export function usePlans(includeInactive = false) {
-  const [plans, setPlans] = useState<Plan[]>([]);
-  const [loading, setLoading] = useState(true);
+  const cacheKey = includeInactive ? "all" : "active";
+  const initial = planCache.get(cacheKey);
+  const [plans, setPlans] = useState<Plan[]>(initial?.value ?? []);
+  const [loading, setLoading] = useState(!initial);
 
   const load = useCallback(async () => {
-    setLoading(true);
+    const cached = planCache.get(cacheKey);
+    if (!cached) setLoading(true);
+    if (cached && Date.now() - cached.at < PLAN_CACHE_MS) {
+      setLoading(false);
+      return;
+    }
     let query = supabase.from("plans" as any).select("*").order("sort_order", { ascending: true });
     if (!includeInactive) query = query.eq("is_active", true);
     const { data } = await query;
     const loaded = ((data as any[]) ?? []) as Plan[];
     // Customer-facing views lead with the standard monthly option while the
     // admin list keeps its configured order.
-    setPlans(includeInactive ? loaded : [...loaded].sort((a, b) => {
+    const next = includeInactive ? loaded : [...loaded].sort((a, b) => {
       const aMonthly = a.interval === "month" && a.interval_count === 1;
       const bMonthly = b.interval === "month" && b.interval_count === 1;
       return Number(bMonthly) - Number(aMonthly) || a.sort_order - b.sort_order;
-    }));
+    });
+    planCache.set(cacheKey, { value: next, at: Date.now() });
+    setPlans(next);
     setLoading(false);
-  }, [includeInactive]);
+  }, [cacheKey, includeInactive]);
 
   useEffect(() => {
     void load();

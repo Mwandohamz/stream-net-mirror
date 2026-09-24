@@ -75,7 +75,7 @@ const LinkCard = ({ links, unlocked, onUnlockClick }: { links: ContentLink[]; un
 
 
   return (
-    <div className="flex gap-3 rounded-lg border border-border bg-secondary/40 p-3">
+    <div className="flex gap-3 rounded-lg border border-border/80 bg-card/75 p-3 shadow-lg backdrop-blur-md">
       <div className="h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-background flex items-center justify-center">
         {link.logo_url ? (
           <img src={link.logo_url} alt={link.title} loading="lazy" decoding="async" className="h-full w-full object-cover" />
@@ -172,7 +172,7 @@ const CategoryLinks = ({ slug, unlocked = true, onUnlockClick }: Props) => {
 
 
   return (
-    <Card className="bg-card border-border">
+    <Card className="border-border/80 bg-card/75 shadow-2xl backdrop-blur-xl">
       <CardContent className="p-5 space-y-4">
         <div className="space-y-1">
           <h2 className="netflix-title text-lg md:text-xl text-foreground">{category.name.toUpperCase()}</h2>

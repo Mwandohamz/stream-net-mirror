@@ -12,3 +12,8 @@
 - [x] Rebrand the member dashboard with five destinations and a central Watch action.
 - [x] Add the six-platform Watch hub with paid/unpaid link handling.
 - [x] Verify the redesigned member dashboard on mobile and desktop.
+- [x] Replace the old branding with the supplied circular streaming logo and install icons.
+- [x] Add five profile avatars with signup selection, account switching, and a default choice.
+- [x] Add layered red, blue, and magenta dashboard styling with movie and football artwork.
+- [x] Show all active plans when an unpaid member opens payment.
+- [x] Cache shared member content, plans, profile, and settings for faster section changes.

@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
+const profileCache = new Map<string, { value: Profile | null; at: number }>();
+const PROFILE_CACHE_MS = 5 * 60_000;
+
 export interface Profile {
   id: string;
   full_name: string;
@@ -26,13 +29,22 @@ export function useProfile() {
       return;
     }
 
+    const cached = profileCache.get(session.user.id);
+    if (cached && Date.now() - cached.at < PROFILE_CACHE_MS) {
+      setProfile(cached.value);
+      setLoading(false);
+      return;
+    }
+
     const { data } = await supabase
       .from("profiles" as any)
       .select("*")
       .eq("id", session.user.id)
       .maybeSingle();
 
-    setProfile((data as any) ?? null);
+    const next = ((data as any) ?? null) as Profile | null;
+    profileCache.set(session.user.id, { value: next, at: Date.now() });
+    setProfile(next);
     setLoading(false);
   }, []);
 
@@ -49,7 +61,10 @@ export function useProfile() {
         .from("profiles" as any)
         .upsert({ id: session.user.id, email: session.user.email ?? "", ...patch } as any, { onConflict: "id" });
 
-      if (!error) await load();
+      if (!error) {
+        profileCache.delete(session.user.id);
+        await load();
+      }
       return { error };
     },
     [load]
