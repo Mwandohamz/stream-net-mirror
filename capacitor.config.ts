@@ -1,13 +1,17 @@
 import type { CapacitorConfig } from "@capacitor/cli";
 
+// Release builds ALWAYS load the bundled `dist` web build.
+// For live-reload device testing only, set CAP_SERVER_URL before `cap sync`, e.g.
+//   CAP_SERVER_URL="https://<preview-host>" npx cap sync android
+const liveReloadUrl = process.env.CAP_SERVER_URL?.trim();
+
 const config: CapacitorConfig = {
   appId: "app.lovable.p25e647d373ae49318862c1ff709c52c3",
   appName: "Stream NetMirror",
   webDir: "dist",
-  bundledWebRuntime: false,
   server: {
-    url: "https://25e647d3-73ae-4931-8862-c1ff709c52c3.lovableproject.com?forceHideBadge=true",
-    cleartext: true,
+    androidScheme: "https",
+    ...(liveReloadUrl ? { url: liveReloadUrl } : {}),
   },
   android: {
     allowMixedContent: false,
