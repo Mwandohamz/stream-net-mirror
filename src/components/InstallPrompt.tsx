@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Download, X, Share } from "lucide-react";
+import LogoShowcase from "@/components/LogoShowcase";
 
 const DISMISS_KEY = "snm_install_dismissed_at";
 const DISMISS_DAYS = 7;
@@ -68,7 +69,7 @@ const InstallPrompt = () => {
     <div className="fixed inset-x-2 bottom-2 z-[60] md:inset-x-auto md:right-4 md:w-96">
       <div className="rounded-2xl border border-border bg-card/95 p-3 shadow-2xl backdrop-blur">
         <div className="flex items-start gap-3">
-          <img src="/logo-hexagon.png" alt="" className="h-10 w-10 rounded-xl" />
+          <LogoShowcase size="md" />
           <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold text-foreground">Add StreamNetMirror to your home screen</p>
             <p className="mt-0.5 text-xs text-muted-foreground">

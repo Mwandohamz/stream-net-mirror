@@ -19,6 +19,7 @@ import CurrencySelector from "@/components/CurrencySelector";
 import { formatUsd } from "@/lib/currency";
 import { supabase } from "@/integrations/supabase/client";
 import { reportPurchase } from "@/lib/metaPurchase";
+import LogoShowcase from "@/components/LogoShowcase";
 
 const Payment = () => {
   const navigate = useNavigate();
@@ -102,7 +103,7 @@ const Payment = () => {
 
           <Card className="bg-card border-border">
             <CardHeader className="text-center">
-              <img src="/logo-hexagon.png" alt="StreamNetMirror" className="h-12 w-12 mx-auto mb-2" />
+              <div className="mx-auto mb-2 flex justify-center"><LogoShowcase size="md" /></div>
               <CardTitle className="netflix-title text-3xl text-foreground">GET STARTED</CardTitle>
               <CardDescription className="text-muted-foreground">
                 Enter your details to proceed to payment

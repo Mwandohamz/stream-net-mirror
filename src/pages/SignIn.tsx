@@ -10,6 +10,7 @@ import { ArrowLeft, Mail, Lock, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import LogoShowcase from "@/components/LogoShowcase";
 
 const SignIn = () => {
   const navigate = useNavigate();
@@ -100,7 +101,7 @@ const SignIn = () => {
 
           <Card className="bg-card border-border">
             <CardHeader className="text-center">
-              <img src="/logo-hexagon.png" alt="StreamNetMirror" className="h-12 w-12 mx-auto mb-2" />
+              <div className="mx-auto mb-2 flex justify-center"><LogoShowcase size="md" /></div>
               <CardTitle className="netflix-title text-2xl text-foreground">SIGN IN</CardTitle>
               <CardDescription className="text-muted-foreground">
                 Access your StreamNetMirror account

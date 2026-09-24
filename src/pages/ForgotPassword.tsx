@@ -9,6 +9,7 @@ import { motion } from "framer-motion";
 import { ArrowLeft, Mail, AlertCircle, CheckCircle2 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import LogoShowcase from "@/components/LogoShowcase";
 
 const ForgotPassword = () => {
   const navigate = useNavigate();
@@ -48,7 +49,7 @@ const ForgotPassword = () => {
 
           <Card className="bg-card border-border">
             <CardHeader className="text-center">
-              <img src="/logo-hexagon.png" alt="StreamNetMirror" className="h-12 w-12 mx-auto mb-2" />
+              <div className="mx-auto mb-2 flex justify-center"><LogoShowcase size="md" /></div>
               <CardTitle className="netflix-title text-2xl text-foreground">RESET PASSWORD</CardTitle>
               <CardDescription className="text-muted-foreground">
                 Enter your email and we'll send you a reset link
