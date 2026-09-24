@@ -118,3 +118,10 @@ export async function notifyPaymentTelegram(
   console.log(`[telegram] ${type} ${depositId}:`, JSON.stringify(summary));
   return summary;
 }
+
+// deno-lint-ignore no-explicit-any
+export const activationLabel = (a: any): string => {
+  if (!a) return "unknown";
+  if (a.activated) return a.reason === "already_active" ? "active (already activated)" : "activated";
+  return `not activated (${a.reason ?? "unknown"})`;
+};

@@ -27,3 +27,5 @@ project_id = "rhobeyejmrnnreepacmr"
     verify_jwt = false
   [functions.admin-send-email]
     verify_jwt = false
+  [functions.admin-telegram]
+    verify_jwt = false
