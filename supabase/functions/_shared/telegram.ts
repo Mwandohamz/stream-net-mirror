@@ -87,7 +87,7 @@ export async function sendTelegramMessage(
 
     try {
       response = await fetch(
-        `${TELEGRAM_API_BASE}/bot${encodeURIComponent(token)}/sendMessage`,
+        `${TELEGRAM_API_BASE}/bot${token}/sendMessage`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
