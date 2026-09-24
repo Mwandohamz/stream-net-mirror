@@ -43,6 +43,7 @@ import Support from "./pages/Support.tsx";
 import LiveSports from "./pages/LiveSports.tsx";
 import OAuthConsent from "./pages/OAuthConsent.tsx";
 import InstallPrompt from "@/components/InstallPrompt";
+import NativeAppLifecycle from "@/components/NativeAppLifecycle";
 const Movies = lazy(() => import("./pages/Movies.tsx"));
 const TVSeries = lazy(() => import("./pages/TVSeries.tsx"));
 
@@ -129,6 +130,7 @@ const App = () => (
       <Sonner />
       <CurrencyProvider>
         <BrowserRouter>
+          <NativeAppLifecycle />
           <PageViewTracker />
 
           <AnimatedRoutes />

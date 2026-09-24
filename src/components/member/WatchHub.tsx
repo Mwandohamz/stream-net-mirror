@@ -12,6 +12,7 @@ import skyLogo from "@/assets/sports/sky-sports-football.jpg.asset.json";
 import uefaLogo from "@/assets/sports/uefa-champions-league.jpg.asset.json";
 import eplLogo from "@/assets/sports/premier-league.jpg.asset.json";
 import laligaLogo from "@/assets/sports/laliga.jpg.asset.json";
+import { openExternalUrl } from "@/lib/native";
 
 const ROTATION_ACK_KEY = "link-rotation-acknowledged";
 
@@ -68,7 +69,7 @@ const WatchHub = ({ unlocked, onUnlockClick }: { unlocked: boolean; onUnlockClic
   const requestOpen = (url: string) => {
     try {
       if (sessionStorage.getItem(ROTATION_ACK_KEY) === "1") {
-        window.open(url, "_blank", "noopener,noreferrer");
+        void openExternalUrl(url);
         return;
       }
     } catch {
@@ -83,7 +84,7 @@ const WatchHub = ({ unlocked, onUnlockClick }: { unlocked: boolean; onUnlockClic
     setPendingUrl(null);
     if (!url) return;
     try { sessionStorage.setItem(ROTATION_ACK_KEY, "1"); } catch { /* no-op */ }
-    window.open(url, "_blank", "noopener,noreferrer");
+    void openExternalUrl(url);
   };
 
   const choosePlatform = (platform: FeaturedPlatform, platformLinks: ContentLink[]) => {

@@ -9,6 +9,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { openExternalUrl } from "@/lib/native";
 
 const ROTATION_ACK_KEY = "link-rotation-acknowledged";
 
@@ -50,7 +51,7 @@ const LinkCard = ({ links, unlocked, onUnlockClick }: { links: ContentLink[]; un
   const link = links[0];
   const [pending, setPending] = useState<{ action: "open" | "copy"; url: string } | null>(null);
 
-  const doOpen = (url: string) => window.open(url, "_blank", "noopener,noreferrer");
+  const doOpen = (url: string) => { void openExternalUrl(url); };
   const doCopy = (url: string) => {
     void navigator.clipboard.writeText(url);
     toast({ title: "Link copied", description: link.title });
