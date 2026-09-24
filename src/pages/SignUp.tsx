@@ -6,16 +6,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { motion } from "framer-motion";
-import { ArrowLeft, Mail, User, Lock, AlertCircle, CheckCircle2, Globe } from "lucide-react";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
+import { Mail, User, Lock, AlertCircle, CheckCircle2, Globe, Eye, EyeOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import CountrySelect from "@/components/CountrySelect";
 import PhoneNumberField, { buildE164 } from "@/components/PhoneNumberField";
 import type { WorldCountry } from "@/data/allCountries";
-import LogoShowcase from "@/components/LogoShowcase";
 import ProfileAvatarPicker from "@/components/ProfileAvatarPicker";
 import { DEFAULT_PROFILE_AVATAR } from "@/lib/profileAvatars";
+import AuthShell from "@/components/AuthShell";
 
 const SignUp = () => {
   const navigate = useNavigate();
@@ -34,6 +32,8 @@ const SignUp = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Someone who already has a verified, signed-in account never needs this form.
   useEffect(() => {
@@ -103,16 +103,10 @@ const SignUp = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      <div className="pt-24 pb-16 container mx-auto px-4 flex items-center justify-center min-h-screen">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md">
-          <button onClick={() => navigate("/")} className="flex items-center gap-1 text-muted-foreground hover:text-foreground text-sm mb-6 transition-colors">
-            <ArrowLeft size={16} /> Back to Home
-          </button>
-
+    <AuthShell onBack={() => navigate("/")} title={success ? "Check your inbox" : "Create your account"} description={success ? "Verify your email to finish setting up your account" : "Free to join. Choose a plan after signing in."} wide>
+      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
           {success ? (
-            <Card className="bg-card border-border">
+            <Card className="border-0 bg-transparent shadow-none">
               <CardContent className="p-8 text-center space-y-4">
                 <div className="w-16 h-16 rounded-full bg-green-500/20 border-2 border-green-500 flex items-center justify-center mx-auto">
                   <CheckCircle2 size={32} className="text-green-500" />
@@ -128,15 +122,8 @@ const SignUp = () => {
               </CardContent>
             </Card>
           ) : (
-            <Card className="bg-card border-border">
-              <CardHeader className="text-center">
-                <div className="mx-auto mb-2 flex justify-center"><LogoShowcase size="md" /></div>
-                <CardTitle className="netflix-title text-2xl text-foreground">CREATE ACCOUNT</CardTitle>
-                <CardDescription className="text-muted-foreground">
-                  Free to join. Choose your plan after signing in.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
+            <Card className="border-0 bg-transparent shadow-none">
+              <CardContent className="space-y-5 p-0">
                 {error && (
                   <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3 flex items-start gap-2">
                     <AlertCircle size={16} className="text-destructive mt-0.5 shrink-0" />
@@ -154,7 +141,7 @@ const SignUp = () => {
                   <Label htmlFor="su-name" className="text-foreground text-sm">Full Name</Label>
                   <div className="relative">
                     <User size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                    <Input id="su-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Your full name" className="pl-9 bg-secondary border-border text-foreground" />
+                    <Input id="su-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Your full name" className="h-12 rounded-lg bg-secondary pl-10 text-foreground" autoComplete="name" enterKeyHint="next" />
                   </div>
                 </div>
 
@@ -162,7 +149,7 @@ const SignUp = () => {
                   <Label htmlFor="su-email" className="text-foreground text-sm">Email</Label>
                   <div className="relative">
                     <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                    <Input id="su-email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="your@email.com" className="pl-9 bg-secondary border-border text-foreground" type="email" />
+                    <Input id="su-email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" className="h-12 rounded-lg bg-secondary pl-10 text-foreground" type="email" inputMode="email" autoComplete="email" autoCapitalize="none" enterKeyHint="next" />
                   </div>
                 </div>
 
@@ -199,7 +186,10 @@ const SignUp = () => {
                   <Label htmlFor="su-password" className="text-foreground text-sm">Password</Label>
                   <div className="relative">
                     <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                    <Input id="su-password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Min 8 characters" className="pl-9 bg-secondary border-border text-foreground" type="password" />
+                    <Input id="su-password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Min 8 characters" className="h-12 rounded-lg bg-secondary pl-10 pr-12 text-foreground" type={showPassword ? "text" : "password"} autoComplete="new-password" enterKeyHint="next" />
+                    <Button type="button" variant="ghost" size="icon" onClick={() => setShowPassword((visible) => !visible)} className="absolute right-1 top-1 h-10 w-10 text-muted-foreground" aria-label={showPassword ? "Hide password" : "Show password"}>
+                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </Button>
                   </div>
                 </div>
 
@@ -207,14 +197,17 @@ const SignUp = () => {
                   <Label htmlFor="su-confirm" className="text-foreground text-sm">Confirm Password</Label>
                   <div className="relative">
                     <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                    <Input id="su-confirm" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Re-enter password" className="pl-9 bg-secondary border-border text-foreground" type="password" />
+                    <Input id="su-confirm" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Re-enter password" className="h-12 rounded-lg bg-secondary pl-10 pr-12 text-foreground" type={showConfirmPassword ? "text" : "password"} autoComplete="new-password" enterKeyHint="done" onKeyDown={(event) => event.key === "Enter" && isValid && handleSignUp()} />
+                    <Button type="button" variant="ghost" size="icon" onClick={() => setShowConfirmPassword((visible) => !visible)} className="absolute right-1 top-1 h-10 w-10 text-muted-foreground" aria-label={showConfirmPassword ? "Hide password" : "Show password"}>
+                      {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </Button>
                   </div>
                   {confirmPassword && password !== confirmPassword && (
                     <p className="text-xs text-destructive">Passwords don't match</p>
                   )}
                 </div>
 
-                <Button onClick={handleSignUp} disabled={!isValid || loading} className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/80 font-semibold">
+                <Button onClick={handleSignUp} disabled={!isValid || loading} className="h-12 w-full rounded-lg bg-primary font-semibold text-primary-foreground hover:bg-primary/80">
                   {loading ? "Creating Account..." : "Create Account"}
                 </Button>
 
@@ -229,10 +222,8 @@ const SignUp = () => {
               </CardContent>
             </Card>
           )}
-        </motion.div>
-      </div>
-      <Footer />
-    </div>
+      </motion.div>
+    </AuthShell>
   );
 };
 

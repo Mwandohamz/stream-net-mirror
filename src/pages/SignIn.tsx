@@ -4,13 +4,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { motion } from "framer-motion";
-import { ArrowLeft, Mail, Lock, AlertCircle } from "lucide-react";
+import { Mail, Lock, AlertCircle, Eye, EyeOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
-import LogoShowcase from "@/components/LogoShowcase";
+import AuthShell from "@/components/AuthShell";
 
 const SignIn = () => {
   const navigate = useNavigate();
@@ -24,6 +21,7 @@ const SignIn = () => {
   const [error, setError] = useState("");
   const [showResendVerification, setShowResendVerification] = useState(false);
   const [resending, setResending] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     // Anyone already signed in goes straight to their dashboard — paid or not.
@@ -91,23 +89,8 @@ const SignIn = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      <div className="pt-24 pb-16 container mx-auto px-4 flex items-center justify-center min-h-screen">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md">
-          <button onClick={() => navigate("/")} className="flex items-center gap-1 text-muted-foreground hover:text-foreground text-sm mb-6 transition-colors">
-            <ArrowLeft size={16} /> Back to Home
-          </button>
-
-          <Card className="bg-card border-border">
-            <CardHeader className="text-center">
-              <div className="mx-auto mb-2 flex justify-center"><LogoShowcase size="md" /></div>
-              <CardTitle className="netflix-title text-2xl text-foreground">SIGN IN</CardTitle>
-              <CardDescription className="text-muted-foreground">
-                Access your StreamNetMirror account
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
+    <AuthShell onBack={() => navigate("/")} title="Welcome back" description="Sign in to your Stream NetMirror account">
+      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="space-y-5">
               {error && (
                 <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3 flex items-start gap-2">
                   <AlertCircle size={16} className="text-destructive mt-0.5 shrink-0" />
@@ -132,25 +115,31 @@ const SignIn = () => {
               )}
 
               <div className="space-y-2">
-                <Label className="text-foreground text-sm">Email</Label>
+                <Label htmlFor="signin-email" className="text-foreground text-sm">Email address</Label>
                 <div className="relative">
                   <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                  <Input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="your@email.com" className="pl-9 bg-secondary border-border text-foreground" type="email" />
+                  <Input id="signin-email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" className="h-12 rounded-lg bg-secondary pl-10 pr-4 text-foreground" type="email" inputMode="email" autoComplete="email" autoCapitalize="none" enterKeyHint="next" />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label className="text-foreground text-sm">Password</Label>
+                <Label htmlFor="signin-password" className="text-foreground text-sm">Password</Label>
                 <div className="relative">
                   <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                   <Input
+                    id="signin-password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Your password"
-                    className="pl-9 bg-secondary border-border text-foreground"
-                    type="password"
+                    className="h-12 rounded-lg bg-secondary pl-10 pr-12 text-foreground"
+                    type={showPassword ? "text" : "password"}
+                    autoComplete="current-password"
+                    enterKeyHint="go"
                     onKeyDown={(e) => e.key === "Enter" && handleSignIn()}
                   />
+                  <Button type="button" variant="ghost" size="icon" onClick={() => setShowPassword((visible) => !visible)} className="absolute right-1 top-1 h-10 w-10 text-muted-foreground" aria-label={showPassword ? "Hide password" : "Show password"}>
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </Button>
                 </div>
                 <div className="text-right">
                   <button onClick={() => navigate("/forgot-password")} className="text-xs text-primary hover:underline">
@@ -159,7 +148,7 @@ const SignIn = () => {
                 </div>
               </div>
 
-              <Button onClick={handleSignIn} disabled={!email || !password || loading} className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/80 font-semibold">
+              <Button onClick={handleSignIn} disabled={!email || !password || loading} className="h-12 w-full rounded-lg bg-primary font-semibold text-primary-foreground hover:bg-primary/80">
                 {loading ? "Signing In..." : "Sign In"}
               </Button>
 
@@ -177,12 +166,8 @@ const SignIn = () => {
                   <button onClick={() => navigate("/support")} className="text-primary hover:underline">Get Help</button>
                 </p>
               </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-      </div>
-      <Footer />
-    </div>
+      </motion.div>
+    </AuthShell>
   );
 };
 
