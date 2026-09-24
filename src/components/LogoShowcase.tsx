@@ -1,5 +1,3 @@
-import logoAsset from "@/assets/brand/streamnetmirror-logo.png.asset.json";
-
 interface LogoShowcaseProps {
   size?: "md" | "lg";
 }
@@ -9,7 +7,7 @@ const LogoShowcase = ({ size = "md" }: LogoShowcaseProps) => {
 
   return (
     <img
-      src={logoAsset.url}
+      src="/app-icon-512.png"
       alt="StreamNetMirror"
       width={768}
       height={768}
