@@ -12,7 +12,13 @@ import {
   AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { Send, Trash2, Pencil, Check, X, RefreshCw, AlertTriangle } from "lucide-react";
+import { Send, Trash2, Pencil, Check, X, RefreshCw, AlertTriangle, CheckCircle2, XCircle, FlaskConical } from "lucide-react";
+
+const TYPE_META: Record<string, { label: string; Icon: typeof Send; cls: string }> = {
+  payment_completed: { label: "Payment completed", Icon: CheckCircle2, cls: "text-primary" },
+  payment_failed: { label: "Payment failed", Icon: XCircle, cls: "text-destructive" },
+  test: { label: "Test", Icon: FlaskConical, cls: "text-muted-foreground" },
+};
 
 type Recipient = { id: string; name: string; chat_id: string; is_active: boolean };
 type HistoryRow = {
@@ -37,6 +43,7 @@ const TelegramSettings = () => {
   const [history, setHistory] = useState<HistoryRow[]>([]);
   const [tokenConfigured, setTokenConfigured] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [chatId, setChatId] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
@@ -50,7 +57,9 @@ const TelegramSettings = () => {
       setRecipients(d.recipients ?? []);
       setHistory(d.history ?? []);
       setTokenConfigured(d.tokenConfigured);
+      setLoadError(null);
     } catch (e) {
+      setLoadError((e as Error).message);
       toast.error(`Could not load Telegram settings: ${(e as Error).message}`);
     } finally {
       setLoading(false);
@@ -74,13 +83,17 @@ const TelegramSettings = () => {
     }
   };
 
-  const nameOf = (h: HistoryRow) => recipients.find((r) => r.id === h.recipient_id)?.name ?? h.chat_id;
+  const nameOf = (h: HistoryRow) =>
+    recipients.find((r) => r.id === h.recipient_id)?.name ?? (h.recipient_id ? h.chat_id : `${h.chat_id} (removed)`);
 
   return (
     <Card className="bg-card border-border">
-      <CardHeader className="flex flex-row items-center justify-between gap-2">
-        <CardTitle className="text-foreground text-lg">Telegram Payment Alerts</CardTitle>
-        <Button variant="ghost" size="icon" onClick={load} aria-label="Refresh"><RefreshCw size={16} /></Button>
+      <CardHeader className="flex flex-row items-start justify-between gap-2 space-y-0">
+        <div className="space-y-1 min-w-0">
+          <CardTitle className="netflix-title text-lg text-foreground">TELEGRAM PAYMENT ALERTS</CardTitle>
+          <p className="text-xs text-muted-foreground">Get a Telegram message whenever a payment is completed or fails. Each active recipient gets each alert once.</p>
+        </div>
+        <Button variant="ghost" size="icon" onClick={() => { setLoading(true); load(); }} aria-label="Refresh" className="shrink-0"><RefreshCw size={16} className={loading ? "animate-spin" : ""} /></Button>
       </CardHeader>
       <CardContent className="space-y-5">
         {tokenConfigured === false && (
@@ -106,7 +119,11 @@ const TelegramSettings = () => {
 
         <div className="space-y-2">
           <Label className="text-muted-foreground text-xs">Recipients</Label>
-          {loading ? <p className="text-sm text-muted-foreground">Loading…</p> : recipients.length === 0 ? (
+          {loadError && !loading ? (
+            <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-foreground break-words">
+              Couldn't load: {loadError} <Button variant="link" size="sm" className="h-auto p-0" onClick={load}>Try again</Button>
+            </div>
+          ) : loading ? <p className="text-sm text-muted-foreground">Loading…</p> : recipients.length === 0 ? (
             <p className="text-sm text-muted-foreground rounded-lg border border-dashed border-border p-4 text-center">No recipients yet. Add one above to receive payment alerts.</p>
           ) : recipients.map((r) => (
             <div key={r.id} className="rounded-lg border border-border bg-secondary/40 p-3 space-y-2">
@@ -125,7 +142,7 @@ const TelegramSettings = () => {
                 <div className="flex items-center justify-between gap-2">
                   <div className="min-w-0">
                     <p className="text-sm font-medium text-foreground truncate">{r.name}</p>
-                    <p className="text-xs text-muted-foreground truncate">{r.chat_id}</p>
+                    <p className="text-xs text-muted-foreground break-all">{r.chat_id}</p>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <Badge variant={r.is_active ? "default" : "secondary"}>{r.is_active ? "Active" : "Off"}</Badge>
@@ -166,21 +183,22 @@ const TelegramSettings = () => {
 
         <div className="space-y-2">
           <Label className="text-muted-foreground text-xs">Recent notifications</Label>
-          {history.length === 0 ? (
+          {loading && history.length === 0 ? <p className="text-sm text-muted-foreground">Loading…</p> : history.length === 0 ? (
             <p className="text-sm text-muted-foreground rounded-lg border border-dashed border-border p-4 text-center">No notifications sent yet.</p>
           ) : (
             <div className="space-y-2 max-h-96 overflow-y-auto">
               {history.map((h) => (
                 <div key={h.id} className="rounded-lg border border-border p-2 text-xs space-y-1">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="font-medium text-foreground">{h.notification_type.replace("_", " ")}</span>
+                    {(() => { const m = TYPE_META[h.notification_type] ?? { label: h.notification_type, Icon: Send, cls: "text-foreground" }; return (
+                      <span className={`flex items-center gap-1 font-medium ${m.cls}`}><m.Icon size={14} />{m.label}</span>); })()}
                     <Badge variant={h.status === "sent" ? "default" : h.status === "failed" ? "destructive" : "secondary"}>{h.status}</Badge>
                   </div>
-                  <div className="text-muted-foreground flex flex-wrap gap-x-3">
-                    <span>{nameOf(h)}</span>
+                  <div className="text-muted-foreground flex flex-wrap gap-x-3 gap-y-0.5">
+                    <span className="break-all">To: {nameOf(h)}</span>
                     <span>{new Date(h.created_at).toLocaleString()}</span>
-                    {h.deposit_id && <span className="truncate">#{h.deposit_id.slice(0, 8)}</span>}
                   </div>
+                  {h.deposit_id && <p className="text-muted-foreground break-all">Deposit: <span className="font-mono">{h.deposit_id}</span></p>}
                   {h.error_message && <p className="text-destructive break-words">{h.error_message}</p>}
                 </div>
               ))}

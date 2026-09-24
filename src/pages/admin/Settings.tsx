@@ -109,7 +109,7 @@ const AdminSettings = () => {
 
   return (
     <AdminLayout>
-      <div className="space-y-6 max-w-lg">
+      <div className="space-y-6 max-w-2xl">
         <h1 className="netflix-title text-3xl text-foreground">SETTINGS</h1>
 
         <Card className="bg-card border-border">
