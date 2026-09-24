@@ -96,6 +96,9 @@ serve(async (req) => {
         } catch (mailErr) {
           console.error("Confirmation email failed:", mailErr);
         }
+        await notifyPaymentTelegram(supabase, depositId, "payment_completed", {
+          subscriptionResult: activationLabel(activation),
+        });
       }
     } else if (status === "FAILED") {
       const reason = body.failureReason?.failureMessage ?? "Payment failed";
@@ -111,6 +114,7 @@ serve(async (req) => {
         console.error("Failed to update payment to failed:", updateError);
       } else {
         console.log("Payment updated to failed for deposit:", depositId, "reason:", reason);
+        await notifyPaymentTelegram(supabase, depositId, "payment_failed");
       }
     } else {
       console.log("Unhandled callback status:", status, "for deposit:", depositId);
