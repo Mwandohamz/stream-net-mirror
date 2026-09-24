@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useAdmin } from "@/hooks/useAdmin";
 import { useAppSettings } from "@/hooks/useAppSettings";
 import AdminLayout from "@/components/admin/AdminLayout";
+import TelegramSettings from "@/components/admin/TelegramSettings";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -313,6 +314,8 @@ const AdminSettings = () => {
             </Button>
           </CardContent>
         </Card>
+
+        <TelegramSettings />
       </div>
     </AdminLayout>
   );
