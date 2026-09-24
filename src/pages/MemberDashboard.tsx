@@ -301,8 +301,10 @@ const MemberDashboard = () => {
                   className="bg-primary text-primary-foreground shrink-0"
                   onClick={() => {
                     setShowAccountSettings(true);
-                    setShowTempPasswordBanner(false);
-                    document.getElementById("account-settings")?.scrollIntoView({ behavior: "smooth" });
+                    setTab("account");
+                    setTimeout(() => {
+                      document.getElementById("account-settings")?.scrollIntoView({ behavior: "smooth" });
+                    }, 100);
                   }}
                 >
                   Change Now
