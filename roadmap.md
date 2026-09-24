@@ -17,3 +17,7 @@
 - [x] Add layered red, blue, and magenta dashboard styling with movie and football artwork.
 - [x] Show all active plans when an unpaid member opens payment.
 - [x] Cache shared member content, plans, profile, and settings for faster section changes.
+- [ ] Add Capacitor foundation and Android project without changing web behavior.
+- [ ] Configure native splash, safe areas, system bars, keyboard, back navigation, and external links.
+- [ ] Polish sign-in and sign-up for native mobile while preserving auth logic.
+- [ ] Validate Android sync, type checks, tests, web build, and responsive auth screens.
