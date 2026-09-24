@@ -21,6 +21,7 @@ import CategoryLinks from "@/components/member/CategoryLinks";
 import WatchHub from "@/components/member/WatchHub";
 import { useToast } from "@/hooks/use-toast";
 import { useAppSettings } from "@/hooks/useAppSettings";
+import { openDownloadUrl, openExternalUrl } from "@/lib/native";
 
 
 /** App downloads are members-only, so fetch a short-lived signed link on demand. */
@@ -29,7 +30,7 @@ async function openApkDownload(fileName: string) {
     .from("app-files")
     .createSignedUrl(fileName, 300, { download: true });
   if (error || !data?.signedUrl) return false;
-  window.location.href = data.signedUrl;
+  await openDownloadUrl(data.signedUrl);
   return true;
 }
 
@@ -274,7 +275,7 @@ const MemberDashboard = () => {
                   className="gap-1 border-border text-foreground"
                   onClick={() => {
                     const text = encodeURIComponent(`Check out StreamNetMirror - Lifetime streaming access! ${window.location.origin}`);
-                    window.open(`https://wa.me/?text=${text}`, "_blank");
+                    void openExternalUrl(`https://wa.me/?text=${text}`);
                   }}
                 >
                   <Share2 size={14} /> Share

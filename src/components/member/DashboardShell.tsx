@@ -73,7 +73,7 @@ const DashboardShell = ({ tab, onTabChange, children }: Props) => {
         </div>
       )}
       {/* Top bar */}
-      <header className="fixed top-0 left-0 right-0 z-40 h-14 border-b border-border bg-background/95 backdrop-blur">
+      <header className="dashboard-topbar fixed top-0 left-0 right-0 z-40 h-14 border-b border-border bg-background/95 backdrop-blur">
         <div className="flex h-full items-center justify-between px-3 md:px-5">
           <div className="flex items-center gap-2">
             <LogoShowcase size="md" />
@@ -134,12 +134,12 @@ const DashboardShell = ({ tab, onTabChange, children }: Props) => {
       </aside>
 
 
-      <main className="relative z-10 px-3 pb-28 pt-20 md:ml-60 md:px-8 md:pb-10 md:pt-24">
+      <main className="dashboard-content relative z-10 px-3 pb-28 pt-20 md:ml-60 md:px-8 md:pb-10 md:pt-24">
         <div className="mx-auto max-w-5xl space-y-6">{children}</div>
       </main>
 
       {/* Mobile bottom navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 z-40 grid h-[72px] grid-cols-5 border-t border-border bg-background/95 px-1 backdrop-blur md:hidden" aria-label="Dashboard navigation">
+      <nav className="dashboard-bottom-nav fixed bottom-0 left-0 right-0 z-40 grid h-[72px] grid-cols-5 border-t border-border bg-background/95 px-1 backdrop-blur md:hidden" aria-label="Dashboard navigation">
         {DASHBOARD_TABS.map((t, index) => (
           <Button
             variant="ghost"

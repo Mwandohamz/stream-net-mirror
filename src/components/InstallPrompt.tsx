@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Download, X, Share } from "lucide-react";
 import LogoShowcase from "@/components/LogoShowcase";
+import { isNativeApp } from "@/lib/native";
 
 const DISMISS_KEY = "snm_install_dismissed_at";
 const DISMISS_DAYS = 7;
@@ -27,7 +28,7 @@ const InstallPrompt = () => {
   const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
 
   useEffect(() => {
-    if (isStandalone() || recentlyDismissed()) return;
+    if (isNativeApp() || isStandalone() || recentlyDismissed()) return;
 
     const onPrompt = (e: Event) => {
       e.preventDefault();

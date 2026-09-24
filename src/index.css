@@ -1,9 +1,9 @@
+@import '@fontsource-variable/outfit';
+@import '@fontsource-variable/figtree';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-@import '@fontsource-variable/outfit';
-@import '@fontsource-variable/figtree';
 
 @layer base {
   :root {
@@ -138,12 +138,71 @@
   body {
     @apply bg-background text-foreground font-sans antialiased;
     font-family: 'Inter', system-ui, sans-serif;
+    min-height: 100dvh;
+    overscroll-behavior-y: none;
   }
 
   h1, h2, h3 {
     font-family: 'Bebas Neue', 'Inter', sans-serif;
     letter-spacing: 0.02em;
   }
+}
+
+@layer utilities {
+  .safe-top { padding-top: env(safe-area-inset-top, 0px); }
+  .safe-bottom { padding-bottom: env(safe-area-inset-bottom, 0px); }
+}
+
+.auth-visual {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: hsl(var(--background));
+}
+.auth-visual img { position: absolute; left: 0; width: 100%; height: 58%; object-fit: cover; opacity: .46; }
+.auth-visual-top { top: 0; object-position: center 32%; }
+.auth-visual-bottom { bottom: 0; object-position: center 36%; }
+.auth-visual-shade {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(to bottom, hsl(var(--background) / .25), hsl(var(--background) / .94) 49%, hsl(var(--background) / .52)),
+    linear-gradient(to right, hsl(var(--primary) / .13), transparent 42%, hsl(205 100% 55% / .12));
+}
+.auth-panel { box-shadow: 0 28px 80px hsl(var(--background) / .72), 0 0 32px hsl(var(--primary) / .12); }
+
+.native-app body { min-height: 100dvh; }
+.native-app .auth-web-chrome { display: none; }
+.native-app .auth-scroll {
+  min-height: 100dvh;
+  padding-top: max(1rem, env(safe-area-inset-top));
+  padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
+  align-items: center;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.native-app .auth-back { margin-top: .25rem; }
+.native-app .dashboard-topbar {
+  height: calc(3.5rem + env(safe-area-inset-top));
+  padding-top: env(safe-area-inset-top);
+}
+.native-app .dashboard-content { padding-top: calc(5rem + env(safe-area-inset-top)); }
+.native-app .dashboard-bottom-nav {
+  height: calc(4.5rem + env(safe-area-inset-bottom));
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.native-app .dashboard-content { padding-bottom: calc(7rem + env(safe-area-inset-bottom)); }
+.native-keyboard-open .dashboard-bottom-nav { display: none; }
+
+@media (max-width: 767px) {
+  .auth-panel { border-left: 0; border-right: 0; }
+  .auth-scroll { padding-left: 0; padding-right: 0; }
+  .auth-back { margin-left: 1rem; }
+}
+
+@media (orientation: landscape) and (max-height: 540px) {
+  .native-app .auth-scroll { align-items: flex-start; }
+  .auth-visual img { height: 75%; }
 }
 
 /* Netflix-style compact title */
