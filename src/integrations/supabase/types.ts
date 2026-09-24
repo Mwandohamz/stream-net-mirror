@@ -530,6 +530,80 @@ export type Database = {
         }
         Relationships: []
       }
+      telegram_notification_recipients: {
+        Row: {
+          chat_id: string
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          chat_id: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          chat_id?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      telegram_payment_notifications: {
+        Row: {
+          chat_id: string
+          created_at: string
+          deposit_id: string | null
+          error_message: string | null
+          id: string
+          message: string | null
+          notification_type: string
+          payment_id: string | null
+          recipient_id: string | null
+          status: string
+        }
+        Insert: {
+          chat_id: string
+          created_at?: string
+          deposit_id?: string | null
+          error_message?: string | null
+          id?: string
+          message?: string | null
+          notification_type: string
+          payment_id?: string | null
+          recipient_id?: string | null
+          status: string
+        }
+        Update: {
+          chat_id?: string
+          created_at?: string
+          deposit_id?: string | null
+          error_message?: string | null
+          id?: string
+          message?: string | null
+          notification_type?: string
+          payment_id?: string | null
+          recipient_id?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "telegram_payment_notifications_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "telegram_notification_recipients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ticket_messages: {
         Row: {
           created_at: string
