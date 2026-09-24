@@ -106,8 +106,8 @@ const WatchHub = ({ unlocked, onUnlockClick }: { unlocked: boolean; onUnlockClic
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4">
         {featuredGroups.map(({ platform, links: platformLinks }) => (
-          <article key={platform.name} className="group flex min-h-[190px] flex-col overflow-hidden rounded-lg border border-border bg-card shadow-sm transition-transform duration-200 hover:-translate-y-0.5">
-            <div className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden bg-secondary p-4">
+          <article key={platform.name} className="group flex min-h-[180px] flex-col overflow-hidden rounded-lg border border-border/80 bg-card/80 shadow-xl backdrop-blur-md transition-transform duration-200 hover:-translate-y-0.5 md:min-h-[210px]">
+            <div className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden bg-secondary/80 p-4">
               <span className="dashboard-heading grid h-20 w-20 place-items-center rounded-lg bg-background px-2 text-center text-base font-bold uppercase text-primary md:h-24 md:w-24">{platform.monogram}</span>
               {platformLinks[0]?.logo_url || platform.logo ? (
                 <img src={platformLinks[0]?.logo_url || platform.logo} alt="" className="absolute h-20 w-20 rounded-lg bg-background object-contain md:h-24 md:w-24" loading="lazy" decoding="async" onError={(event) => { event.currentTarget.style.display = "none"; }} />

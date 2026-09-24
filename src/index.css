@@ -86,24 +86,39 @@
   }
 
   .theme-dashboard {
-    --background: 225 36% 4%;
+    --background: 228 45% 4%;
     --foreground: 210 33% 98%;
-    --card: 224 36% 13%;
+    --card: 226 38% 11%;
     --card-foreground: 210 33% 98%;
     --popover: 224 36% 10%;
     --popover-foreground: 210 33% 98%;
-    --primary: 197 100% 44%;
-    --primary-foreground: 225 36% 4%;
+    --primary: 199 100% 48%;
+    --primary-foreground: 228 45% 4%;
     --secondary: 224 34% 16%;
     --secondary-foreground: 210 33% 98%;
     --muted: 224 27% 18%;
     --muted-foreground: 215 17% 70%;
-    --accent: 357 83% 49%;
+    --accent: 354 94% 53%;
     --accent-foreground: 0 0% 100%;
     --border: 221 25% 24%;
     --input: 221 25% 24%;
     --ring: 197 100% 44%;
     font-family: 'Figtree Variable', sans-serif;
+    background:
+      radial-gradient(circle at 12% 18%, hsl(354 94% 53% / 0.18), transparent 34%),
+      radial-gradient(circle at 88% 16%, hsl(199 100% 48% / 0.2), transparent 36%),
+      radial-gradient(circle at 72% 76%, hsl(288 80% 50% / 0.1), transparent 30%),
+      hsl(var(--background));
+  }
+
+  .theme-dashboard.dashboard-tab-football {
+    --primary: 199 100% 55%;
+    --accent: 321 100% 58%;
+  }
+
+  .theme-dashboard.dashboard-tab-movies {
+    --primary: 354 94% 53%;
+    --accent: 199 100% 52%;
   }
 
   .theme-dashboard .dashboard-heading,

@@ -12,6 +12,8 @@ import { useProfile } from "@/hooks/useProfile";
 import { useSubscriber, subscriptionAccessEnd, isSubscriptionActive } from "@/hooks/useSubscriber";
 import { usePricing } from "@/hooks/usePricing";
 import { useToast } from "@/hooks/use-toast";
+import ProfileAvatarPicker from "@/components/ProfileAvatarPicker";
+import { DEFAULT_PROFILE_AVATAR } from "@/lib/profileAvatars";
 
 function daysBetween(target: Date): number {
   return Math.ceil((target.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
@@ -107,6 +109,15 @@ const AccountOverviewCard = () => {
     }
   };
 
+  const chooseAvatar = async (avatarUrl: string) => {
+    const { error } = await updateProfile({ avatar_url: avatarUrl });
+    if (error) {
+      toast({ title: "Could not save avatar", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Avatar updated" });
+  };
+
   return (
     <Card className="overflow-hidden border-border bg-card">
       <CardContent className="space-y-5 p-5 md:p-6">
@@ -114,7 +125,7 @@ const AccountOverviewCard = () => {
           {/* Avatar */}
           <div className="relative shrink-0">
             <Avatar className="h-16 w-16 border-2 border-primary/40 md:h-20 md:w-20">
-              <AvatarImage src={(profile as any)?.avatar_url || undefined} alt={profile?.full_name || "Profile picture"} />
+              <AvatarImage src={profile?.avatar_url || DEFAULT_PROFILE_AVATAR} alt={profile?.full_name || "Profile picture"} />
               <AvatarFallback className="bg-secondary text-foreground text-lg font-semibold">{initials}</AvatarFallback>
             </Avatar>
             <button
@@ -186,6 +197,16 @@ const AccountOverviewCard = () => {
           </div>
         </div>
 
+        <div className="space-y-2 border-t border-border pt-4">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-semibold text-foreground">Profile avatar</p>
+              <p className="text-xs text-muted-foreground">Choose one, or upload your own using the camera.</p>
+            </div>
+          </div>
+          <ProfileAvatarPicker value={profile?.avatar_url || DEFAULT_PROFILE_AVATAR} onChange={(url) => void chooseAvatar(url)} />
+        </div>
+
 
         {/* Subscription status */}
         <div className="rounded-lg border border-border bg-secondary/40 p-4 space-y-3">
@@ -198,7 +219,7 @@ const AccountOverviewCard = () => {
                   {countdown.active ? (countdown.inGrace ? "Grace period" : "Active") : "Expired"}
                 </Badge>
               ) : (
-                <Badge className="bg-primary/20 text-primary">Lifetime access</Badge>
+                <Badge className="bg-primary/20 text-primary">No active plan</Badge>
               )}
             </div>
             {priceUsd !== null && (
@@ -225,14 +246,14 @@ const AccountOverviewCard = () => {
               </div>
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground">Your access does not expire.</p>
+            <p className="text-sm text-muted-foreground">Choose a plan to unlock streaming, sports and downloads.</p>
           )}
 
           <Button
             onClick={() => navigate(plan ? `/payment?plan=${plan.id}` : "/payment")}
             className="w-full sm:w-auto bg-primary text-primary-foreground hover:bg-primary/80 gap-2"
           >
-            <RefreshCw size={15} /> {countdown && !countdown.active ? "Reactivate" : "Renew now"}
+            <RefreshCw size={15} /> {countdown ? (countdown.active ? "Renew now" : "Reactivate") : "View all plans"}
           </Button>
         </div>
       </CardContent>

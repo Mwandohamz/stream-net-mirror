@@ -13,6 +13,9 @@ import { useToast } from "@/hooks/use-toast";
 import CountrySelect from "@/components/CountrySelect";
 import PhoneNumberField, { buildE164 } from "@/components/PhoneNumberField";
 import type { WorldCountry } from "@/data/allCountries";
+import LogoShowcase from "@/components/LogoShowcase";
+import ProfileAvatarPicker from "@/components/ProfileAvatarPicker";
+import { DEFAULT_PROFILE_AVATAR } from "@/lib/profileAvatars";
 
 const SignUp = () => {
   const navigate = useNavigate();
@@ -27,6 +30,7 @@ const SignUp = () => {
   const [localPhone, setLocalPhone] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState(DEFAULT_PROFILE_AVATAR);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
@@ -66,6 +70,7 @@ const SignUp = () => {
             country_iso3: country?.iso3,
             country_name: country?.name,
             currency: country?.currency,
+            avatar_url: avatarUrl,
           },
           emailRedirectTo: `${window.location.origin}${safeNext ? `/signup?next=${encodeURIComponent(safeNext)}` : "/dashboard"}`,
         },
@@ -125,7 +130,7 @@ const SignUp = () => {
           ) : (
             <Card className="bg-card border-border">
               <CardHeader className="text-center">
-                <img src="/logo-hexagon.png" alt="StreamNetMirror" className="h-12 w-12 mx-auto mb-2" />
+                <div className="mx-auto mb-2 flex justify-center"><LogoShowcase size="md" /></div>
                 <CardTitle className="netflix-title text-2xl text-foreground">CREATE ACCOUNT</CardTitle>
                 <CardDescription className="text-muted-foreground">
                   Free to join. Choose your plan after signing in.
@@ -138,6 +143,12 @@ const SignUp = () => {
                     <p className="text-xs text-destructive">{error}</p>
                   </div>
                 )}
+
+                <div className="space-y-2">
+                  <Label className="text-foreground text-sm">Choose your avatar</Label>
+                  <ProfileAvatarPicker value={avatarUrl} onChange={setAvatarUrl} disabled={loading} />
+                  <p className="text-xs text-muted-foreground">You can change it later from your account.</p>
+                </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="su-name" className="text-foreground text-sm">Full Name</Label>

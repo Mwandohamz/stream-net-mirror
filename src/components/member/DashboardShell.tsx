@@ -15,6 +15,10 @@ import CountdownBadge from "@/components/CountdownBadge";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useProfile";
 import { useSubscriber, subscriptionAccessEnd } from "@/hooks/useSubscriber";
+import { DEFAULT_PROFILE_AVATAR } from "@/lib/profileAvatars";
+import moviesBackdrop from "@/assets/dashboard-movies.jpg";
+import footballBackdrop from "@/assets/dashboard-football.jpg";
+import logoAsset from "@/assets/brand/streamnetmirror-logo.png.asset.json";
 
 export type DashboardTab = "dashboard" | "movies" | "watch" | "football" | "account";
 
@@ -39,6 +43,7 @@ const DashboardShell = ({ tab, onTabChange, children }: Props) => {
   const { profile } = useProfile();
   const { subscription } = useSubscriber();
   const accessEnd = subscription ? subscriptionAccessEnd(subscription) : null;
+  const backdrop = tab === "movies" ? moviesBackdrop : tab === "football" ? footballBackdrop : tab === "watch" ? logoAsset.url : null;
 
   const initials = (profile?.full_name || profile?.email || "?")
     .split(" ")
@@ -53,7 +58,20 @@ const DashboardShell = ({ tab, onTabChange, children }: Props) => {
   };
 
   return (
-    <div className="theme-dashboard min-h-screen bg-background font-sans">
+    <div className={`theme-dashboard dashboard-tab-${tab} relative min-h-screen overflow-hidden bg-background font-sans`}>
+      {backdrop && (
+        <div className="pointer-events-none fixed inset-0 z-0 md:left-60" aria-hidden="true">
+          <img
+            src={backdrop}
+            alt=""
+            width={1600}
+            height={900}
+            className={`h-full w-full object-cover ${tab === "watch" ? "scale-75 opacity-20 blur-[1px]" : "opacity-45"}`}
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-background/25 via-background/75 to-background" />
+          <div className="absolute inset-0 bg-gradient-to-r from-background/70 via-transparent to-background/50" />
+        </div>
+      )}
       {/* Top bar */}
       <header className="fixed top-0 left-0 right-0 z-40 h-14 border-b border-border bg-background/95 backdrop-blur">
         <div className="flex h-full items-center justify-between px-3 md:px-5">
@@ -68,7 +86,7 @@ const DashboardShell = ({ tab, onTabChange, children }: Props) => {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="h-10 gap-2 rounded-full border border-border p-1 pr-2" aria-label="Open profile menu">
                   <Avatar className="h-7 w-7">
-                    <AvatarImage src={(profile as any)?.avatar_url || undefined} alt={profile?.full_name || "Profile"} />
+                    <AvatarImage src={profile?.avatar_url || DEFAULT_PROFILE_AVATAR} alt={profile?.full_name || "Profile"} />
                     <AvatarFallback className="bg-secondary text-[11px]">{initials}</AvatarFallback>
                   </Avatar>
                   <span className="hidden sm:block max-w-[120px] truncate text-xs text-foreground">
@@ -116,7 +134,7 @@ const DashboardShell = ({ tab, onTabChange, children }: Props) => {
       </aside>
 
 
-      <main className="px-3 pb-28 pt-20 md:ml-60 md:px-8 md:pb-10 md:pt-24">
+      <main className="relative z-10 px-3 pb-28 pt-20 md:ml-60 md:px-8 md:pb-10 md:pt-24">
         <div className="mx-auto max-w-5xl space-y-6">{children}</div>
       </main>
 
