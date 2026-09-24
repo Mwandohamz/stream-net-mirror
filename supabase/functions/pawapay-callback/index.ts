@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { activateSubscriptionForPayment } from "../_shared/subscription.ts";
 import { sendPaymentConfirmation } from "../_shared/notify.ts";
+import { notifyPaymentTelegram, activationLabel } from "../_shared/telegramPaymentNotifications.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -96,6 +97,9 @@ serve(async (req) => {
         } catch (mailErr) {
           console.error("Confirmation email failed:", mailErr);
         }
+        await notifyPaymentTelegram(supabase, depositId, "payment_completed", {
+          subscriptionResult: activationLabel(activation),
+        });
       }
     } else if (status === "FAILED") {
       const reason = body.failureReason?.failureMessage ?? "Payment failed";
@@ -111,6 +115,7 @@ serve(async (req) => {
         console.error("Failed to update payment to failed:", updateError);
       } else {
         console.log("Payment updated to failed for deposit:", depositId, "reason:", reason);
+        await notifyPaymentTelegram(supabase, depositId, "payment_failed");
       }
     } else {
       console.log("Unhandled callback status:", status, "for deposit:", depositId);

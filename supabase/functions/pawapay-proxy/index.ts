@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { activateSubscriptionForPayment } from "../_shared/subscription.ts";
 import { sendPaymentConfirmation } from "../_shared/notify.ts";
+import { notifyPaymentTelegram, activationLabel } from "../_shared/telegramPaymentNotifications.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -271,13 +272,14 @@ serve(async (req) => {
       // Update status based on response
       const depositStatus = data?.status;
       if (depositStatus === "REJECTED") {
-        await supabase
+        const { error: rejErr } = await supabase
           .from("payments")
           .update({
             status: "failed",
             failure_reason: data?.failureReason?.failureMessage ?? "Rejected",
           })
           .eq("deposit_id", depositId);
+        if (!rejErr) await notifyPaymentTelegram(supabase, depositId, "payment_failed");
       }
 
       return new Response(JSON.stringify(data), {
@@ -311,17 +313,21 @@ serve(async (req) => {
         } catch (mailErr) {
           console.error("Confirmation email failed:", mailErr);
         }
+        await notifyPaymentTelegram(supabase, depositId, "payment_completed", {
+          subscriptionResult: activationLabel(activation),
+        });
       } else if (status === "FAILED") {
         const reason = Array.isArray(data)
           ? data[0]?.failureReason?.failureMessage
           : data?.failureReason?.failureMessage;
-        await supabase
+        const { error: failErr } = await supabase
           .from("payments")
           .update({
             status: "failed",
             failure_reason: reason ?? "Failed",
           })
           .eq("deposit_id", depositId);
+        if (!failErr) await notifyPaymentTelegram(supabase, depositId, "payment_failed");
       }
 
       return new Response(JSON.stringify(data), {
