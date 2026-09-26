@@ -78,5 +78,8 @@ export function useContent(includeInactive = false) {
     [categories]
   );
 
-  return { categories, links, linksFor, categoryBySlug, loading, reload: load };
+  // reload(force) bypasses the TTL so admin saves/refreshes always re-query.
+  const reload = useCallback((force = true) => load(force), [load]);
+
+  return { categories, links, linksFor, categoryBySlug, loading, reload };
 }

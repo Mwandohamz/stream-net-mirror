@@ -51,7 +51,10 @@ export function usePlans(includeInactive = false) {
     void load();
   }, [load]);
 
-  return { plans, loading, reload: load };
+  // reload(force) bypasses the TTL so admin saves/refreshes always re-query.
+  const reload = useCallback((force = true) => load(force), [load]);
+
+  return { plans, loading, reload };
 }
 
 export function planIntervalLabel(plan: Pick<Plan, "interval" | "interval_count">): string {
