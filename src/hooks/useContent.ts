@@ -38,10 +38,10 @@ export function useContent(includeInactive = false) {
   const [links, setLinks] = useState<ContentLink[]>(initial?.links ?? []);
   const [loading, setLoading] = useState(!initial);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (force = false) => {
     const cached = contentCache.get(cacheKey);
     if (!cached) setLoading(true);
-    if (cached && Date.now() - cached.at < CONTENT_CACHE_MS) {
+    if (!force && cached && Date.now() - cached.at < CONTENT_CACHE_MS) {
       setLoading(false);
       return;
     }

@@ -24,10 +24,10 @@ export function usePlans(includeInactive = false) {
   const [plans, setPlans] = useState<Plan[]>(initial?.value ?? []);
   const [loading, setLoading] = useState(!initial);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (force = false) => {
     const cached = planCache.get(cacheKey);
     if (!cached) setLoading(true);
-    if (cached && Date.now() - cached.at < PLAN_CACHE_MS) {
+    if (!force && cached && Date.now() - cached.at < PLAN_CACHE_MS) {
       setLoading(false);
       return;
     }
