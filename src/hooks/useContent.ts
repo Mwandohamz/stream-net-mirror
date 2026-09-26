@@ -38,10 +38,10 @@ export function useContent(includeInactive = false) {
   const [links, setLinks] = useState<ContentLink[]>(initial?.links ?? []);
   const [loading, setLoading] = useState(!initial);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (force = false) => {
     const cached = contentCache.get(cacheKey);
     if (!cached) setLoading(true);
-    if (cached && Date.now() - cached.at < CONTENT_CACHE_MS) {
+    if (!force && cached && Date.now() - cached.at < CONTENT_CACHE_MS) {
       setLoading(false);
       return;
     }
@@ -78,5 +78,8 @@ export function useContent(includeInactive = false) {
     [categories]
   );
 
-  return { categories, links, linksFor, categoryBySlug, loading, reload: load };
+  // reload(force) bypasses the TTL so admin saves/refreshes always re-query.
+  const reload = useCallback((force = true) => load(force), [load]);
+
+  return { categories, links, linksFor, categoryBySlug, loading, reload };
 }

@@ -24,10 +24,10 @@ export function usePlans(includeInactive = false) {
   const [plans, setPlans] = useState<Plan[]>(initial?.value ?? []);
   const [loading, setLoading] = useState(!initial);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (force = false) => {
     const cached = planCache.get(cacheKey);
     if (!cached) setLoading(true);
-    if (cached && Date.now() - cached.at < PLAN_CACHE_MS) {
+    if (!force && cached && Date.now() - cached.at < PLAN_CACHE_MS) {
       setLoading(false);
       return;
     }
@@ -51,7 +51,10 @@ export function usePlans(includeInactive = false) {
     void load();
   }, [load]);
 
-  return { plans, loading, reload: load };
+  // reload(force) bypasses the TTL so admin saves/refreshes always re-query.
+  const reload = useCallback((force = true) => load(force), [load]);
+
+  return { plans, loading, reload };
 }
 
 export function planIntervalLabel(plan: Pick<Plan, "interval" | "interval_count">): string {
