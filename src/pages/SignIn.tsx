@@ -39,7 +39,13 @@ const SignIn = () => {
   const handleResendVerification = async () => {
     setResending(true);
     try {
-      const { error } = await supabase.auth.resend({ type: "signup", email: email.trim().toLowerCase() });
+      const { error } = await supabase.auth.resend({
+        type: "signup",
+        email: email.trim().toLowerCase(),
+        options: {
+          emailRedirectTo: `${window.location.origin}${safeNext ? `/signup?next=${encodeURIComponent(safeNext)}` : "/dashboard"}`,
+        },
+      });
       if (error) {
         toast({ title: "Error", description: error.message, variant: "destructive" });
       } else {

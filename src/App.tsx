@@ -22,6 +22,7 @@ import SignIn from "./pages/SignIn.tsx";
 import SignUp from "./pages/SignUp.tsx";
 import ForgotPassword from "./pages/ForgotPassword.tsx";
 import ResetPassword from "./pages/ResetPassword.tsx";
+import VerifyEmail from "./pages/VerifyEmail.tsx";
 import MemberDashboard from "./pages/MemberDashboard.tsx";
 import AdminLogin from "./pages/admin/AdminLogin.tsx";
 
@@ -87,6 +88,7 @@ const AnimatedRoutes = () => {
         <Route path="/signup" element={<PageTransition><SignUp /></PageTransition>} />
         <Route path="/forgot-password" element={<PageTransition><ForgotPassword /></PageTransition>} />
         <Route path="/reset-password" element={<PageTransition><ResetPassword /></PageTransition>} />
+        <Route path="/verify" element={<PageTransition><VerifyEmail /></PageTransition>} />
         <Route path="/dashboard" element={<SubscriberRoute><MemberDashboard /></SubscriberRoute>} />
         <Route path="/terms" element={<PageTransition><Terms /></PageTransition>} />
         <Route path="/privacy" element={<PageTransition><Privacy /></PageTransition>} />
