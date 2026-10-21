@@ -166,6 +166,57 @@ export type Database = {
         }
         Relationships: []
       }
+      fixtures: {
+        Row: {
+          away_crest_url: string | null
+          away_score: number | null
+          away_team: string
+          competition_code: string
+          competition_name: string
+          home_crest_url: string | null
+          home_score: number | null
+          home_team: string
+          id: number
+          kickoff_utc: string
+          last_synced_at: string
+          matchday: number | null
+          season: number | null
+          status: string
+        }
+        Insert: {
+          away_crest_url?: string | null
+          away_score?: number | null
+          away_team: string
+          competition_code: string
+          competition_name: string
+          home_crest_url?: string | null
+          home_score?: number | null
+          home_team: string
+          id: number
+          kickoff_utc: string
+          last_synced_at?: string
+          matchday?: number | null
+          season?: number | null
+          status?: string
+        }
+        Update: {
+          away_crest_url?: string | null
+          away_score?: number | null
+          away_team?: string
+          competition_code?: string
+          competition_name?: string
+          home_crest_url?: string | null
+          home_score?: number | null
+          home_team?: string
+          id?: number
+          kickoff_utc?: string
+          last_synced_at?: string
+          matchday?: number | null
+          season?: number | null
+          status?: string
+        }
+        Relationships: []
+      }
       influencers: {
         Row: {
           created_at: string
