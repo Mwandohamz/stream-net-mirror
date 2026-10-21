@@ -14,6 +14,7 @@ import type { WorldCountry } from "@/data/allCountries";
 import ProfileAvatarPicker from "@/components/ProfileAvatarPicker";
 import { DEFAULT_PROFILE_AVATAR } from "@/lib/profileAvatars";
 import AuthShell from "@/components/AuthShell";
+import { emailVerificationUrl } from "@/lib/emailVerification";
 
 const SignUp = () => {
   const navigate = useNavigate();
@@ -72,7 +73,7 @@ const SignUp = () => {
             currency: country?.currency,
             avatar_url: avatarUrl,
           },
-          emailRedirectTo: `${window.location.origin}${safeNext ? `/signup?next=${encodeURIComponent(safeNext)}` : "/dashboard"}`,
+          emailRedirectTo: emailVerificationUrl(window.location.origin, safeNext),
         },
       });
 
