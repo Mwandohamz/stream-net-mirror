@@ -1,34 +1,44 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Loader2, Play } from "lucide-react";
-import { useFixtures } from "@/hooks/useFixtures";
+import { useFixtures, type Fixture } from "@/hooks/useFixtures";
 import { useMembership } from "@/hooks/useMembership";
 import { fixtureStatus, fixturesWatchDestination, formatKickoff, LEAGUE_OPTIONS } from "@/lib/fixtures";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import WatchHub from "@/components/member/WatchHub";
 
 export default function UpcomingFixtures({ onUnlock }: { onUnlock?: () => void }) {
-  const [competition, setCompetition] = useState("all");
-  const [picker, setPicker] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const competition = LEAGUE_OPTIONS.some(o => o.code === searchParams.get("league")) ? searchParams.get("league")! : "all";
+  const [pickerFor, setPickerFor] = useState<Fixture | null>(null);
   const { fixtures, loading, error } = useFixtures(competition);
   const membership = useMembership();
   const navigate = useNavigate();
-  const watch = () => {
+
+  const selectLeague = (code: string) => {
+    const next = new URLSearchParams(searchParams);
+    if (code === "all") next.delete("league"); else next.set("league", code);
+    setSearchParams(next, { replace: true });
+  };
+
+  const watch = (fixture: Fixture) => {
     const destination = fixturesWatchDestination(membership.isMember, membership.state);
     if (destination) { if (onUnlock) onUnlock(); else navigate(destination); }
-    else setPicker(true);
+    else setPickerFor(fixture);
   };
+
   return <section className="space-y-4" aria-label="Upcoming Fixtures">
     <div className="flex flex-wrap items-center justify-between gap-3">
       <h2 className="dashboard-heading text-xl font-semibold text-foreground">Upcoming Fixtures</h2>
-      <Select value={competition} onValueChange={setCompetition}>
-        <SelectTrigger className="w-48" aria-label="Filter fixtures by competition"><SelectValue /></SelectTrigger>
-        <SelectContent>{LEAGUE_OPTIONS.map(option => <SelectItem key={option.code} value={option.code}>{option.label}</SelectItem>)}</SelectContent>
-      </Select>
     </div>
+    <Tabs value={competition} onValueChange={selectLeague}>
+      <TabsList className="grid h-auto w-full grid-cols-2 gap-1 sm:grid-cols-4" aria-label="Choose a league">
+        {LEAGUE_OPTIONS.map(option => <TabsTrigger key={option.code} value={option.code} className="text-xs sm:text-sm">{option.label}</TabsTrigger>)}
+      </TabsList>
+    </Tabs>
     {loading ? <div className="flex items-center gap-2 py-6 text-sm text-muted-foreground"><Loader2 size={18} className="animate-spin" /> Loading fixtures…</div> : error ? <p role="status" className="py-6 text-sm text-muted-foreground">Fixtures are temporarily unavailable.</p> : fixtures.length === 0 ? <p role="status" className="py-6 text-sm text-muted-foreground">Fixtures update shortly</p> : <div className="divide-y divide-border border-y border-border">
       {fixtures.map(fixture => <article key={fixture.id} className="flex flex-wrap items-center gap-3 py-4">
         <div className="min-w-0 flex-1 space-y-2">
@@ -40,9 +50,17 @@ export default function UpcomingFixtures({ onUnlock }: { onUnlock?: () => void }
           </div>
           <time dateTime={fixture.kickoff_utc} className="block text-xs text-muted-foreground">{formatKickoff(fixture.kickoff_utc)}</time>
         </div>
-        <Button size="sm" className="shrink-0 gap-1.5" disabled={membership.loading} onClick={watch}><Play size={14} /> Watch</Button>
+        <Button size="sm" className="shrink-0 gap-1.5" disabled={membership.loading} onClick={() => watch(fixture)}><Play size={14} /> Watch</Button>
       </article>)}
     </div>}
-    <Dialog open={picker} onOpenChange={setPicker}><DialogContent className="theme-dashboard max-h-[85dvh] max-w-2xl overflow-y-auto"><DialogHeader><DialogTitle>Choose a live sports platform</DialogTitle></DialogHeader><WatchHub sportsOnly unlocked={membership.isMember} onUnlockClick={() => navigate("/payment")} /></DialogContent></Dialog>
+    <Dialog open={!!pickerFor} onOpenChange={open => !open && setPickerFor(null)}>
+      <DialogContent className="theme-dashboard max-h-[85dvh] max-w-2xl overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>{pickerFor ? `Watch ${pickerFor.home_team} vs ${pickerFor.away_team}` : "Choose a live sports platform"}</DialogTitle>
+          <DialogDescription>Pick a platform below to see every link available for streaming this match.</DialogDescription>
+        </DialogHeader>
+        <WatchHub sportsOnly unlocked={membership.isMember} onUnlockClick={() => navigate("/payment")} />
+      </DialogContent>
+    </Dialog>
   </section>;
 }
