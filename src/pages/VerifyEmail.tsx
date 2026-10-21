@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { AlertCircle, CheckCircle2, Mail } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import AuthShell from "@/components/AuthShell";
+import { emailVerificationUrl, verificationDestination } from "@/lib/emailVerification";
 
 // Landing page for email verification links. Supabase appends error details to
 // the redirect URL when a one-time token is missing/expired/already used (for
@@ -15,6 +16,8 @@ import AuthShell from "@/components/AuthShell";
 const VerifyEmail = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const destination = verificationDestination(searchParams.get("next"));
+  const signInUrl = destination === "/dashboard" ? "/signin" : `/signin?next=${encodeURIComponent(destination)}`;
   const { toast } = useToast();
   const [email, setEmail] = useState("");
   const [resending, setResending] = useState(false);
@@ -30,9 +33,9 @@ const VerifyEmail = () => {
   useEffect(() => {
     // If the link actually worked, a session exists — go straight in.
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) navigate("/dashboard", { replace: true });
+      if (session?.user && !errorCode) navigate(destination, { replace: true });
     });
-  }, [navigate]);
+  }, [navigate, destination, errorCode]);
 
   const handleResend = async () => {
     if (!email.trim()) return;
@@ -41,7 +44,7 @@ const VerifyEmail = () => {
       const { error } = await supabase.auth.resend({
         type: "signup",
         email: email.trim().toLowerCase(),
-        options: { emailRedirectTo: `${window.location.origin}/dashboard` },
+        options: { emailRedirectTo: emailVerificationUrl(window.location.origin, destination) },
       });
       if (error) {
         toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -57,14 +60,14 @@ const VerifyEmail = () => {
   };
 
   return (
-    <AuthShell onBack={() => navigate("/signin")} title="Verification link problem" description="This link is no longer valid">
+    <AuthShell onBack={() => navigate(signInUrl)} title="Verification link problem" description="This link is no longer valid">
       <div className="space-y-5">
         <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3 flex items-start gap-2">
           <AlertCircle size={16} className="text-destructive mt-0.5 shrink-0" />
           <div className="space-y-1">
             <p className="text-xs text-destructive">
               {errorDescription
-                ? decodeURIComponent(errorDescription.replace(/\+/g, " "))
+                ? errorDescription
                 : "This verification link has expired or was already replaced by a newer one."}
             </p>
             <p className="text-xs text-muted-foreground">
@@ -84,7 +87,7 @@ const VerifyEmail = () => {
               We sent a new verification link to <span className="text-foreground">{email}</span>. Open the newest
               email and click its link.
             </p>
-            <Button onClick={() => navigate("/signin")} className="w-full bg-primary text-primary-foreground hover:bg-primary/80">
+            <Button onClick={() => navigate(signInUrl)} className="w-full bg-primary text-primary-foreground hover:bg-primary/80">
               Go to Sign In
             </Button>
           </div>
@@ -118,7 +121,7 @@ const VerifyEmail = () => {
             </Button>
             <p className="text-xs text-muted-foreground text-center">
               Already verified?{" "}
-              <button onClick={() => navigate("/signin")} className="text-primary hover:underline">Sign In</button>
+              <button onClick={() => navigate(signInUrl)} className="text-primary hover:underline">Sign In</button>
             </p>
           </>
         )}

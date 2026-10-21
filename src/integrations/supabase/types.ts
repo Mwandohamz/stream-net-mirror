@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5"
+    PostgrestVersion: "14.4"
   }
   public: {
     Tables: {
@@ -76,9 +76,11 @@ export type Database = {
       }
       content_links: {
         Row: {
+          allow_fullscreen: boolean
           category_id: string
           created_at: string
           description: string | null
+          embed_mode: string
           id: string
           is_active: boolean
           logo_url: string | null
@@ -89,9 +91,11 @@ export type Database = {
           url: string
         }
         Insert: {
+          allow_fullscreen?: boolean
           category_id: string
           created_at?: string
           description?: string | null
+          embed_mode?: string
           id?: string
           is_active?: boolean
           logo_url?: string | null
@@ -102,9 +106,11 @@ export type Database = {
           url: string
         }
         Update: {
+          allow_fullscreen?: boolean
           category_id?: string
           created_at?: string
           description?: string | null
+          embed_mode?: string
           id?: string
           is_active?: boolean
           logo_url?: string | null
@@ -399,6 +405,41 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      stream_sessions: {
+        Row: {
+          embed_mode: string | null
+          id: string
+          link_id: string
+          opened_at: string
+          platform: string | null
+          user_id: string
+        }
+        Insert: {
+          embed_mode?: string | null
+          id?: string
+          link_id: string
+          opened_at?: string
+          platform?: string | null
+          user_id: string
+        }
+        Update: {
+          embed_mode?: string | null
+          id?: string
+          link_id?: string
+          opened_at?: string
+          platform?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stream_sessions_link_id_fkey"
+            columns: ["link_id"]
+            isOneToOne: false
+            referencedRelation: "content_links"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       subscribers: {
         Row: {
@@ -697,6 +738,17 @@ export type Database = {
           logo_url: string
           platform: string
           sort_order: number
+          title: string
+          url: string
+        }[]
+      }
+      resolve_watch_link: {
+        Args: { p_link_id: string; p_platform?: string }
+        Returns: {
+          allow_fullscreen: boolean
+          embed_mode: string
+          id: string
+          logo_url: string
           title: string
           url: string
         }[]

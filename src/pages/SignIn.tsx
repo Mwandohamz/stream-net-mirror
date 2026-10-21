@@ -8,6 +8,7 @@ import { motion } from "framer-motion";
 import { Mail, Lock, AlertCircle, Eye, EyeOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import AuthShell from "@/components/AuthShell";
+import { emailVerificationUrl } from "@/lib/emailVerification";
 
 const SignIn = () => {
   const navigate = useNavigate();
@@ -43,7 +44,7 @@ const SignIn = () => {
         type: "signup",
         email: email.trim().toLowerCase(),
         options: {
-          emailRedirectTo: `${window.location.origin}${safeNext ? `/signup?next=${encodeURIComponent(safeNext)}` : "/dashboard"}`,
+          emailRedirectTo: emailVerificationUrl(window.location.origin, safeNext),
         },
       });
       if (error) {
