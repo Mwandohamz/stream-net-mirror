@@ -12,6 +12,7 @@
         "@capacitor/keyboard": "^8.0.5",
         "@capacitor/splash-screen": "^8.0.2",
         "@capacitor/status-bar": "^8.0.3",
+        "@capgo/inappbrowser": "^8.6.14",
         "@fontsource-variable/figtree": "^5.3.0",
         "@fontsource-variable/outfit": "^5.3.0",
         "@hookform/resolvers": "^3.10.0",
@@ -127,6 +128,8 @@
     "@capacitor/splash-screen": ["@capacitor/splash-screen@8.0.2", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@capacitor/splash-screen/-/splash-screen-8.0.2.tgz", { "peerDependencies": { "@capacitor/core": ">=8.0.0" } }, "sha512-0C6rYScr13WfAE9nPl4ScOQynmjFv9NT3Th+RZkD4ezYHmER6mcl1/lDYsv7jg3Rj3FOvLrlTlmNkUrr83kZzQ=="],
 
     "@capacitor/status-bar": ["@capacitor/status-bar@8.0.3", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@capacitor/status-bar/-/status-bar-8.0.3.tgz", { "peerDependencies": { "@capacitor/core": ">=8.0.0" } }, "sha512-csSpfNeN49Hx9JaQBSJEIiEbOLtXg3kcc2IpScq2fu5L520h3AWEvsxoH8Srk1jxfRKepaJ4S4sqSC3foI4AgA=="],
+
+    "@capgo/inappbrowser": ["@capgo/inappbrowser@8.6.14", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@capgo/inappbrowser/-/inappbrowser-8.6.14.tgz", { "peerDependencies": { "@capacitor/core": ">=8.0.0" } }, "sha512-5aSpqDf94h6za78Sa2ZTlGIJpIhdV76ZPeuFSULTCDHswyGRGFjT5BKcs5WxiguUGD6dT+6tc04wlWU+yndNrA=="],
 
     "@drizzle-team/brocli": ["@drizzle-team/brocli@0.10.2", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@drizzle-team/brocli/-/brocli-0.10.2.tgz", {}, "sha512-z33Il7l5dKjUgGULTqBsQBQwckHh5AbIuxhdsIxDDiZAzBOrZO6q9ogcWC65kU382AfynTfgNumVcNIjuIua6w=="],
 
