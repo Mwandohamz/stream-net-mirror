@@ -79,7 +79,21 @@ Regenerate icons/splash from `assets/` with `bun run android:assets`.
 - Login sessions persist in the app's private WebView storage (HTTPS scheme `https://localhost`).
 - Payments are initiated only by tapping Pay; resuming the app just re-checks status
   and never creates a new payment or subscription. Meta Purchase is deduplicated per payment ID.
-- Streaming links, downloads, and WhatsApp open in the system browser; Android Back navigates
+- Streaming links resolve through `/watch/:linkId` and the existing entitlement-checking RPC. Iframe sources show a persistent branded header; native `webview` sources use `@capgo/inappbrowser` with no toolbar/address bar, sized below that header. Android Back navigates within the native source; Close returns to the dashboard. Web users fall back to iframe playback. Only admin-selected `external` sources, downloads, and WhatsApp open in the system browser; Android Back navigates
   inside the app and minimizes it from the home screen.
 - Only the `INTERNET` permission is requested. No secrets exist in the app bundle —
   Telegram, pawaPay, and admin keys live only on the server.
+
+## In-app playback update
+After pulling this update locally: `git pull`, `bun install`, then `npx cap sync android` (after the web build). GitHub Actions also installs and syncs the new plugin automatically.
+Hosted asset-pointer URLs resolve against `https://streamnetmirror.app`, not the bundled localhost origin. Existing saved avatars are normalized when displayed.
+Iframe `load` does not reliably report cross-origin framing blocks; a six-second timeout/error notice and an always-visible Open externally action provide recovery. Native video and sizing must be checked on a physical Android device, including rotation and close/back behavior. A third-party player may manage its own native video fullscreen; the admin fullscreen switch governs our iframe and fullscreen controls, not third-party native player internals.
+Android Studio remains optional; build and download the APK through GitHub Actions. See Lovable's Capacitor mobile-development blog post before preparing a store release.
+
+### Verification for this update
+- Preview compilation passed and all 11 existing/new tests passed.
+- Authorized admin session opened a real Sky Sports source from the dashboard inside `/watch/...`; the source page loaded with the app header visible. This confirms source embedding, not actual live-match video playback or paid-account behavior.
+- Admin changed the real source to native webview, saved and read it back, verified web iframe fallback with no iframe-mode fullscreen toggle, then restored its original iframe mode.
+- Simulated third-party navigation failure produced the six-second recovery notice; fullscreen retained the header. Dashboard home logo and hosted avatar/crest/logo rendering passed, including a 360px phone layout with no horizontal overflow.
+- The existing watch RPC incorrectly treated publicly visible link IDs as entitlement; it now requires the existing RPC's nonempty entitled URL before revealing a source or recording a session, and rejects inactive/non-stream categories.
+- Local `cap sync`/Doctor could not finish because the sandbox has no production `dist` output; native plugin Gradle registration is included, and GitHub Actions performs the web build and full sync before APK compilation. No Android device or paid-member session was available for final native/video verification. No website publication was performed.

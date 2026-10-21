@@ -12,6 +12,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Plus, Pencil, Trash2, RefreshCw, Upload, Loader2, ExternalLink } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useContent, type ContentCategory, type ContentLink } from "@/hooks/useContent";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { normalizeEmbedMode } from "@/lib/watchPlayback";
+import { toAbsoluteAssetUrl } from "@/lib/assetUrl";
 
 const PLATFORMS = ["web", "android", "ios", "tv", "software"];
 
@@ -26,6 +29,8 @@ const emptyLink = {
   platform: "web",
   sort_order: 0,
   is_active: true,
+  embed_mode: "iframe",
+  allow_fullscreen: true,
 };
 
 const AdminContent = () => {
@@ -88,6 +93,8 @@ const AdminContent = () => {
       platform: linkForm.platform,
       sort_order: Number(linkForm.sort_order) || 0,
       is_active: linkForm.is_active,
+      embed_mode: normalizeEmbedMode(linkForm.embed_mode),
+      allow_fullscreen: linkForm.allow_fullscreen,
     };
     const extraUrls = additionalUrls.map((url) => url.trim()).filter(Boolean);
     // Extra URLs keep the same title/platform so they show up as extra buttons
@@ -241,6 +248,7 @@ const AdminContent = () => {
                       <div className="flex items-center gap-2 flex-wrap">
                         <p className="text-sm font-medium text-foreground truncate">{l.title}</p>
                         <Badge variant="outline" className="text-[9px]">{l.platform}</Badge>
+                        <Badge variant="outline" className="text-[9px]">{normalizeEmbedMode(l.embed_mode)}</Badge>
                         {!l.is_active && <Badge className="bg-destructive/20 text-destructive text-[9px]">Hidden</Badge>}
                       </div>
                       <a href={l.url} target="_blank" rel="noopener noreferrer" className="text-[11px] text-primary inline-flex items-center gap-1 truncate">
@@ -259,10 +267,12 @@ const AdminContent = () => {
                             title: l.title,
                             description: l.description ?? "",
                             url: l.url,
-                            logo_url: l.logo_url ?? "",
+                            logo_url: l.logo_url ? toAbsoluteAssetUrl(l.logo_url) : "",
                             platform: l.platform,
                             sort_order: l.sort_order,
                             is_active: l.is_active,
+                            embed_mode: normalizeEmbedMode(l.embed_mode),
+                            allow_fullscreen: l.allow_fullscreen ?? true,
                           });
                           setLinkEditing(true);
                           setAdditionalUrls([]);
@@ -402,6 +412,21 @@ const AdminContent = () => {
                 placeholder="or paste an image URL"
                 className="mt-2"
               />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="playback-mode">Playback</Label>
+              <Select value={linkForm.embed_mode} onValueChange={(value) => setLinkForm({ ...linkForm, embed_mode: value })}>
+                <SelectTrigger id="playback-mode"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="iframe">In-app (iframe)</SelectItem>
+                  <SelectItem value="webview">In-app (native webview)</SelectItem>
+                  <SelectItem value="external">External browser</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center gap-2">
+              <Switch id="allow-fullscreen" checked={linkForm.allow_fullscreen} onCheckedChange={(value) => setLinkForm({ ...linkForm, allow_fullscreen: value })} />
+              <Label htmlFor="allow-fullscreen">Allow fullscreen</Label>
             </div>
             <div className="flex items-end gap-4 flex-wrap">
               <div className="space-y-1">

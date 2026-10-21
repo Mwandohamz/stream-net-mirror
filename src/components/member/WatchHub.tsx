@@ -12,7 +12,9 @@ import skyLogo from "@/assets/sports/sky-sports-football.jpg.asset.json";
 import uefaLogo from "@/assets/sports/uefa-champions-league.jpg.asset.json";
 import eplLogo from "@/assets/sports/premier-league.jpg.asset.json";
 import laligaLogo from "@/assets/sports/laliga.jpg.asset.json";
-import { openExternalUrl } from "@/lib/native";
+import { useNavigate } from "react-router-dom";
+import { watchPath } from "@/lib/watchPlayback";
+import { toAbsoluteAssetUrl } from "@/lib/assetUrl";
 
 const ROTATION_ACK_KEY = "link-rotation-acknowledged";
 
@@ -26,18 +28,19 @@ type FeaturedPlatform = {
 const FEATURED: FeaturedPlatform[] = [
   { name: "Netflix", aliases: ["netflix", "netmirror"], logo: netflixLogo, monogram: "N" },
   { name: "Prime Video", aliases: ["prime", "amazon"], logo: "", monogram: "prime video" },
-  { name: "Sky Sports", aliases: ["sky sports", "sky"], logo: skyLogo.url, monogram: "SKY" },
-  { name: "UEFA", aliases: ["uefa", "champions league", "ucl"], logo: uefaLogo.url, monogram: "UEFA" },
-  { name: "EPL", aliases: ["premier league", "epl"], logo: eplLogo.url, monogram: "EPL" },
-  { name: "LaLiga", aliases: ["laliga", "la liga"], logo: laligaLogo.url, monogram: "LALIGA" },
+  { name: "Sky Sports", aliases: ["sky sports", "sky"], logo: toAbsoluteAssetUrl(skyLogo.url), monogram: "SKY" },
+  { name: "UEFA", aliases: ["uefa", "champions league", "ucl"], logo: toAbsoluteAssetUrl(uefaLogo.url), monogram: "UEFA" },
+  { name: "EPL", aliases: ["premier league", "epl"], logo: toAbsoluteAssetUrl(eplLogo.url), monogram: "EPL" },
+  { name: "LaLiga", aliases: ["laliga", "la liga"], logo: toAbsoluteAssetUrl(laligaLogo.url), monogram: "LALIGA" },
 ];
 
 const keyFor = (link: ContentLink) => `${link.title.trim().toLowerCase()}|${link.platform}`;
 
 const WatchHub = ({ unlocked, onUnlockClick }: { unlocked: boolean; onUnlockClick: () => void }) => {
+  const navigate = useNavigate();
   const { categories, links, loading } = useContent();
   const [selected, setSelected] = useState<{ platform: FeaturedPlatform; links: ContentLink[] } | null>(null);
-  const [pendingUrl, setPendingUrl] = useState<string | null>(null);
+  const [pendingLink, setPendingLink] = useState<ContentLink | null>(null);
   const [moreOpen, setMoreOpen] = useState(false);
 
   const activeCategoryIds = useMemo(
@@ -66,25 +69,25 @@ const WatchHub = ({ unlocked, onUnlockClick }: { unlocked: boolean; onUnlockClic
   const usedIds = new Set(featuredGroups.flatMap((group) => group.links.map((link) => link.id)));
   const remaining = grouped.filter((group) => !group.some((link) => usedIds.has(link.id)));
 
-  const requestOpen = (url: string) => {
+  const requestOpen = (link: ContentLink) => {
     try {
       if (sessionStorage.getItem(ROTATION_ACK_KEY) === "1") {
-        void openExternalUrl(url);
+        navigate(watchPath(link.id));
         return;
       }
     } catch {
       // Private browsing can disable session storage; the notice remains available.
     }
     setSelected(null);
-    setPendingUrl(url);
+    setPendingLink(link);
   };
 
   const confirmOpen = () => {
-    const url = pendingUrl;
-    setPendingUrl(null);
-    if (!url) return;
+    const link = pendingLink;
+    setPendingLink(null);
+    if (!link) return;
     try { sessionStorage.setItem(ROTATION_ACK_KEY, "1"); } catch { /* no-op */ }
-    void openExternalUrl(url);
+    navigate(watchPath(link.id));
   };
 
   const choosePlatform = (platform: FeaturedPlatform, platformLinks: ContentLink[]) => {
@@ -159,7 +162,7 @@ const WatchHub = ({ unlocked, onUnlockClick }: { unlocked: boolean; onUnlockClic
           </DialogHeader>
           <div className="space-y-2">
             {selected?.links.length ? selected.links.map((link, index) => (
-              <Button key={link.id} className="h-11 w-full justify-between" onClick={() => requestOpen(link.url)}>
+              <Button key={link.id} className="h-11 w-full justify-between" onClick={() => requestOpen(link)}>
                 {selected.links.length > 1 ? `Open link ${index + 1}` : "Open platform"}<ExternalLink size={16} />
               </Button>
             )) : (
@@ -169,7 +172,7 @@ const WatchHub = ({ unlocked, onUnlockClick }: { unlocked: boolean; onUnlockClic
         </DialogContent>
       </Dialog>
 
-      <AlertDialog open={!!pendingUrl} onOpenChange={(open) => !open && setPendingUrl(null)}>
+      <AlertDialog open={!!pendingLink} onOpenChange={(open) => !open && setPendingLink(null)}>
         <AlertDialogContent className="border-border bg-popover">
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2"><RefreshCw size={17} className="text-primary" /> Streaming links are refreshed</AlertDialogTitle>

@@ -47,6 +47,7 @@ import InstallPrompt from "@/components/InstallPrompt";
 import NativeAppLifecycle from "@/components/NativeAppLifecycle";
 const Movies = lazy(() => import("./pages/Movies.tsx"));
 const TVSeries = lazy(() => import("./pages/TVSeries.tsx"));
+const Watch = lazy(() => import("./pages/Watch.tsx"));
 
 
 const queryClient = new QueryClient({
@@ -90,6 +91,7 @@ const AnimatedRoutes = () => {
         <Route path="/reset-password" element={<PageTransition><ResetPassword /></PageTransition>} />
         <Route path="/verify" element={<PageTransition><VerifyEmail /></PageTransition>} />
         <Route path="/dashboard" element={<SubscriberRoute><MemberDashboard /></SubscriberRoute>} />
+        <Route path="/watch/:linkId" element={<SubscriberRoute><Watch /></SubscriberRoute>} />
         <Route path="/terms" element={<PageTransition><Terms /></PageTransition>} />
         <Route path="/privacy" element={<PageTransition><Privacy /></PageTransition>} />
         <Route path="/admin/login" element={<AdminLogin />} />

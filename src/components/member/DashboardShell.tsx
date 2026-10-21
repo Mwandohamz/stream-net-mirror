@@ -19,6 +19,7 @@ import { DEFAULT_PROFILE_AVATAR } from "@/lib/profileAvatars";
 import moviesBackdrop from "@/assets/dashboard-movies.jpg";
 import footballBackdrop from "@/assets/dashboard-football.jpg";
 import logoAsset from "@/assets/brand/streamnetmirror-logo.png.asset.json";
+import { toAbsoluteAssetUrl } from "@/lib/assetUrl";
 
 export type DashboardTab = "dashboard" | "movies" | "watch" | "football" | "account";
 
@@ -43,7 +44,7 @@ const DashboardShell = ({ tab, onTabChange, children }: Props) => {
   const { profile } = useProfile();
   const { subscription } = useSubscriber();
   const accessEnd = subscription ? subscriptionAccessEnd(subscription) : null;
-  const backdrop = tab === "movies" ? moviesBackdrop : tab === "football" ? footballBackdrop : tab === "watch" ? logoAsset.url : null;
+  const backdrop = tab === "movies" ? moviesBackdrop : tab === "football" ? footballBackdrop : tab === "watch" ? toAbsoluteAssetUrl(logoAsset.url) : null;
 
   const initials = (profile?.full_name || profile?.email || "?")
     .split(" ")
@@ -75,10 +76,10 @@ const DashboardShell = ({ tab, onTabChange, children }: Props) => {
       {/* Top bar */}
       <header className="dashboard-topbar fixed top-0 left-0 right-0 z-40 h-14 border-b border-border bg-background/95 backdrop-blur">
         <div className="flex h-full items-center justify-between px-3 md:px-5">
-          <div className="flex items-center gap-2">
+          <Button variant="ghost" className="h-auto min-w-0 gap-2 px-0 hover:bg-transparent" aria-label="Go to dashboard home" onClick={() => onTabChange("dashboard")}>
             <LogoShowcase size="md" />
-            <span className="dashboard-heading text-sm font-bold md:text-base">STREAMNETMIRROR</span>
-          </div>
+            <span className="dashboard-heading min-w-0 truncate text-xs font-bold sm:text-sm md:text-base">STREAMNETMIRROR</span>
+          </Button>
 
           <div className="flex items-center gap-2">
             {accessEnd && <CountdownBadge target={accessEnd} prefix="Ends in" className="hidden sm:inline-flex" />}
@@ -86,7 +87,7 @@ const DashboardShell = ({ tab, onTabChange, children }: Props) => {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="h-10 gap-2 rounded-full border border-border p-1 pr-2" aria-label="Open profile menu">
                   <Avatar className="h-7 w-7">
-                    <AvatarImage src={profile?.avatar_url || DEFAULT_PROFILE_AVATAR} alt={profile?.full_name || "Profile"} />
+                    <AvatarImage src={toAbsoluteAssetUrl(profile?.avatar_url || DEFAULT_PROFILE_AVATAR)} alt={profile?.full_name || "Profile"} />
                     <AvatarFallback className="bg-secondary text-[11px]">{initials}</AvatarFallback>
                   </Avatar>
                   <span className="hidden sm:block max-w-[120px] truncate text-xs text-foreground">

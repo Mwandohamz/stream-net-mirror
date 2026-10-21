@@ -21,7 +21,8 @@
 - [x] Configure native splash, safe areas, system bars, keyboard, back navigation, and external links.
 - [x] Polish sign-in and sign-up for native mobile while preserving auth logic.
 - [x] Validate Android sync, type checks, tests, web build, and responsive auth screens.
-- [ ] Add entitlement-resolved in-app streaming and native webview playback.
-- [ ] Add admin playback controls and dashboard home logo action.
-- [ ] Normalize asset-pointer URLs for bundled native apps.
-- [ ] Test player flows and document native verification limitations.
+- [x] Add entitlement-resolved in-app streaming and native webview playback.
+- [x] Add admin playback controls and dashboard home logo action.
+- [x] Normalize asset-pointer URLs for bundled native apps.
+- [x] Test player flows and document native verification limitations.
+- [ ] Verify actual video playback on Android and with a paid member: requires a device APK and an authorized paid test account; available test session is admin-only.

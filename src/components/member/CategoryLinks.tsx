@@ -10,6 +10,8 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { openExternalUrl } from "@/lib/native";
+import { useNavigate } from "react-router-dom";
+import { isStreamingCategory, watchPath } from "@/lib/watchPlayback";
 
 const ROTATION_ACK_KEY = "link-rotation-acknowledged";
 
@@ -46,23 +48,27 @@ interface Props {
 }
 
 /** One card can carry several URLs for the same title — each becomes its own button. */
-const LinkCard = ({ links, unlocked, onUnlockClick }: { links: ContentLink[]; unlocked: boolean; onUnlockClick?: () => void }) => {
+const LinkCard = ({ links, slug, unlocked, onUnlockClick }: { links: ContentLink[]; slug: string; unlocked: boolean; onUnlockClick?: () => void }) => {
+  const navigate = useNavigate();
   const { toast } = useToast();
   const link = links[0];
-  const [pending, setPending] = useState<{ action: "open" | "copy"; url: string } | null>(null);
+  const [pending, setPending] = useState<{ action: "open" | "copy"; link: ContentLink } | null>(null);
 
-  const doOpen = (url: string) => { void openExternalUrl(url); };
+  const doOpen = (item: ContentLink) => {
+    if (isStreamingCategory(slug)) navigate(watchPath(item.id));
+    else void openExternalUrl(item.url);
+  };
   const doCopy = (url: string) => {
     void navigator.clipboard.writeText(url);
     toast({ title: "Link copied", description: link.title });
   };
 
-  const request = (action: "open" | "copy", url: string) => {
+  const request = (action: "open" | "copy", item: ContentLink) => {
     if (rotationAcknowledged()) {
-      action === "open" ? doOpen(url) : doCopy(url);
+      action === "open" ? doOpen(item) : doCopy(item.url);
       return;
     }
-    setPending({ action, url });
+    setPending({ action, link: item });
   };
 
   const confirm = () => {
@@ -70,8 +76,8 @@ const LinkCard = ({ links, unlocked, onUnlockClick }: { links: ContentLink[]; un
     const p = pending;
     setPending(null);
     if (!p) return;
-    if (p.action === "open") doOpen(p.url);
-    if (p.action === "copy") doCopy(p.url);
+    if (p.action === "open") doOpen(p.link);
+    if (p.action === "copy") doCopy(p.link.url);
   };
 
 
@@ -99,7 +105,7 @@ const LinkCard = ({ links, unlocked, onUnlockClick }: { links: ContentLink[]; un
                 key={l.id}
                 size="sm"
                 className="h-8 gap-1 bg-primary text-primary-foreground"
-                onClick={() => request("open", l.url)}
+                onClick={() => request("open", l)}
               >
                 <ExternalLink size={13} /> {links.length > 1 ? `Open link ${i + 1}` : "Open"}
               </Button>
@@ -108,7 +114,7 @@ const LinkCard = ({ links, unlocked, onUnlockClick }: { links: ContentLink[]; un
               size="sm"
               variant="outline"
               className="h-8 gap-1 border-border text-foreground"
-              onClick={() => request("copy", link.url)}
+              onClick={() => request("copy", link)}
             >
               <Copy size={13} /> Copy
             </Button>
@@ -187,7 +193,7 @@ const CategoryLinks = ({ slug, unlocked = true, onUnlockClick }: Props) => {
         ) : (
           <div className="grid gap-3 sm:grid-cols-2">
             {groups.map((g) => (
-              <LinkCard key={g[0].id} links={g} unlocked={unlocked} onUnlockClick={onUnlockClick} />
+              <LinkCard key={g[0].id} links={g} slug={slug} unlocked={unlocked} onUnlockClick={onUnlockClick} />
             ))}
           </div>
         )}
