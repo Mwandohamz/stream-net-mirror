@@ -10,7 +10,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { LayoutDashboard, Clapperboard, Trophy, LogOut, Settings, Home, CirclePlay } from "lucide-react";
+import { LayoutDashboard, Clapperboard, Trophy, LogOut, Settings, Home, CirclePlay, ChevronDown } from "lucide-react";
+import { LEAGUE_OPTIONS } from "@/lib/fixtures";
 import LogoShowcase from "@/components/LogoShowcase";
 import CountdownBadge from "@/components/CountdownBadge";
 import { supabase } from "@/integrations/supabase/client";
@@ -42,6 +43,16 @@ interface Props {
 /** App-style dashboard frame: sidebar on desktop, bottom bar on mobile. */
 const DashboardShell = ({ tab, onTabChange, children }: Props) => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeLeague = searchParams.get("league") ?? "all";
+  const [leaguesOpen, setLeaguesOpen] = useState(false);
+  const openLeague = (code: string) => {
+    const next = new URLSearchParams(searchParams);
+    if (code === "all") next.delete("league"); else next.set("league", code);
+    next.set("tab", "football");
+    setSearchParams(next, { replace: true });
+    onTabChange("football");
+  };
   const { profile } = useProfile();
   const { subscription } = useSubscriber();
   const accessEnd = subscription ? subscriptionAccessEnd(subscription) : null;
@@ -117,16 +128,48 @@ const DashboardShell = ({ tab, onTabChange, children }: Props) => {
           <p className="px-3 pb-3 pt-2 text-[10px] font-semibold uppercase text-muted-foreground/70">Member app</p>
           <nav className="space-y-1">
             {DASHBOARD_TABS.map((t) => (
-              <Button
-                variant="ghost"
-                key={t.id}
-                onClick={() => onTabChange(t.id)}
-                className={`h-11 w-full justify-start gap-3 rounded-lg px-3 text-sm transition-colors ${
-                  tab === t.id ? "bg-primary text-primary-foreground font-semibold" : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
-                }`}
-              >
-                <t.icon size={18} /> {t.label}
-              </Button>
+              <div key={t.id}>
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    onClick={() => onTabChange(t.id)}
+                    className={`h-11 min-w-0 flex-1 justify-start gap-3 rounded-lg px-3 text-sm transition-colors ${
+                      tab === t.id ? "bg-primary text-primary-foreground font-semibold" : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                    }`}
+                  >
+                    <t.icon size={18} /> {t.label}
+                  </Button>
+                  {t.id === "football" && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label="Show leagues"
+                      aria-expanded={leaguesOpen || tab === "football"}
+                      onClick={() => setLeaguesOpen((open) => !open)}
+                      className={`h-11 w-8 shrink-0 rounded-lg ${tab === "football" ? "text-primary" : "text-muted-foreground hover:text-foreground"}`}
+                    >
+                      <ChevronDown size={16} className={`transition-transform ${leaguesOpen || tab === "football" ? "rotate-180" : ""}`} />
+                    </Button>
+                  )}
+                </div>
+                {t.id === "football" && (leaguesOpen || tab === "football") && (
+                  <div className="ml-9 mt-1 space-y-0.5 border-l border-border pl-3">
+                    {LEAGUE_OPTIONS.map((league) => (
+                      <Button
+                        key={league.code}
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => openLeague(league.code)}
+                        className={`h-8 w-full justify-start rounded-md px-2 text-xs ${
+                          tab === "football" && activeLeague === league.code ? "bg-muted font-semibold text-foreground" : "text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        {league.label}
+                      </Button>
+                    ))}
+                  </div>
+                )}
+              </div>
             ))}
           </nav>
         </div>
