@@ -43,6 +43,6 @@ export default function UpcomingFixtures({ onUnlock }: { onUnlock?: () => void }
         <Button size="sm" className="shrink-0 gap-1.5" disabled={membership.loading} onClick={watch}><Play size={14} /> Watch</Button>
       </article>)}
     </div>}
-    <Dialog open={picker} onOpenChange={setPicker}><DialogContent className="max-h-[85dvh] max-w-2xl overflow-y-auto"><DialogHeader><DialogTitle>Choose a live sports platform</DialogTitle></DialogHeader><WatchHub sportsOnly unlocked={membership.isMember} onUnlockClick={() => navigate("/payment")} /></DialogContent></Dialog>
+    <Dialog open={picker} onOpenChange={setPicker}><DialogContent className="theme-dashboard max-h-[85dvh] max-w-2xl overflow-y-auto"><DialogHeader><DialogTitle>Choose a live sports platform</DialogTitle></DialogHeader><WatchHub sportsOnly unlocked={membership.isMember} onUnlockClick={() => navigate("/payment")} /></DialogContent></Dialog>
   </section>;
 }

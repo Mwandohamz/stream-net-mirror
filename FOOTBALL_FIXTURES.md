@@ -21,3 +21,5 @@ Before the API key is configured, authorized requests return HTTP 200 with `{ "s
 
 ## Verification limits
 Real upstream synchronization requires the API key; paid-member playback requires an authorized paid account. Do not mistake mocked fixture UI checks for upstream API or live-video verification.
+
+Verified: Deno compile and protected no-key tests; all 20 app tests; preview build; deployed anonymous call returns 401 and authorized admin call returns 200/no_api_key. Public real empty state renders. Mocked fixture rows verified All/La Liga filtering and Africa/Lusaka local time, with phone layout checks. Guest Watch navigated to signup; simulated unpaid Watch navigated to payment. The real admin session opened the sports-only WatchHub and existing Sky Sports link picker in the Football tab. No paid test account, upstream API key, or actual match video was available. The function is deployed; the production website was not published.
