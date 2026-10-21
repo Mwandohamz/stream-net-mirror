@@ -36,7 +36,7 @@ const FEATURED: FeaturedPlatform[] = [
 
 const keyFor = (link: ContentLink) => `${link.title.trim().toLowerCase()}|${link.platform}`;
 
-const WatchHub = ({ unlocked, onUnlockClick }: { unlocked: boolean; onUnlockClick: () => void }) => {
+const WatchHub = ({ unlocked, onUnlockClick, sportsOnly = false }: { unlocked: boolean; onUnlockClick: () => void; sportsOnly?: boolean }) => {
   const navigate = useNavigate();
   const { categories, links, loading } = useContent();
   const [selected, setSelected] = useState<{ platform: FeaturedPlatform; links: ContentLink[] } | null>(null);
@@ -44,8 +44,8 @@ const WatchHub = ({ unlocked, onUnlockClick }: { unlocked: boolean; onUnlockClic
   const [moreOpen, setMoreOpen] = useState(false);
 
   const activeCategoryIds = useMemo(
-    () => new Set(categories.filter((category) => ["netmirror", "live-sports"].includes(category.slug)).map((category) => category.id)),
-    [categories],
+    () => new Set(categories.filter((category) => (sportsOnly ? ["live-sports"] : ["netmirror", "live-sports"]).includes(category.slug)).map((category) => category.id)),
+    [categories, sportsOnly],
   );
   const relevantLinks = useMemo(() => links.filter((link) => activeCategoryIds.has(link.category_id)), [activeCategoryIds, links]);
 
@@ -58,13 +58,13 @@ const WatchHub = ({ unlocked, onUnlockClick }: { unlocked: boolean; onUnlockClic
     return [...groups.values()];
   }, [relevantLinks]);
 
-  const featuredGroups = useMemo(() => FEATURED.map((platform) => ({
+  const featuredGroups = useMemo(() => (sportsOnly ? FEATURED.slice(2) : FEATURED).map((platform) => ({
     platform,
     links: grouped.find((group) => {
       const searchable = `${group[0]?.title ?? ""} ${group[0]?.platform ?? ""}`.toLowerCase();
       return platform.aliases.some((alias) => searchable.includes(alias));
     }) ?? [],
-  })), [grouped]);
+  })), [grouped, sportsOnly]);
 
   const usedIds = new Set(featuredGroups.flatMap((group) => group.links.map((link) => link.id)));
   const remaining = grouped.filter((group) => !group.some((link) => usedIds.has(link.id)));
@@ -100,13 +100,13 @@ const WatchHub = ({ unlocked, onUnlockClick }: { unlocked: boolean; onUnlockClic
 
   return (
     <section className="space-y-5" aria-labelledby="watch-heading">
-      <div className="space-y-2">
+      {!sportsOnly && <div className="space-y-2">
         <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
           <span className="h-2 w-2 rounded-full bg-primary" /> Your streaming hub
         </div>
         <h1 id="watch-heading" className="dashboard-heading text-3xl leading-tight text-foreground md:text-5xl">What do you want to watch?</h1>
         <p className="max-w-xl text-sm text-muted-foreground md:text-base">Choose a platform. We keep its available links together and refresh them when they change.</p>
-      </div>
+      </div>}
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4">
         {featuredGroups.map(({ platform, links: platformLinks }) => (

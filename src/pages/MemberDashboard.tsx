@@ -19,6 +19,7 @@ import {
 import DashboardShell, { type DashboardTab } from "@/components/member/DashboardShell";
 import CategoryLinks from "@/components/member/CategoryLinks";
 import WatchHub from "@/components/member/WatchHub";
+import UpcomingFixtures from "@/components/UpcomingFixtures";
 import { useToast } from "@/hooks/use-toast";
 import { useAppSettings } from "@/hooks/useAppSettings";
 import { openDownloadUrl, openExternalUrl } from "@/lib/native";
@@ -547,11 +548,14 @@ const MemberDashboard = () => {
           )}
 
           {tab === "football" && (
+            <>
+            <UpcomingFixtures />
             <CategoryLinks
               slug="live-sports"
               unlocked={membership.isMember}
               onUnlockClick={() => navigate("/payment")}
             />
+            </>
           )}
 
           {tab === "account" && (<>
