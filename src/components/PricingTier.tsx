@@ -1,3 +1,4 @@
+import { toAbsoluteAssetUrl } from "@/lib/assetUrl";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -32,11 +33,11 @@ const ottPlatforms = [
 ];
 
 const defaultSportsLogos = [
-  { id: "premier-league", title: "Premier League", logo_url: premierLeague.url },
-  { id: "champions-league", title: "UEFA Champions League", logo_url: championsLeague.url },
-  { id: "la-liga", title: "LaLiga", logo_url: laLiga.url },
-  { id: "bundesliga", title: "Bundesliga", logo_url: bundesliga.url },
-  { id: "sky-sports", title: "Sky Sports", logo_url: skySports.url },
+  { id: "premier-league", title: "Premier League", logo_url: toAbsoluteAssetUrl(premierLeague.url) },
+  { id: "champions-league", title: "UEFA Champions League", logo_url: toAbsoluteAssetUrl(championsLeague.url) },
+  { id: "la-liga", title: "LaLiga", logo_url: toAbsoluteAssetUrl(laLiga.url) },
+  { id: "bundesliga", title: "Bundesliga", logo_url: toAbsoluteAssetUrl(bundesliga.url) },
+  { id: "sky-sports", title: "Sky Sports", logo_url: toAbsoluteAssetUrl(skySports.url) },
 ];
 
 const baseFeatures = [

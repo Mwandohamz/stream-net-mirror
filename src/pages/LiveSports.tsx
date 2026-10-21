@@ -1,3 +1,4 @@
+import { toAbsoluteAssetUrl } from "@/lib/assetUrl";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import Navbar from "@/components/Navbar";
@@ -19,31 +20,31 @@ import sky from "@/assets/sports/sky-sports-football.jpg.asset.json";
 const LEAGUES = [
   {
     name: "UEFA Champions League",
-    logo: ucl.url,
+    logo: toAbsoluteAssetUrl(ucl.url),
     tag: "Tuesdays & Wednesdays",
     blurb: "Europe's biggest nights — Real Madrid, Bayern, City and PSG. Miss one goal and the whole group is talking about it tomorrow.",
   },
   {
     name: "Premier League",
-    logo: epl.url,
+    logo: toAbsoluteAssetUrl(epl.url),
     tag: "Every weekend",
     blurb: "All 380 matches, from the Manchester derby to a relegation six-pointer. No blackouts, no cable bill, no waiting for highlights.",
   },
   {
     name: "LaLiga",
-    logo: laliga.url,
+    logo: toAbsoluteAssetUrl(laliga.url),
     tag: "Spanish football",
     blurb: "El Clásico, the Madrid derby and the finest technical football on earth — live, in your language, on any device.",
   },
   {
     name: "Bundesliga",
-    logo: bundesliga.url,
+    logo: toAbsoluteAssetUrl(bundesliga.url),
     tag: "Goals guaranteed",
     blurb: "The highest-scoring league in Europe and the loudest stands in the world. Der Klassiker is unmissable.",
   },
   {
     name: "Sky Sports Football",
-    logo: sky.url,
+    logo: toAbsoluteAssetUrl(sky.url),
     tag: "Round-the-clock",
     blurb: "Match build-up, EFL action, transfer news and analysis running all day — the channel fans keep on in the background.",
   },

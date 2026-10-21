@@ -1,3 +1,4 @@
+import { toAbsoluteAssetUrl } from "@/lib/assetUrl";
 import { Check } from "lucide-react";
 import { PROFILE_AVATARS } from "@/lib/profileAvatars";
 
@@ -10,7 +11,7 @@ interface ProfileAvatarPickerProps {
 const ProfileAvatarPicker = ({ value, onChange, disabled = false }: ProfileAvatarPickerProps) => (
   <div className="grid grid-cols-5 gap-2" role="radiogroup" aria-label="Choose a profile avatar">
     {PROFILE_AVATARS.map((avatar) => {
-      const selected = value === avatar.url;
+      const selected = toAbsoluteAssetUrl(value) === avatar.url;
       return (
         <button
           key={avatar.id}
