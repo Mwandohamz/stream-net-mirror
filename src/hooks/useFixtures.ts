@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { FIXTURE_CACHE_MS, FIXTURE_LIMIT, FIXTURE_LOOKBACK_MS } from "@/lib/fixtures";
 
