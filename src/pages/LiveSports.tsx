@@ -9,6 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Trophy, ShieldCheck, Globe, RefreshCw, Play, Radio } from "lucide-react";
 import { useContent } from "@/hooks/useContent";
 import { useMembership } from "@/hooks/useMembership";
+import UpcomingFixtures from "@/components/UpcomingFixtures";
 
 import ucl from "@/assets/sports/uefa-champions-league.jpg.asset.json";
 import epl from "@/assets/sports/premier-league.jpg.asset.json";
@@ -67,7 +68,7 @@ const LiveSports = () => {
       }))
     : LEAGUES;
 
-  const go = () => navigate(isMember ? "/dashboard?tab=football" : "/signup");
+  const go = () => navigate(isMember ? "/dashboard?tab=football" : ctaHref);
 
   return (
     <div className="theme-sports min-h-screen bg-background">
@@ -88,6 +89,7 @@ const LiveSports = () => {
           </Button>
         </header>
 
+        <div className="mx-auto mt-8 max-w-5xl"><UpcomingFixtures onUnlock={go} /></div>
         <section className="mx-auto mt-10 grid max-w-5xl gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {cards.map((l, i) => (
             <motion.div

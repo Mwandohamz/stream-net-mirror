@@ -1,5 +1,7 @@
 # Architecture rules
 
+- Fixtures are public cached metadata synced only by the protected football-fixtures function; fixture Watch actions reuse the live-sports platform picker and never create per-match stream URLs.
+
 - Signup and all verification resends share `src/lib/emailVerification.ts` to land on the public `/verify` route and preserve safe internal checkout destinations on success.
 - Streaming buttons route to the authenticated Watch page, which resolves current URLs with `resolve_watch_link`; cached content URLs are not player authority.
 - Native streams use a sized, toolbar-less Capgo WebView below the React header; never pass app credentials or inject the Capacitor bridge into third-party content.

@@ -1,5 +1,8 @@
 # Implementation roadmap
 
+- [ ] Add protected football-data fixtures sync, cached fixtures, both sports views, and Watch picker integration.
+- [ ] Verify no-key behavior, authorization, fixture filters/local times, empty states, and Watch navigation.
+
 - [x] Replace Payments and Customers fragile reads with trusted cached admin data.
 - [x] Simplify Users table and preserve full details/actions in a view dialog.
 - [x] Show plan billing intervals accurately and default public selection to monthly.
