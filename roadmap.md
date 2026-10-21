@@ -2,7 +2,9 @@
 
 - [x] Add protected football-data fixtures sync, cached fixtures, both sports views, and Watch picker integration.
 - [x] Verify no-key behavior, authorization, fixture filters/local times, empty states, and Watch navigation.
-- [ ] Populate real fixtures and verify paid-member fixture playback: waiting for FOOTBALL_DATA_API_KEY, scheduled FIXTURES_SYNC_SECRET setup, and authorized paid test account.
+- [x] Populate real fixtures from the football-data API (PL 310, CL 99, PD 291) and verify 10-minute sync rate limiting.
+- [x] Replace the fixture league filter with top tab navigation and a sidebar league dropdown, and open the sports link picker from each fixture Watch button.
+- [ ] Verify paid-member fixture playback: requires an authorized paid test account.
 
 - [x] Replace Payments and Customers fragile reads with trusted cached admin data.
 - [x] Simplify Users table and preserve full details/actions in a view dialog.
