@@ -21,3 +21,7 @@
 - [x] Configure native splash, safe areas, system bars, keyboard, back navigation, and external links.
 - [x] Polish sign-in and sign-up for native mobile while preserving auth logic.
 - [x] Validate Android sync, type checks, tests, web build, and responsive auth screens.
+- [ ] Add entitlement-resolved in-app streaming and native webview playback.
+- [ ] Add admin playback controls and dashboard home logo action.
+- [ ] Normalize asset-pointer URLs for bundled native apps.
+- [ ] Test player flows and document native verification limitations.
