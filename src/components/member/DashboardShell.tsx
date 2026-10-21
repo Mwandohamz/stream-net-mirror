@@ -78,7 +78,7 @@ const DashboardShell = ({ tab, onTabChange, children }: Props) => {
         <div className="flex h-full items-center justify-between px-3 md:px-5">
           <Button variant="ghost" className="h-auto min-w-0 gap-2 px-0 hover:bg-transparent" aria-label="Go to dashboard home" onClick={() => onTabChange("dashboard")}>
             <LogoShowcase size="md" />
-            <span className="dashboard-heading text-sm font-bold md:text-base">STREAMNETMIRROR</span>
+            <span className="dashboard-heading min-w-0 truncate text-xs font-bold sm:text-sm md:text-base">STREAMNETMIRROR</span>
           </Button>
 
           <div className="flex items-center gap-2">

@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useContent, type ContentCategory, type ContentLink } from "@/hooks/useContent";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { normalizeEmbedMode } from "@/lib/watchPlayback";
+import { toAbsoluteAssetUrl } from "@/lib/assetUrl";
 
 const PLATFORMS = ["web", "android", "ios", "tv", "software"];
 
@@ -266,7 +267,7 @@ const AdminContent = () => {
                             title: l.title,
                             description: l.description ?? "",
                             url: l.url,
-                            logo_url: l.logo_url ?? "",
+                            logo_url: l.logo_url ? toAbsoluteAssetUrl(l.logo_url) : "",
                             platform: l.platform,
                             sort_order: l.sort_order,
                             is_active: l.is_active,

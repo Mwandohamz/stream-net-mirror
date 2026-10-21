@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { toAbsoluteAssetUrl } from "@/lib/assetUrl";
 
 type ContentSnapshot = { categories: ContentCategory[]; links: ContentLink[]; at: number };
 const contentCache = new Map<string, ContentSnapshot>();
@@ -58,7 +59,9 @@ export function useContent(includeInactive = false) {
 
     const [cats, lks] = await Promise.all([catQuery, linkPromise]);
     const nextCategories = ((cats.data as any[]) ?? []) as ContentCategory[];
-    const nextLinks = ((lks.data as any[]) ?? []) as ContentLink[];
+    const nextLinks = (((lks.data as any[]) ?? []) as ContentLink[]).map((link) => ({
+      ...link, logo_url: link.logo_url ? toAbsoluteAssetUrl(link.logo_url) : null,
+    }));
     contentCache.set(cacheKey, { categories: nextCategories, links: nextLinks, at: Date.now() });
     setCategories(nextCategories);
     setLinks(nextLinks);
