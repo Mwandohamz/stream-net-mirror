@@ -121,7 +121,14 @@ const Watch = () => {
   }, [source, nativeView, close]);
 
   useEffect(() => {
-    const changed = () => setFullscreen(Boolean(document.fullscreenElement));
+    const changed = () => {
+      const active = document.fullscreenElement;
+      setFullscreen(Boolean(active));
+      // A site's own fullscreen request must not hide our persistent header.
+      if (active && active !== container.current) {
+        void document.exitFullscreen().then(() => container.current?.requestFullscreen()).catch(() => undefined);
+      }
+    };
     document.addEventListener("fullscreenchange", changed);
     return () => { document.removeEventListener("fullscreenchange", changed); };
   }, []);
