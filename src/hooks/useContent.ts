@@ -25,6 +25,8 @@ export interface ContentLink {
   platform: string;
   sort_order: number;
   is_active: boolean;
+  embed_mode?: string;
+  allow_fullscreen?: boolean;
 }
 
 /**

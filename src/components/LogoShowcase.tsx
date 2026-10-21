@@ -1,9 +1,9 @@
 interface LogoShowcaseProps {
-  size?: "md" | "lg";
+  size?: "sm" | "md" | "lg";
 }
 
 const LogoShowcase = ({ size = "md" }: LogoShowcaseProps) => {
-  const sizeClass = size === "lg" ? "h-16 w-16 md:h-20 md:w-20" : "h-10 w-10 md:h-14 md:w-14";
+  const sizeClass = size === "sm" ? "h-8 w-8" : size === "lg" ? "h-16 w-16 md:h-20 md:w-20" : "h-10 w-10 md:h-14 md:w-14";
 
   return (
     <img
