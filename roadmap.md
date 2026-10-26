@@ -1,5 +1,12 @@
 # Roadmap — dashboard native polish + in-app streaming + APK downloads
 
+## Current request
+- [ ] Mobile sidebar and gradient Play action
+- [ ] Account transaction/subscription history and in-app notification inbox
+- [ ] Animated native launch using existing icon/movie/football assets
+- [ ] Separate own-app APK upload from legacy external APK; signed release APK workflow and instructions
+- [ ] Tests and signed-in mobile validation
+
 - [x] Swap dashboard tab icons: House for Home, ball for Football (bottom nav + sidebar)
 - [x] Login/signup/account creation → straight to /dashboard (already in place, verified)
 - [x] All stream links open inside the app; removed external-open options; iframe back button + platform switcher + popup/redirect blocking
