@@ -20,7 +20,9 @@ serve(async (req) => {
     .maybeSingle();
 
   const fileName = setting?.value;
-  if (!fileName || !/^downloads\/streamnetmirror-own-[a-zA-Z0-9-]+\.apk$/.test(fileName)) return json({ error: "Stream NetMirror APK has not been uploaded yet" }, 404);
+  const valid = typeof fileName === "string" &&
+    (/^downloads\/streamnetmirror-own-[a-zA-Z0-9-]+\.apk$/.test(fileName) || /^app-(debug|release)\.apk$/.test(fileName));
+  if (!valid) return json({ error: "Stream NetMirror APK has not been uploaded yet" }, 404);
 
   let platform: string | null = null;
   let userId: string | null = null;
