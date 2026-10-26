@@ -1,34 +1,11 @@
-# Implementation roadmap
+# Roadmap — dashboard native polish + in-app streaming + APK downloads
 
-- [x] Add protected football-data fixtures sync, cached fixtures, both sports views, and Watch picker integration.
-- [x] Verify no-key behavior, authorization, fixture filters/local times, empty states, and Watch navigation.
-- [x] Populate real fixtures from the football-data API (PL 310, CL 99, PD 291) and verify 10-minute sync rate limiting.
-- [x] Replace the fixture league filter with top tab navigation and a sidebar league dropdown, and open the sports link picker from each fixture Watch button.
-- [ ] Verify paid-member fixture playback: requires an authorized paid test account.
-
-- [x] Replace Payments and Customers fragile reads with trusted cached admin data.
-- [x] Simplify Users table and preserve full details/actions in a view dialog.
-- [x] Show plan billing intervals accurately and default public selection to monthly.
-- [x] Restore Live Sports images on mobile plan cards.
-- [x] Add session-based link rotation confirmation before open/copy.
-- [x] Improve payment success and failure feedback with accurate reasons.
-- [x] Add secure targeted account-email selection, filters, editable templates, and activity logging.
-- [x] Replace bulk link textarea with reliable multiple URL fields per content item.
-- [x] Deploy changed backend functions and verify database and build.
-- [x] Rebrand the member dashboard with five destinations and a central Watch action.
-- [x] Add the six-platform Watch hub with paid/unpaid link handling.
-- [x] Verify the redesigned member dashboard on mobile and desktop.
-- [x] Replace the old branding with the supplied circular streaming logo and install icons.
-- [x] Add five profile avatars with signup selection, account switching, and a default choice.
-- [x] Add layered red, blue, and magenta dashboard styling with movie and football artwork.
-- [x] Show all active plans when an unpaid member opens payment.
-- [x] Cache shared member content, plans, profile, and settings for faster section changes.
-- [x] Add Capacitor foundation and Android project without changing web behavior.
-- [x] Configure native splash, safe areas, system bars, keyboard, back navigation, and external links.
-- [x] Polish sign-in and sign-up for native mobile while preserving auth logic.
-- [x] Validate Android sync, type checks, tests, web build, and responsive auth screens.
-- [x] Add entitlement-resolved in-app streaming and native webview playback.
-- [x] Add admin playback controls and dashboard home logo action.
-- [x] Normalize asset-pointer URLs for bundled native apps.
-- [x] Test player flows and document native verification limitations.
-- [ ] Verify actual video playback on Android and with a paid member: requires a device APK and an authorized paid test account; available test session is admin-only.
+- [x] Swap dashboard tab icons: House for Home, ball for Football (bottom nav + sidebar)
+- [x] Login/signup/account creation → straight to /dashboard (already in place, verified)
+- [x] All stream links open inside the app; removed external-open options; iframe back button + platform switcher + popup/redirect blocking
+- [x] APK download for everyone, tracked downloads (device/time) visible in admin Settings
+- [x] LIVE badge on live football fixtures
+- [x] Reduced dashboard text; compact link-rotation notice
+- [x] Profile section redesign (gradient header, centered avatar, info rows, plan status); sidebar Download App button with Android-warning dialog
+- [x] Play-icon loading indicator replacing spinners
+- [x] Verified: typecheck, 20 tests, build OK, signed-in desktop + mobile browser pass, download endpoint returns signed APK URL and logs the download

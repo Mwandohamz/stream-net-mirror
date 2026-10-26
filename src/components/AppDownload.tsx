@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
-import { Download, Globe, Smartphone, Monitor } from "lucide-react";
+import { Globe, Smartphone, Monitor } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import ApkDownloadButton from "@/components/ApkDownloadButton";
 
 const AppDownload = () => {
   return (
@@ -17,14 +18,14 @@ const AppDownload = () => {
               DOWNLOAD THE APP
             </h2>
             <p className="text-xs md:text-lg text-muted-foreground mb-4 md:mb-6">
-              Get Stream Net Mirror on your favourite device. Available on Android, iOS via WebView, Smart TVs, and web browsers.
+              Get StreamNetMirror on your favourite device. Free app for Android phones and TVs — no account needed to download.
             </p>
 
             <div className="space-y-3 md:space-y-4 mb-5 md:mb-8">
               {[
-                { Icon: Smartphone, title: "Android APK", desc: "Download directly from our website or Play Store" },
+                { Icon: Smartphone, title: "Android APK", desc: "Download directly from our website" },
                 { Icon: Monitor, title: "iOS (WebView)", desc: "Use DODO or iOSMirror for app-like experience" },
-                { Icon: Globe, title: "Web Browser", desc: "Stream directly at netmirror.vip from any browser" },
+                { Icon: Globe, title: "Web Browser", desc: "Stream directly at streamnetmirror.app from any browser" },
               ].map(({ Icon, title, desc }) => (
                 <div key={title} className="flex items-center gap-2 md:gap-3">
                   <Icon className="w-4 h-4 md:w-5 md:h-5 text-primary flex-shrink-0" />
@@ -37,10 +38,8 @@ const AppDownload = () => {
             </div>
 
             <div className="flex flex-wrap gap-2 md:gap-3">
-              <Button className="bg-primary text-primary-foreground hover:bg-primary/80 gap-1.5 text-xs md:text-sm h-9 md:h-10 active:scale-95 transition-transform">
-                <Download className="w-3.5 h-3.5 md:w-4 md:h-4" /> Download APK
-              </Button>
-              <Button variant="outline" className="border-border text-foreground hover:bg-secondary gap-1.5 text-xs md:text-sm h-9 md:h-10 active:scale-95 transition-transform">
+              <ApkDownloadButton className="gap-1.5 text-xs md:text-sm h-9 md:h-10" />
+              <Button variant="outline" className="border-border text-foreground hover:bg-secondary gap-1.5 text-xs md:text-sm h-9 md:h-10 active:scale-95 transition-transform" onClick={() => { window.location.href = "/signin"; }}>
                 <Globe className="w-3.5 h-3.5 md:w-4 md:h-4" /> Stream on Web
               </Button>
             </div>

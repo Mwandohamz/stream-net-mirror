@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Loader2, Play } from "lucide-react";
+import { Play } from "lucide-react";
+import PlayLoader from "@/components/PlayLoader";
 import { useFixtures, type Fixture } from "@/hooks/useFixtures";
 import { useMembership } from "@/hooks/useMembership";
 import { fixtureStatus, fixturesWatchDestination, formatKickoff, LEAGUE_OPTIONS } from "@/lib/fixtures";
@@ -39,10 +40,10 @@ export default function UpcomingFixtures({ onUnlock }: { onUnlock?: () => void }
         {LEAGUE_OPTIONS.map(option => <TabsTrigger key={option.code} value={option.code} className="text-xs sm:text-sm">{option.label}</TabsTrigger>)}
       </TabsList>
     </Tabs>
-    {loading ? <div className="flex items-center gap-2 py-6 text-sm text-muted-foreground"><Loader2 size={18} className="animate-spin" /> Loading fixtures…</div> : error ? <p role="status" className="py-6 text-sm text-muted-foreground">Fixtures are temporarily unavailable.</p> : fixtures.length === 0 ? <p role="status" className="py-6 text-sm text-muted-foreground">Fixtures update shortly</p> : <div className="divide-y divide-border border-y border-border">
+    {loading ? <div className="flex justify-center py-10"><PlayLoader label="Loading fixtures" size={48} /></div> : error ? <p role="status" className="py-6 text-sm text-muted-foreground">Fixtures are temporarily unavailable.</p> : fixtures.length === 0 ? <p role="status" className="py-6 text-sm text-muted-foreground">Fixtures update shortly</p> : <div className="divide-y divide-border border-y border-border">
       {fixtures.map(fixture => <article key={fixture.id} className="flex flex-wrap items-center gap-3 py-4">
         <div className="min-w-0 flex-1 space-y-2">
-          <div className="flex flex-wrap items-center gap-2"><Badge variant="outline">{LEAGUE_OPTIONS.find(o => o.code === fixture.competition_code)?.label ?? fixture.competition_name}</Badge><Badge variant={fixtureStatus(fixture.status) === "Live" ? "default" : "secondary"}>{fixtureStatus(fixture.status)}</Badge></div>
+          <div className="flex flex-wrap items-center gap-2"><Badge variant="outline">{LEAGUE_OPTIONS.find(o => o.code === fixture.competition_code)?.label ?? fixture.competition_name}</Badge>{fixtureStatus(fixture.status) === "Live" ? <Badge className="gap-1.5 bg-destructive text-destructive-foreground"><span className="relative flex h-2 w-2"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-current opacity-75" /><span className="relative inline-flex h-2 w-2 rounded-full bg-current" /></span>LIVE</Badge> : <Badge variant="secondary">{fixtureStatus(fixture.status)}</Badge>}</div>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm font-semibold text-foreground">
             <span className="flex min-w-0 items-center gap-2">{fixture.home_crest_url && <img src={fixture.home_crest_url} alt="" loading="lazy" className="h-6 w-6 shrink-0 object-contain" onError={e => { e.currentTarget.hidden = true; }} />}<span className="break-words">{fixture.home_team}</span></span>
             <span className="text-xs text-muted-foreground">vs</span>

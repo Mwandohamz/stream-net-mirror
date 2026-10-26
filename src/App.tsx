@@ -44,6 +44,7 @@ import Support from "./pages/Support.tsx";
 import LiveSports from "./pages/LiveSports.tsx";
 import OAuthConsent from "./pages/OAuthConsent.tsx";
 import InstallPrompt from "@/components/InstallPrompt";
+import PlayLoader from "@/components/PlayLoader";
 import NativeAppLifecycle from "@/components/NativeAppLifecycle";
 const Movies = lazy(() => import("./pages/Movies.tsx"));
 const TVSeries = lazy(() => import("./pages/TVSeries.tsx"));
@@ -77,7 +78,7 @@ const AnimatedRoutes = () => {
       <Suspense
         fallback={
           <div className="min-h-screen bg-background flex items-center justify-center">
-            <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+            <PlayLoader />
           </div>
         }
       >

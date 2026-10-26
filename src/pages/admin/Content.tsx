@@ -420,7 +420,6 @@ const AdminContent = () => {
                 <SelectContent>
                   <SelectItem value="iframe">In-app (iframe)</SelectItem>
                   <SelectItem value="webview">In-app (native webview)</SelectItem>
-                  <SelectItem value="external">External browser</SelectItem>
                 </SelectContent>
               </Select>
             </div>

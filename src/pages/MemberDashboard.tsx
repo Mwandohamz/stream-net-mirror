@@ -11,7 +11,7 @@ import AccountOverviewCard from "@/components/member/AccountOverviewCard";
 import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
 import {
-  ExternalLink, Download, Globe, Smartphone, Monitor,
+  ExternalLink, Globe, Smartphone, Monitor,
   MessageCircle, Send, LogOut, Play, ChevronRight,
   AlertTriangle, CheckCircle2, Info, RefreshCw, Laptop, Lock, Eye, EyeOff, Settings,
   Copy, Share2
@@ -22,18 +22,8 @@ import WatchHub from "@/components/member/WatchHub";
 import UpcomingFixtures from "@/components/UpcomingFixtures";
 import { useToast } from "@/hooks/use-toast";
 import { useAppSettings } from "@/hooks/useAppSettings";
-import { openDownloadUrl, openExternalUrl } from "@/lib/native";
-
-
-/** App downloads are members-only, so fetch a short-lived signed link on demand. */
-async function openApkDownload(fileName: string) {
-  const { data, error } = await supabase.storage
-    .from("app-files")
-    .createSignedUrl(fileName, 300, { download: true });
-  if (error || !data?.signedUrl) return false;
-  await openDownloadUrl(data.signedUrl);
-  return true;
-}
+import { openExternalUrl } from "@/lib/native";
+import ApkDownloadButton from "@/components/ApkDownloadButton";
 
 interface Ticket {
   id: string;
@@ -247,7 +237,7 @@ const MemberDashboard = () => {
                   Welcome back{userName ? `, ${userName.split(" ")[0]}` : ""}
                 </h1>
                 <p className="text-sm text-muted-foreground">
-                  Everything you need — streaming links, live sports and downloads — in one place.
+                  Streaming, live sports and downloads — in one place.
                 </p>
               </div>
 
@@ -315,28 +305,11 @@ const MemberDashboard = () => {
             </Card>
           )}
 
-          {/* Important Notice */}
-          <Card className="bg-accent/10 border-accent/30 border-2">
-            <CardContent className="p-4 md:p-6 space-y-3">
-              <div className="flex items-center gap-2">
-                <Info size={20} className="text-accent-foreground shrink-0" />
-                <h2 className="netflix-title text-base md:text-lg text-foreground">IMPORTANT — PLEASE READ</h2>
-              </div>
-              <div className="space-y-2 text-xs md:text-sm text-muted-foreground leading-relaxed">
-                <p>
-                  <strong className="text-foreground">StreamNetMirror</strong> facilitates easy, cheap, <strong className="text-foreground">affordable streaming access</strong> by mirroring popular platforms like Netflix, Disney+, HBO Max and more — all in one place for one low subscription.
-                </p>
-                <p>
-                  <AlertTriangle size={14} className="inline text-primary mr-1" />
-                  <strong className="text-foreground">Links may change or temporarily go down</strong> — especially for <strong className="text-foreground">iOS / WebView / browser users</strong>. If a link stops working, simply <strong className="text-foreground">come back to this dashboard</strong> to get the latest refreshed links.
-                </p>
-                <p>
-                  <RefreshCw size={14} className="inline text-primary mr-1" />
-                  Occasional lags or downtime are normal. We continuously update links and mirrors to keep everything working for as long as your membership is active.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+          {/* Link-rotation notice */}
+          <div className="flex items-center gap-2 rounded-lg border border-border bg-card/60 px-3 py-2.5 text-xs text-muted-foreground">
+            <RefreshCw size={14} className="shrink-0 text-primary" />
+            <p>Links refresh regularly — if one stops working, come back here for the latest.</p>
+          </div>
           </>)}
 
           {tab === "watch" && (
@@ -418,29 +391,7 @@ const MemberDashboard = () => {
                   <Smartphone size={24} className="text-primary mx-auto mb-2 mt-2" />
                   <p className="text-foreground font-medium text-sm">Android APK</p>
                   <p className="text-xs text-muted-foreground mb-3">Best experience — direct download</p>
-                  {settings.apk_file_name ? (
-                    <Button
-                      size="sm"
-                      className="w-full bg-primary text-primary-foreground gap-1"
-                      onClick={async () => {
-                        if (!membership.isMember) {
-                          navigate("/payment");
-                          return;
-                        }
-                        const ok = await openApkDownload(settings.apk_file_name);
-                        if (!ok) toast({ title: "Download unavailable", description: "We couldn't prepare the download. Please try again shortly.", variant: "destructive" });
-                      }}
-                    >
-                      {membership.isMember ? <Download size={14} /> : <Lock size={14} />}
-                      {membership.isMember ? "Download APK" : "Unlock download"}
-                    </Button>
-                  ) : (
-                    <a href={portalUrl} target="_blank" rel="noopener noreferrer">
-                      <Button size="sm" className="w-full bg-primary text-primary-foreground gap-1">
-                        <Download size={14} /> Download
-                      </Button>
-                    </a>
-                  )}
+                  <ApkDownloadButton className="w-full gap-1" />
                 </div>
 
                 {/* Web Browser */}
@@ -519,22 +470,7 @@ const MemberDashboard = () => {
                   </p>
                 </div>
                 {settings.apk_file_name ? (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="w-full mt-3 border-green-500/30 text-foreground gap-1 hover:bg-green-500/10"
-                    onClick={async () => {
-                      if (!membership.isMember) {
-                        navigate("/payment");
-                        return;
-                      }
-                      const ok = await openApkDownload(settings.apk_file_name);
-                      if (!ok) toast({ title: "Download unavailable", description: "We couldn't prepare the download. Please try again shortly.", variant: "destructive" });
-                    }}
-                  >
-                    {membership.isMember ? <Download size={14} className="text-green-400" /> : <Lock size={14} />}
-                    {membership.isMember ? "Download TV APK" : "Unlock TV download"}
-                  </Button>
+                  <ApkDownloadButton label="Download TV APK" variant="outline" className="mt-3 w-full gap-1 border-green-500/30 hover:bg-green-500/10" />
                 ) : (
                   <a href={portalUrl} target="_blank" rel="noopener noreferrer" className="block mt-3">
                     <Button size="sm" variant="outline" className="w-full border-green-500/30 text-foreground gap-1 hover:bg-green-500/10">

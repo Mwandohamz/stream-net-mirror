@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { ChevronDown, ExternalLink, Link2, Lock, Play, RefreshCw } from "lucide-react";
+import { ChevronDown, Link2, Lock, Play, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
@@ -163,7 +163,7 @@ const WatchHub = ({ unlocked, onUnlockClick, sportsOnly = false }: { unlocked: b
           <div className="space-y-2">
             {selected?.links.length ? selected.links.map((link, index) => (
               <Button key={link.id} className="h-11 w-full justify-between" onClick={() => requestOpen(link)}>
-                {selected.links.length > 1 ? `Open link ${index + 1}` : "Open platform"}<ExternalLink size={16} />
+                {selected.links.length > 1 ? `Open link ${index + 1}` : "Open platform"}<Play size={16} className="fill-current" />
               </Button>
             )) : (
               <div className="rounded-lg border border-border bg-secondary p-4 text-sm text-muted-foreground">No active link is published for this platform yet. Please check More platforms or try again later.</div>

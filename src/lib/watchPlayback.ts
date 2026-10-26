@@ -1,7 +1,8 @@
 export type EmbedMode = "iframe" | "webview" | "external";
 
+// All playback stays inside the app: a legacy "external" mode is embedded too.
 export const normalizeEmbedMode = (mode: string | null | undefined): EmbedMode =>
-  mode === "webview" || mode === "external" ? mode : "iframe";
+  mode === "webview" ? mode : "iframe";
 
 export const isStreamingCategory = (slug: string): boolean =>
   slug === "netmirror" || slug === "live-sports";

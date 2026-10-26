@@ -9,9 +9,9 @@ describe("in-app playback rules", () => {
     expect(isStreamingCategory("downloads")).toBe(false);
     expect(isStreamingCategory("software")).toBe(false);
   });
-  it("preserves admin escape hatches and defaults to iframe", () => {
+  it("keeps every stream inside the app and defaults to iframe", () => {
     expect(normalizeEmbedMode("webview")).toBe("webview");
-    expect(normalizeEmbedMode("external")).toBe("external");
+    expect(normalizeEmbedMode("external")).toBe("iframe");
     expect(normalizeEmbedMode(undefined)).toBe("iframe");
     expect(normalizeEmbedMode("unknown")).toBe("iframe");
   });
