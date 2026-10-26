@@ -1,8 +1,8 @@
 # Roadmap — dashboard native polish + in-app streaming + APK downloads
 
 ## Current request
-- [ ] Native-only entry routing: splash → login/signup → dashboard, no website landing pages
-- [ ] Verify native launch/session routing and preserve website behavior; document APK rebuild
+- [x] Native-only entry routing: splash → login/signup → dashboard, no website landing pages
+- [x] Verified 26 tests and clean preview compilation; browser-emulated native splash/signup/saved-session dashboard and unchanged web homepage; documented APK rebuild (real-device check still manual)
 - [x] Mobile sidebar and gradient Play action
 - [x] Account transaction/subscription history and in-app notification inbox (existing account records, not push notifications)
 - [x] Animated native launch using existing icon/movie/football assets
