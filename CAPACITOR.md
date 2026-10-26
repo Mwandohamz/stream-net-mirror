@@ -74,6 +74,7 @@ privacy policy URL, content rating, and enabling Play App Signing.
 ### Native experience
 - Existing branded launcher icons and system splash resources are retained.
 - A brief animated movie/football launch follows the static Android system splash. It respects reduced-motion settings and does not replay on resume.
+- Native launches never render the website homepage. New/signed-out users see Sign In with Create Account; returning signed-in users go straight to dashboard Home. Email verification is still required when enabled. Native public Movies/Series/Football links open the matching dashboard section, while checkout, password recovery and support stay available. Android Back minimizes the app from Sign In or dashboard Home.
 - The in-app bell shows existing subscription status and support-ticket updates. It is not background push messaging; no new phone permissions or push service were added.
 - Account transaction history lists existing payments and subscription periods using the account's existing access rules.
 - For local changes, first `git pull`, then install dependencies, build the web app and run `npx cap sync android`. GitHub Actions does this automatically.
