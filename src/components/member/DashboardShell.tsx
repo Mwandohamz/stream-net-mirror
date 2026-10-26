@@ -10,7 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { LayoutDashboard, Clapperboard, Trophy, LogOut, Settings, Home, CirclePlay, ChevronDown } from "lucide-react";
+import { Clapperboard, Volleyball, LogOut, Settings, Home, CirclePlay, ChevronDown, Download } from "lucide-react";
 import { LEAGUE_OPTIONS } from "@/lib/fixtures";
 import LogoShowcase from "@/components/LogoShowcase";
 import CountdownBadge from "@/components/CountdownBadge";
@@ -22,14 +22,15 @@ import moviesBackdrop from "@/assets/dashboard-movies.jpg";
 import footballBackdrop from "@/assets/dashboard-football.jpg";
 import logoAsset from "@/assets/brand/streamnetmirror-logo.png.asset.json";
 import { toAbsoluteAssetUrl } from "@/lib/assetUrl";
+import ApkDownloadButton from "@/components/ApkDownloadButton";
 
 export type DashboardTab = "dashboard" | "movies" | "watch" | "football" | "account";
 
 export const DASHBOARD_TABS: { id: DashboardTab; label: string; short: string; icon: typeof Home }[] = [
-  { id: "dashboard", label: "Dashboard", short: "Dashboard", icon: LayoutDashboard },
+  { id: "dashboard", label: "Home", short: "Home", icon: Home },
   { id: "movies", label: "Movies & Series", short: "Movies", icon: Clapperboard },
   { id: "watch", label: "Watch", short: "Watch", icon: CirclePlay },
-  { id: "football", label: "Football", short: "Football", icon: Trophy },
+  { id: "football", label: "Football", short: "Football", icon: Volleyball },
   { id: "account", label: "Account", short: "Account", icon: Settings },
 ];
 
@@ -173,9 +174,12 @@ const DashboardShell = ({ tab, onTabChange, children }: Props) => {
             ))}
           </nav>
         </div>
-        <Button variant="ghost" size="sm" className="w-full justify-start gap-2 text-muted-foreground" onClick={signOut}>
-          <LogOut size={16} /> Sign out
-        </Button>
+        <div className="space-y-1 border-t border-border pt-3">
+          <ApkDownloadButton label="Download App" variant="ghost" className="w-full justify-start gap-2 px-3 text-muted-foreground hover:text-foreground" />
+          <Button variant="ghost" size="sm" className="w-full justify-start gap-2 text-muted-foreground" onClick={signOut}>
+            <LogOut size={16} /> Sign out
+          </Button>
+        </div>
       </aside>
 
 
