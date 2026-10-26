@@ -11,7 +11,7 @@ import AccountOverviewCard from "@/components/member/AccountOverviewCard";
 import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
 import {
-  ExternalLink, Download, Globe, Smartphone, Monitor,
+  ExternalLink, Globe, Smartphone, Monitor,
   MessageCircle, Send, LogOut, Play, ChevronRight,
   AlertTriangle, CheckCircle2, Info, RefreshCw, Laptop, Lock, Eye, EyeOff, Settings,
   Copy, Share2
