@@ -6,6 +6,8 @@ import Footer from "@/components/Footer";
 import LogoShowcase from "@/components/LogoShowcase";
 import moviesBackdrop from "@/assets/dashboard-movies.jpg";
 import footballBackdrop from "@/assets/dashboard-football.jpg";
+import { isNativeApp } from "@/lib/native";
+import { useLocation } from "react-router-dom";
 
 interface AuthShellProps {
   children: ReactNode;
@@ -15,8 +17,12 @@ interface AuthShellProps {
   wide?: boolean;
 }
 
-const AuthShell = ({ children, onBack, title, description, wide = false }: AuthShellProps) => (
-  <div className="auth-screen min-h-screen bg-background">
+const AuthShell = ({ children, onBack, title, description, wide = false }: AuthShellProps) => {
+  const { pathname } = useLocation();
+  const native = isNativeApp();
+  const hideBack = native && ["/signin", "/signup"].includes(pathname);
+  return (
+  <div className={`auth-screen min-h-screen bg-background ${native ? "theme-dashboard" : ""}`}>
     <div className="auth-web-chrome"><Navbar /></div>
     <div className="auth-visual" aria-hidden="true">
       <img src={moviesBackdrop} alt="" className="auth-visual-top" />
@@ -26,9 +32,9 @@ const AuthShell = ({ children, onBack, title, description, wide = false }: AuthS
 
     <main className="auth-scroll relative z-10 mx-auto flex min-h-screen w-full max-w-6xl items-start justify-center px-4 pb-12 pt-24 md:items-center md:px-8 md:py-28">
       <div className={`w-full ${wide ? "max-w-xl" : "max-w-md"}`}>
-        <Button variant="ghost" onClick={onBack} className="auth-back mb-3 h-11 gap-2 px-2 text-muted-foreground hover:text-foreground">
+        {!hideBack && <Button variant="ghost" onClick={onBack} className="auth-back mb-3 h-11 gap-2 px-2 text-muted-foreground hover:text-foreground">
           <ArrowLeft size={18} /> Back
-        </Button>
+        </Button>}
         <section className="auth-panel overflow-hidden rounded-lg border border-border/80 bg-card/90 shadow-2xl backdrop-blur-xl">
           <header className="border-b border-border/60 px-5 pb-5 pt-6 text-center sm:px-8">
             <div className="mx-auto mb-3 flex justify-center"><LogoShowcase size="lg" /></div>
@@ -41,6 +47,7 @@ const AuthShell = ({ children, onBack, title, description, wide = false }: AuthS
     </main>
     <div className="auth-web-chrome"><Footer /></div>
   </div>
-);
+  );
+};
 
 export default AuthShell;

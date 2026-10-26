@@ -71,7 +71,7 @@ const NativeAppLifecycle = () => {
   useEffect(() => {
     if (!isNativeApp()) return;
     const backButton = CapacitorApp.addListener("backButton", ({ canGoBack }) => {
-      if (location.pathname !== "/" && canGoBack) {
+      if (!["/", "/signin", "/dashboard"].includes(location.pathname) && canGoBack) {
         navigate(-1);
         return;
       }

@@ -47,6 +47,7 @@ import InstallPrompt from "@/components/InstallPrompt";
 import PlayLoader from "@/components/PlayLoader";
 import NativeAppLifecycle from "@/components/NativeAppLifecycle";
 import NativeLaunch from "@/components/NativeLaunch";
+import NativeEntryFlow from "@/components/NativeEntryFlow";
 const Movies = lazy(() => import("./pages/Movies.tsx"));
 const TVSeries = lazy(() => import("./pages/TVSeries.tsx"));
 const Watch = lazy(() => import("./pages/Watch.tsx"));
@@ -140,7 +141,7 @@ const App = () => (
           <NativeLaunch />
           <PageViewTracker />
 
-          <AnimatedRoutes />
+          <NativeEntryFlow><AnimatedRoutes /></NativeEntryFlow>
           <InstallPrompt />
         </BrowserRouter>
       </CurrencyProvider>

@@ -1,6 +1,6 @@
 import { Navigate } from "react-router-dom";
 import { useSubscriber } from "@/hooks/useSubscriber";
-import { Loader2 } from "lucide-react";
+import PlayLoader from "@/components/PlayLoader";
 
 /**
  * Any signed-in account may open the dashboard. Paid and unpaid members share
@@ -13,7 +13,7 @@ const SubscriberRoute = ({ children }: { children: React.ReactNode }) => {
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <PlayLoader />
       </div>
     );
   }

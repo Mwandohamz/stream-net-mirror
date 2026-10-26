@@ -10,3 +10,4 @@
 - Own-app distribution uses a separate app setting and a namespaced path in the existing private app-files bucket, preventing legacy third-party APKs from being delivered.
 - Account history and notification inbox read existing RLS-protected subscription, payment and ticket records via cached queries; never create a parallel payment or notification authority.
 - The native launch animation runs once per cold app mount above routes; it must not replay on resume or initiate payments or tracking.
+- NativeEntryFlow replaces website landing/entertainment routes with session-aware dashboard destinations before rendering them; account verification, checkout and web routes stay unchanged.
