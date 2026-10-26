@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      apk_downloads: {
+        Row: {
+          created_at: string
+          file_name: string
+          id: string
+          platform: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          file_name: string
+          id?: string
+          platform?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          file_name?: string
+          id?: string
+          platform?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       app_settings: {
         Row: {
           id: string
