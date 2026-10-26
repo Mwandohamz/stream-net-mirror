@@ -7,6 +7,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { downloadApk } from "@/lib/apkDownload";
+import { APP_APK_SIZE_LABEL } from "@/lib/appApk";
 
 interface Props {
   label?: string;
@@ -45,6 +46,7 @@ const ApkDownloadButton = ({ label = "Download APK", className, variant = "defau
         onClick={() => setConfirmOpen(true)}
       >
         <Download size={14} /> {downloading ? "Preparing…" : label}
+        {!downloading && <span className="ml-1 text-[0.7em] opacity-70">· {APP_APK_SIZE_LABEL}</span>}
       </Button>
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <AlertDialogContent className="border-border bg-popover">
@@ -54,7 +56,7 @@ const ApkDownloadButton = ({ label = "Download APK", className, variant = "defau
             </AlertDialogTitle>
             <AlertDialogDescription asChild>
               <div className="space-y-2 text-sm">
-                <p>This Stream NetMirror APK is for <strong className="text-foreground">Android only</strong>.</p>
+                <p>This Stream NetMirror APK is for <strong className="text-foreground">Android only</strong>. File size: <strong className="text-foreground">{APP_APK_SIZE_LABEL}</strong>.</p>
                 <p>
                   While installing, your phone may warn about apps from "unknown sources". That's normal for apps
                   installed outside the Play Store. Only install the Stream NetMirror file downloaded here and
