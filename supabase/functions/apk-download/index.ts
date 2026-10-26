@@ -1,10 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -12,19 +8,19 @@ const json = (body: unknown, status = 200) =>
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
-  const supabase = createClient(
-    Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-  );
+  const url = Deno.env.get("SUPABASE_URL");
+  const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (!url || !key) return json({ error: "Download service unavailable" }, 503);
+  const supabase = createClient(url, key);
 
   const { data: setting } = await supabase
     .from("app_settings")
     .select("value")
-    .eq("key", "apk_file_name")
+    .eq("key", "streamnetmirror_apk_file_name")
     .maybeSingle();
 
   const fileName = setting?.value;
-  if (!fileName) return json({ error: "APK not available" }, 404);
+  if (!fileName || !/^downloads\/streamnetmirror-own-[a-zA-Z0-9-]+\.apk$/.test(fileName)) return json({ error: "Stream NetMirror APK has not been uploaded yet" }, 404);
 
   let platform: string | null = null;
   let userId: string | null = null;

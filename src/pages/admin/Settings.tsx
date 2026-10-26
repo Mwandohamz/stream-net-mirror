@@ -11,6 +11,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Upload, FileDown, Trash2, Download, Smartphone } from "lucide-react";
+import { APP_APK_SETTING, APP_APK_PREFIX } from "@/lib/appApk";
 
 interface ApkDownloadRow {
   id: string;
@@ -49,20 +50,20 @@ const AdminSettings = () => {
   // Load current APK info from settings
   useEffect(() => {
     let cancelled = false;
-    if (settings.apk_file_name) {
-      setApkFileName(settings.apk_file_name);
+    if (settings[APP_APK_SETTING]) {
+      setApkFileName(settings[APP_APK_SETTING]);
       // The bucket is private: use a short-lived signed link.
       supabase.storage
         .from("app-files")
-        .createSignedUrl(settings.apk_file_name, 3600)
+        .createSignedUrl(settings[APP_APK_SETTING], 3600)
         .then(({ data }) => {
           if (!cancelled) setApkUrl(data?.signedUrl ?? null);
         });
-    }
+    } else { setApkFileName(null); setApkUrl(null); }
     return () => {
       cancelled = true;
     };
-  }, [settings.apk_file_name]);
+  }, [settings[APP_APK_SETTING]]);
 
   const handlePasswordChange = async () => {
     if (newPassword.length < 6) {
@@ -84,18 +85,13 @@ const AdminSettings = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (!file.name.endsWith(".apk")) {
+    if (!file.name.toLowerCase().endsWith(".apk")) {
       toast.error("Please upload an APK file (.apk)");
       return;
     }
 
     setApkUploading(true);
-    const fileName = `downloads/streamnetmirror-${Date.now()}.apk`;
-
-    // Delete old file if exists
-    if (apkFileName) {
-      await supabase.storage.from("app-files").remove([apkFileName]);
-    }
+    const fileName = `${APP_APK_PREFIX}${Date.now()}.apk`;
 
     const { error } = await supabase.storage.from("app-files").upload(fileName, file, {
       contentType: "application/vnd.android.package-archive",
@@ -105,7 +101,15 @@ const AdminSettings = () => {
     if (error) {
       toast.error("Upload failed: " + error.message);
     } else {
-      await updateSetting("apk_file_name", fileName);
+      const { error: settingError } = await updateSetting(APP_APK_SETTING, fileName);
+      if (settingError) {
+        await supabase.storage.from("app-files").remove([fileName]);
+        toast.error("Could not publish APK: " + settingError.message);
+        setApkUploading(false);
+        return;
+      }
+      // Publish the replacement first, so a failed upload never removes the current app.
+      if (apkFileName) await supabase.storage.from("app-files").remove([apkFileName]);
       setApkFileName(fileName);
       const { data } = await supabase.storage.from("app-files").createSignedUrl(fileName, 3600);
       setApkUrl(data?.signedUrl ?? null);
@@ -119,7 +123,7 @@ const AdminSettings = () => {
     if (!apkFileName) return;
     setApkUploading(true);
     await supabase.storage.from("app-files").remove([apkFileName]);
-    await updateSetting("apk_file_name", "");
+    await updateSetting(APP_APK_SETTING, "");
     setApkUrl(null);
     setApkFileName(null);
     toast.success("APK removed");
@@ -283,7 +287,7 @@ const AdminSettings = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-xs text-muted-foreground">
-              Upload the StreamNetMirror Android APK file. Subscribers will see a direct download button on their dashboard.
+              Upload your own Stream NetMirror APK from GitHub Actions, not an external app’s APK. Everyone can download it, with or without a subscription. Use the signed release APK for distribution; an AAB is for Google Play, not installation.
             </p>
 
             {apkFileName && apkUrl ? (
