@@ -24,6 +24,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAppSettings } from "@/hooks/useAppSettings";
 import { openExternalUrl } from "@/lib/native";
 import ApkDownloadButton from "@/components/ApkDownloadButton";
+import AccountActivity from "@/components/member/AccountActivity";
 
 interface Ticket {
   id: string;
@@ -72,7 +73,7 @@ const MemberDashboard = () => {
   const initialTab = new URLSearchParams(window.location.search).get("tab");
   const validInitialTab = (["dashboard", "movies", "watch", "football", "account"] as DashboardTab[]).includes(initialTab as DashboardTab)
     ? initialTab as DashboardTab
-    : "watch";
+    : "dashboard";
   const [tab, setTab] = useState<DashboardTab>(validInitialTab);
   const membership = useMembership();
 
@@ -321,6 +322,7 @@ const MemberDashboard = () => {
           )}
 
           {tab === "account" && <AccountOverviewCard />}
+          {tab === "account" && <div id="transaction-history" className="scroll-mt-20"><AccountActivity /></div>}
 
           {/* Payment Receipt */}
           {tab === "account" && paymentReceipt && (

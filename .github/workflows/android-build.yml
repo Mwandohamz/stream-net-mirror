@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       build_release:
-        description: "Also build a signed release AAB (requires signing secrets)"
+        description: "Also build signed release APK + AAB (requires signing secrets)"
         type: boolean
         default: false
   push:
@@ -14,6 +14,9 @@ on:
 concurrency:
   group: android-build-${{ github.ref }}
   cancel-in-progress: true
+
+permissions:
+  contents: read
 
 jobs:
   android:
@@ -36,8 +39,8 @@ jobs:
         with:
           node-version: 22
 
-      - name: Install dependencies (bun.lockb)
-        run: bun install --frozen-lockfile || bun install
+      - name: Install dependencies (bun.lock)
+        run: bun install --frozen-lockfile
 
       - name: Build web app (production)
         run: bun run build
@@ -86,21 +89,35 @@ jobs:
             echo "configured=true" >> "$GITHUB_OUTPUT"
           else
             echo "configured=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::Release signing secrets not set — skipping signed AAB. Debug APK was built."
+            echo "::notice::Release signing secrets not set — skipping signed APK/AAB. Debug APK was built."
           fi
 
-      - name: Build signed release AAB
+      - name: Build signed release APK and AAB
         if: steps.signing.outputs.configured == 'true' && (github.event_name == 'workflow_dispatch' && inputs.build_release)
         working-directory: android
         env:
           ANDROID_KEYSTORE_PATH: ${{ runner.temp }}/release.jks
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
-          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > "$ANDROID_KEYSTORE_PATH"
-          ./gradlew bundleRelease --no-daemon --stacktrace
-          rm -f "$ANDROID_KEYSTORE_PATH"
+          trap 'rm -f "$ANDROID_KEYSTORE_PATH"' EXIT
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 -d > "$ANDROID_KEYSTORE_PATH"
+          ./gradlew assembleRelease bundleRelease --no-daemon --stacktrace
+
+      - name: Verify signed release APK
+        if: steps.signing.outputs.configured == 'true' && (github.event_name == 'workflow_dispatch' && inputs.build_release)
+        run: "$ANDROID_HOME/build-tools/36.0.0/apksigner verify --verbose android/app/build/outputs/apk/release/app-release.apk"
+
+      - name: Upload release APK
+        if: steps.signing.outputs.configured == 'true' && (github.event_name == 'workflow_dispatch' && inputs.build_release)
+        uses: actions/upload-artifact@v4
+        with:
+          name: stream-netmirror-release-apk
+          path: android/app/build/outputs/apk/release/app-release.apk
+          if-no-files-found: error
+          retention-days: 30
 
       - name: Upload release AAB
         if: steps.signing.outputs.configured == 'true' && (github.event_name == 'workflow_dispatch' && inputs.build_release)

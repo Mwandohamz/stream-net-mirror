@@ -54,11 +54,11 @@ const ApkDownloadButton = ({ label = "Download APK", className, variant = "defau
             </AlertDialogTitle>
             <AlertDialogDescription asChild>
               <div className="space-y-2 text-sm">
-                <p>This app is for <strong className="text-foreground">Android phones and TVs only</strong>.</p>
+                <p>This Stream NetMirror APK is for <strong className="text-foreground">Android only</strong>.</p>
                 <p>
                   While installing, your phone may warn about apps from "unknown sources". That's normal for apps
-                  installed outside the Play Store — the file comes straight from us, it's safe, and the app does
-                  not collect your personal data. You can proceed with the install.
+                  installed outside the Play Store. Only install the Stream NetMirror file downloaded here and
+                  don’t ignore a security warning identifying a specific threat. Download requests record device information and time.
                 </p>
               </div>
             </AlertDialogDescription>
