@@ -68,10 +68,9 @@ const Watch = () => {
     navigate(isSubscriber ? "/dashboard" : "/payment", { replace: true });
   }, [denied, accessLoading, isSubscriber, navigate, toast]);
 
-  useEffect(() => {
-    if (!source || mode === "external") return;
-    // Streams always play inside the app — never hand off to another app.
-  }, [source, mode]);
+  // Streams always play inside the app — never hand off to another app.
+
+
 
   useEffect(() => {
     if (!source || mode === "external" || nativeView || loaded) return;
