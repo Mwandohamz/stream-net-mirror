@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Loader2, Maximize, Minimize, X, ExternalLink } from "lucide-react";
+import { ArrowLeft, Maximize, Minimize, X } from "lucide-react";
 import { InAppBrowser, ToolBarType } from "@capgo/inappbrowser";
 import type { PluginListenerHandle } from "@capacitor/core";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,8 @@ import LogoShowcase from "@/components/LogoShowcase";
 import { supabase } from "@/integrations/supabase/client";
 import { useSubscriber } from "@/hooks/useSubscriber";
 import { useToast } from "@/hooks/use-toast";
-import { isNativeApp, openExternalUrl } from "@/lib/native";
+import { isNativeApp } from "@/lib/native";
+import PlayLoader from "@/components/PlayLoader";
 import { FRAME_TIMEOUT_MS, isSafeStreamUrl, normalizeEmbedMode } from "@/lib/watchPlayback";
 
 type Source = { id: string; title: string; url: string; embed_mode: string; allow_fullscreen: boolean };
@@ -68,11 +69,9 @@ const Watch = () => {
   }, [denied, accessLoading, isSubscriber, navigate, toast]);
 
   useEffect(() => {
-    if (!source || mode !== "external") return;
-    void openExternalUrl(source.url).then(close).catch(() => {
-      toast({ title: "Could not open this source", variant: "destructive" }); close();
-    });
-  }, [source, mode, close, toast]);
+    if (!source || mode === "external") return;
+    // Streams always play inside the app — never hand off to another app.
+  }, [source, mode]);
 
   useEffect(() => {
     if (!source || mode === "external" || nativeView || loaded) return;
@@ -140,7 +139,7 @@ const Watch = () => {
     } catch { toast({ title: "Fullscreen isn't supported on this device" }); }
   };
 
-  if (!source) return <div className="min-h-screen bg-background flex items-center justify-center"><Loader2 aria-label="Loading stream" className="h-8 w-8 animate-spin text-primary" /></div>;
+  if (!source) return <div className="min-h-screen bg-background flex items-center justify-center"><PlayLoader label="Loading stream" /></div>;
 
   return (
     <div ref={container} className="theme-dashboard fixed inset-0 z-50 flex h-dvh flex-col overflow-hidden bg-background">
@@ -152,18 +151,32 @@ const Watch = () => {
             <h1 className="truncate text-sm text-muted-foreground">{source.title}</h1>
           </div>
           {mode === "iframe" && source.allow_fullscreen && <Button variant="ghost" size="icon" aria-label={fullscreen ? "Exit fullscreen" : "Enter fullscreen"} title={fullscreen ? "Exit fullscreen" : "Enter fullscreen"} onClick={() => void toggleFullscreen()}>{fullscreen ? <Minimize size={20} /> : <Maximize size={20} />}</Button>}
+          <Button variant="ghost" size="icon" aria-label="Back to platforms" title="Back to platforms" onClick={close}><ArrowLeft size={22} /></Button>
           <Button variant="ghost" size="icon" aria-label="Close stream" title="Close stream" onClick={close}><X size={22} /></Button>
         </div>
       </header>
       <div ref={content} className="relative flex min-h-0 flex-1 flex-col pb-[env(safe-area-inset-bottom)]">
-        {!nativeView && mode !== "external" && <>
-          <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-border bg-card px-3 py-2">
-            <p role="status" className="text-xs text-muted-foreground">{failed ? "This source doesn't work embedded" : "Having trouble with this source?"}</p>
-            <Button size="sm" variant="outline" className="h-8 gap-2" onClick={() => void openExternalUrl(source.url).catch(() => toast({ title: "Could not open browser", variant: "destructive" }))}><ExternalLink size={14} /> Open externally</Button>
+        {!nativeView && <>
+           <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-border bg-card px-3 py-2">
+            <p role="status" className="text-xs text-muted-foreground">{failed ? "This source isn't loading" : "Having trouble with this source?"}</p>
+            <Button size="sm" variant="outline" className="h-8 gap-2" onClick={close}><ArrowLeft size={14} /> Switch platform</Button>
           </div>
-          <iframe key={source.id} src={source.url} title={source.title} allow={source.allow_fullscreen ? "autoplay; fullscreen; encrypted-media" : "autoplay; encrypted-media"} allowFullScreen={source.allow_fullscreen} className="min-h-0 w-full flex-1 border-0 bg-background" onLoad={() => setLoaded(true)} onError={() => setFailed(true)} />
+          <iframe
+            key={source.id}
+            src={source.url}
+            title={source.title}
+            allow={source.allow_fullscreen ? "autoplay; fullscreen; encrypted-media" : "autoplay; encrypted-media"}
+            allowFullScreen={source.allow_fullscreen}
+            // No popups or top-level redirects: ad links on embedded sites can't
+            // drag the viewer out of StreamNetMirror.
+            sandbox="allow-scripts allow-same-origin allow-forms allow-presentation allow-pointer-lock"
+            referrerPolicy="no-referrer"
+            className="min-h-0 w-full flex-1 border-0 bg-background"
+            onLoad={() => setLoaded(true)}
+            onError={() => setFailed(true)}
+          />
         </>}
-        {nativeView && <div className="flex flex-1 items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}
+        {nativeView && <div className="flex flex-1 items-center justify-center"><PlayLoader label="Opening stream" /></div>}
       </div>
     </div>
   );
