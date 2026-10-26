@@ -10,7 +10,15 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Upload, FileDown, Trash2, Download } from "lucide-react";
+import { Upload, FileDown, Trash2, Download, Smartphone } from "lucide-react";
+
+interface ApkDownloadRow {
+  id: string;
+  file_name: string;
+  user_agent: string | null;
+  platform: string | null;
+  created_at: string;
+}
 
 const AdminSettings = () => {
   const navigate = useNavigate();
@@ -25,7 +33,18 @@ const AdminSettings = () => {
   const [apkUploading, setApkUploading] = useState(false);
   const [apkUrl, setApkUrl] = useState<string | null>(null);
   const [apkFileName, setApkFileName] = useState<string | null>(null);
+  const [apkDownloads, setApkDownloads] = useState<ApkDownloadRow[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Latest 100 app downloads (device, time) for tracking.
+  useEffect(() => {
+    supabase
+      .from("apk_downloads" as any)
+      .select("id, file_name, user_agent, platform, created_at")
+      .order("created_at", { ascending: false })
+      .limit(100)
+      .then(({ data }) => setApkDownloads((data as unknown as ApkDownloadRow[]) ?? []));
+  }, [apkFileName]);
 
   // Load current APK info from settings
   useEffect(() => {
@@ -312,6 +331,30 @@ const AdminSettings = () => {
               <Upload size={16} />
               {apkUploading ? "Uploading..." : apkFileName ? "Replace APK" : "Upload APK"}
             </Button>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-card border-border">
+          <CardHeader>
+            <CardTitle className="netflix-title text-lg text-foreground">APP DOWNLOADS ({apkDownloads.length})</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {apkDownloads.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No downloads tracked yet.</p>
+            ) : (
+              <div className="divide-y divide-border">
+                {apkDownloads.map((d) => (
+                  <div key={d.id} className="flex items-center gap-3 py-2.5">
+                    <Smartphone size={16} className="shrink-0 text-primary" />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm text-foreground">{d.platform || "Unknown device"}</p>
+                      <p className="truncate text-[10px] text-muted-foreground">{d.user_agent || "No device info"}</p>
+                    </div>
+                    <span className="shrink-0 text-[10px] text-muted-foreground">{new Date(d.created_at).toLocaleString()}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
 
