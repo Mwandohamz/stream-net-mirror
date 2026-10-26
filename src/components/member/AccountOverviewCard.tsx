@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Camera, Loader2, CalendarClock, RefreshCw, Pencil, Check, X } from "lucide-react";
+import { Camera, Loader2, CalendarClock, RefreshCw, Pencil, Check, X, Mail, Phone, Globe } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useProfile";
 import { useSubscriber, subscriptionAccessEnd, isSubscriptionActive } from "@/hooks/useSubscriber";
@@ -120,20 +120,20 @@ const AccountOverviewCard = () => {
 
   return (
     <Card className="overflow-hidden border-border bg-card">
-      <CardContent className="space-y-5 p-5 md:p-6">
-        <div className="flex flex-wrap items-start gap-4">
-          {/* Avatar */}
-          <div className="relative shrink-0">
-            <Avatar className="h-16 w-16 border-2 border-primary/40 md:h-20 md:w-20">
+      {/* Profile header */}
+      <div className="relative bg-gradient-to-br from-primary/70 via-primary/30 to-card px-5 pb-16 pt-8">
+        <div className="flex flex-col items-center gap-3 text-center">
+          <div className="relative">
+            <Avatar className="h-20 w-20 border-4 border-background shadow-xl md:h-24 md:w-24">
               <AvatarImage src={profile?.avatar_url || DEFAULT_PROFILE_AVATAR} alt={profile?.full_name || "Profile picture"} />
-              <AvatarFallback className="bg-secondary text-foreground text-lg font-semibold">{initials}</AvatarFallback>
+              <AvatarFallback className="bg-secondary text-foreground text-xl font-semibold">{initials}</AvatarFallback>
             </Avatar>
             <button
               type="button"
               onClick={() => fileRef.current?.click()}
               disabled={uploading}
               aria-label="Upload profile picture"
-              className="absolute -bottom-1 -right-1 h-8 w-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center border-2 border-card"
+              className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full border-2 border-background bg-primary text-primary-foreground"
             >
               {uploading ? <Loader2 size={14} className="animate-spin" /> : <Camera size={14} />}
             </button>
@@ -149,53 +149,68 @@ const AccountOverviewCard = () => {
               }}
             />
           </div>
-
-          <div className="flex-1 min-w-[200px] space-y-1">
-            {editing ? (
-              <div className="space-y-3">
-                <div className="space-y-1">
-                  <Label className="text-xs text-muted-foreground">Full name</Label>
-                  <Input value={fullName} onChange={(e) => setFullName(e.target.value)} className="bg-secondary border-border" />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs text-muted-foreground">Phone</Label>
-                  <Input value={phone} onChange={(e) => setPhone(e.target.value)} className="bg-secondary border-border" />
-                </div>
-                <div className="flex gap-2">
-                  <Button size="sm" onClick={saveDetails} disabled={saving} className="bg-primary text-primary-foreground gap-1">
-                    {saving ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />} Save
-                  </Button>
-                  <Button size="sm" variant="ghost" onClick={() => setEditing(false)} className="gap-1">
-                    <X size={14} /> Cancel
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <>
-                <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                  <h2 className="netflix-title break-words text-lg md:text-xl text-foreground">
-                    {profileLoading ? "…" : profile?.full_name || "Your account"}
-                  </h2>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="h-7 gap-1 px-2 text-xs text-muted-foreground"
-                    onClick={() => setEditing(true)}
-                  >
-                    <Pencil size={12} /> Edit
-                  </Button>
-                </div>
-                <p className="break-all text-sm text-muted-foreground">{profile?.email}</p>
-                <div className="flex flex-wrap gap-x-4 gap-y-1 pt-1 text-xs text-muted-foreground">
-                  {profile?.phone && <span>{profile.phone}</span>}
-                  {profile?.country_name && <span>{profile.country_name}</span>}
-                  {profile?.currency && <span>Currency: {profile.currency}</span>}
-                  {profile?.created_at && <span>Member since {new Date(profile.created_at).toLocaleDateString()}</span>}
-                </div>
-              </>
+          <div className="flex items-center gap-2">
+            <h2 className="netflix-title break-words text-xl text-foreground md:text-2xl">
+              {profileLoading ? "…" : profile?.full_name || "Your account"}
+            </h2>
+            {!editing && (
+              <Button size="sm" variant="ghost" className="h-7 gap-1 px-2 text-xs text-foreground/80" onClick={() => setEditing(true)}>
+                <Pencil size={12} /> Edit
+              </Button>
             )}
           </div>
+          {countdown ? (
+            <Badge className={countdown.active ? "bg-green-500/20 text-green-400" : "bg-destructive/20 text-destructive"}>
+              {countdown.active
+                ? countdown.inGrace
+                  ? `Grace period — ends ${countdown.accessEnd.toLocaleDateString()}`
+                  : `Active until ${countdown.end.toLocaleDateString()}`
+                : `Expired ${countdown.end.toLocaleDateString()}`}
+            </Badge>
+          ) : (
+            <Badge className="bg-primary/20 text-primary-foreground">No active plan</Badge>
+          )}
         </div>
+      </div>
+
+      <CardContent className="space-y-5 p-5 md:p-6">
+        {editing ? (
+          <div className="space-y-3">
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">Full name</Label>
+              <Input value={fullName} onChange={(e) => setFullName(e.target.value)} className="bg-secondary border-border" />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">Phone</Label>
+              <Input value={phone} onChange={(e) => setPhone(e.target.value)} className="bg-secondary border-border" />
+            </div>
+            <div className="flex gap-2">
+              <Button size="sm" onClick={saveDetails} disabled={saving} className="gap-1 bg-primary text-primary-foreground">
+                {saving ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />} Save
+              </Button>
+              <Button size="sm" variant="ghost" onClick={() => setEditing(false)} className="gap-1">
+                <X size={14} /> Cancel
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="divide-y divide-border rounded-lg border border-border">
+            {[
+              { icon: Mail, label: "Email", value: profile?.email },
+              { icon: Phone, label: "Phone", value: profile?.phone || "Not added" },
+              { icon: Globe, label: "Country", value: profile?.country_name || "Not set" },
+              { icon: CalendarClock, label: "Member since", value: profile?.created_at ? new Date(profile.created_at).toLocaleDateString() : "—" },
+            ].map(({ icon: RowIcon, label, value }) => (
+              <div key={label} className="flex items-center gap-3 px-3 py-3">
+                <RowIcon size={16} className="shrink-0 text-primary" />
+                <div className="min-w-0">
+                  <p className="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</p>
+                  <p className="break-all text-sm text-foreground">{value}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
 
         <div className="space-y-2 border-t border-border pt-4">
           <div className="flex items-center justify-between gap-3">
