@@ -1,11 +1,11 @@
 # Roadmap — dashboard native polish + in-app streaming + APK downloads
 
-- [ ] Swap dashboard tab icons: House for Home, ball for Football (bottom nav + sidebar)
-- [ ] Login/signup/account creation → straight to /dashboard
-- [ ] All stream links open inside the app; remove external-open options; iframe back button + platform switcher + popup/redirect blocking
-- [ ] APK download for everyone (remove NetMirror download option), tracked downloads (device/time) visible in admin
-- [ ] LIVE badge on live football fixtures
-- [ ] Reduce dashboard text; polish home cards (transparent-style, Netflix/PL-inspired)
-- [ ] Profile section redesign (avatar/name/info rows/subscription expiry) per reference image; sidebar Download App button with Android-warning dialog
-- [ ] Play-icon loading indicator replacing spinners
-- [ ] Verify: typecheck/build + browser pass
+- [x] Swap dashboard tab icons: House for Home, ball for Football (bottom nav + sidebar)
+- [x] Login/signup/account creation → straight to /dashboard (already in place, verified)
+- [x] All stream links open inside the app; removed external-open options; iframe back button + platform switcher + popup/redirect blocking
+- [x] APK download for everyone, tracked downloads (device/time) visible in admin Settings
+- [x] LIVE badge on live football fixtures
+- [x] Reduced dashboard text; compact link-rotation notice
+- [x] Profile section redesign (gradient header, centered avatar, info rows, plan status); sidebar Download App button with Android-warning dialog
+- [x] Play-icon loading indicator replacing spinners
+- [x] Verified: typecheck, 20 tests, build OK, signed-in desktop + mobile browser pass, download endpoint returns signed APK URL and logs the download
