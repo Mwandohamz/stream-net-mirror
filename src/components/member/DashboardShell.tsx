@@ -10,7 +10,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Clapperboard, Volleyball, LogOut, Settings, Home, CirclePlay, ChevronDown, Download } from "lucide-react";
+import { Clapperboard, Volleyball, LogOut, Settings, Home, Play, ChevronDown, Menu, Receipt } from "lucide-react";
+import { Sheet, SheetContent, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import NotificationInbox from "@/components/member/NotificationInbox";
 import { LEAGUE_OPTIONS } from "@/lib/fixtures";
 import LogoShowcase from "@/components/LogoShowcase";
 import CountdownBadge from "@/components/CountdownBadge";
@@ -29,7 +31,7 @@ export type DashboardTab = "dashboard" | "movies" | "watch" | "football" | "acco
 export const DASHBOARD_TABS: { id: DashboardTab; label: string; short: string; icon: typeof Home }[] = [
   { id: "dashboard", label: "Home", short: "Home", icon: Home },
   { id: "movies", label: "Movies & Series", short: "Movies", icon: Clapperboard },
-  { id: "watch", label: "Watch", short: "Watch", icon: CirclePlay },
+  { id: "watch", label: "Watch", short: "Watch", icon: Play },
   { id: "football", label: "Football", short: "Football", icon: Volleyball },
   { id: "account", label: "Account", short: "Account", icon: Settings },
 ];
@@ -47,12 +49,15 @@ const DashboardShell = ({ tab, onTabChange, children }: Props) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const activeLeague = searchParams.get("league") ?? "all";
   const [leaguesOpen, setLeaguesOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const changeTab = (next: DashboardTab) => { onTabChange(next); setMenuOpen(false); };
   const openLeague = (code: string) => {
     const next = new URLSearchParams(searchParams);
     if (code === "all") next.delete("league"); else next.set("league", code);
     next.set("tab", "football");
     setSearchParams(next, { replace: true });
     onTabChange("football");
+    setMenuOpen(false);
   };
   const { profile } = useProfile();
   const { subscription } = useSubscriber();
@@ -89,12 +94,14 @@ const DashboardShell = ({ tab, onTabChange, children }: Props) => {
       {/* Top bar */}
       <header className="dashboard-topbar fixed top-0 left-0 right-0 z-40 h-14 border-b border-border bg-background/95 backdrop-blur">
         <div className="flex h-full items-center justify-between px-3 md:px-5">
+          <Button variant="ghost" size="icon" aria-label="Open navigation menu" className="mr-1 h-10 w-10 shrink-0 md:hidden" onClick={() => setMenuOpen(true)}><Menu size={21} /></Button>
           <Button variant="ghost" className="h-auto min-w-0 gap-2 px-0 hover:bg-transparent" aria-label="Go to dashboard home" onClick={() => onTabChange("dashboard")}>
             <LogoShowcase size="md" />
             <span className="dashboard-heading min-w-0 truncate text-xs font-bold sm:text-sm md:text-base">STREAMNETMIRROR</span>
           </Button>
 
           <div className="flex items-center gap-2">
+            <NotificationInbox />
             {accessEnd && <CountdownBadge target={accessEnd} prefix="Ends in" className="hidden sm:inline-flex" />}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -122,6 +129,24 @@ const DashboardShell = ({ tab, onTabChange, children }: Props) => {
           </div>
         </div>
       </header>
+
+      <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
+        <SheetContent side="left" className="theme-dashboard flex w-[min(320px,88vw)] flex-col overflow-y-auto border-border bg-background px-4 pb-6 pt-12 text-foreground safe-top">
+          <SheetTitle className="sr-only">Navigation menu</SheetTitle>
+          <SheetDescription className="sr-only">Your account, streaming and football</SheetDescription>
+          <div className="mb-5 flex items-center gap-3 border-b border-border pb-5">
+            <Avatar className="h-14 w-14 shrink-0 border-2 border-primary"><AvatarImage src={toAbsoluteAssetUrl(profile?.avatar_url || DEFAULT_PROFILE_AVATAR)} /><AvatarFallback>{initials}</AvatarFallback></Avatar>
+            <div className="min-w-0"><p className="truncate font-semibold">{profile?.full_name || "Account"}</p><p className="break-all text-xs text-muted-foreground">{profile?.email}</p>{accessEnd && <p className="mt-1 text-xs text-primary">Ends {new Date(accessEnd).toLocaleDateString()}</p>}</div>
+          </div>
+          <nav className="space-y-1" aria-label="Mobile sidebar">
+            {DASHBOARD_TABS.map(t => <div key={t.id}><Button variant="ghost" onClick={() => changeTab(t.id)} className={`h-12 w-full justify-start gap-3 ${tab === t.id ? "bg-secondary text-foreground" : "text-muted-foreground"}`}><t.icon size={20} className={t.id === "watch" ? "fill-current text-primary" : ""} />{t.label}</Button>
+              {t.id === "football" && <div className="ml-8 border-l border-border pl-2">{LEAGUE_OPTIONS.map(l => <Button key={l.code} variant="ghost" size="sm" className={`h-10 w-full justify-start text-xs ${activeLeague === l.code && tab === "football" ? "text-primary" : "text-muted-foreground"}`} onClick={() => openLeague(l.code)}>{l.label}</Button>)}</div>}
+            </div>)}
+            <Button variant="ghost" className="h-12 w-full justify-start gap-3 text-muted-foreground" onClick={() => { changeTab("account"); setTimeout(() => document.getElementById("transaction-history")?.scrollIntoView({ behavior: "smooth" }), 100); }}><Receipt size={20} /> Transaction history</Button>
+          </nav>
+          <div className="mt-auto space-y-2 border-t border-border pt-4"><ApkDownloadButton label="Download App" variant="outline" className="h-11 w-full gap-2" /><Button variant="ghost" className="h-11 w-full justify-start gap-3 text-muted-foreground" onClick={signOut}><LogOut size={18} /> Sign out</Button></div>
+        </SheetContent>
+      </Sheet>
 
       {/* Desktop sidebar */}
       <aside className="fixed left-0 top-14 bottom-0 z-30 hidden w-60 flex-col justify-between overflow-y-auto border-r border-border bg-card/60 p-4 md:flex">
@@ -199,7 +224,7 @@ const DashboardShell = ({ tab, onTabChange, children }: Props) => {
               tab === t.id ? "text-primary" : "text-muted-foreground"
             }`}
           >
-            <span className={t.id === "watch" ? "grid h-12 w-12 place-items-center rounded-full border-4 border-background bg-primary text-primary-foreground shadow-lg" : "grid h-7 place-items-center"}>
+            <span className={t.id === "watch" ? "streaming-play-surface grid h-14 w-14 place-items-center rounded-full border-4 border-background text-accent-foreground" : "grid h-7 place-items-center"}>
               <t.icon size={t.id === "watch" ? 23 : 20} className={t.id === "watch" ? "fill-current" : ""} />
             </span>
             <span className={index === 2 ? "font-semibold text-primary" : "truncate"}>{t.short}</span>

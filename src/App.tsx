@@ -46,6 +46,7 @@ import OAuthConsent from "./pages/OAuthConsent.tsx";
 import InstallPrompt from "@/components/InstallPrompt";
 import PlayLoader from "@/components/PlayLoader";
 import NativeAppLifecycle from "@/components/NativeAppLifecycle";
+import NativeLaunch from "@/components/NativeLaunch";
 const Movies = lazy(() => import("./pages/Movies.tsx"));
 const TVSeries = lazy(() => import("./pages/TVSeries.tsx"));
 const Watch = lazy(() => import("./pages/Watch.tsx"));
@@ -136,6 +137,7 @@ const App = () => (
       <CurrencyProvider>
         <BrowserRouter>
           <NativeAppLifecycle />
+          <NativeLaunch />
           <PageViewTracker />
 
           <AnimatedRoutes />
