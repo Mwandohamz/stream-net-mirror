@@ -239,54 +239,83 @@ const AdminContent = () => {
               </div>
 
               <div className="grid gap-2 sm:grid-cols-2">
-                {linksFor(c.id).map((l) => (
-                  <div key={l.id} className="flex gap-3 rounded-lg border border-border bg-secondary/40 p-3">
-                    <div className="h-10 w-10 shrink-0 overflow-hidden rounded bg-background">
-                      {l.logo_url && <img src={l.logo_url} alt={l.title} className="h-full w-full object-cover" />}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <p className="text-sm font-medium text-foreground truncate">{l.title}</p>
-                        <Badge variant="outline" className="text-[9px]">{l.platform}</Badge>
-                        <Badge variant="outline" className="text-[9px]">{normalizeEmbedMode(l.embed_mode)}</Badge>
-                        {!l.is_active && <Badge className="bg-destructive/20 text-destructive text-[9px]">Hidden</Badge>}
+                {groupLinks(linksFor(c.id)).map((group) => {
+                  const head = group[0];
+                  const openEdit = (l: ContentLink) => {
+                    setLinkForm({
+                      id: l.id,
+                      category_id: l.category_id,
+                      title: l.title,
+                      description: l.description ?? "",
+                      url: l.url,
+                      logo_url: l.logo_url ? toAbsoluteAssetUrl(l.logo_url) : "",
+                      platform: l.platform,
+                      sort_order: l.sort_order,
+                      is_active: l.is_active,
+                      embed_mode: normalizeEmbedMode(l.embed_mode),
+                      allow_fullscreen: l.allow_fullscreen ?? true,
+                    });
+                    setLinkEditing(true);
+                    setAdditionalUrls([]);
+                    setLinkOpen(true);
+                  };
+                  const addUrl = () => {
+                    setLinkForm({
+                      ...emptyLink,
+                      category_id: head.category_id,
+                      title: head.title,
+                      description: head.description ?? "",
+                      url: "",
+                      logo_url: head.logo_url ? toAbsoluteAssetUrl(head.logo_url) : "",
+                      platform: head.platform,
+                      sort_order: Math.max(...group.map((g) => g.sort_order)) + 1,
+                      is_active: true,
+                      embed_mode: normalizeEmbedMode(head.embed_mode),
+                      allow_fullscreen: head.allow_fullscreen ?? true,
+                    });
+                    setLinkEditing(false);
+                    setAdditionalUrls([]);
+                    setLinkOpen(true);
+                  };
+                  const deleteGroup = async () => {
+                    if (!confirm(`Delete "${head.title}" and all ${group.length} of its links?`)) return;
+                    const { error } = await supabase.from("content_links" as any).delete().in("id", group.map((g) => g.id));
+                    if (error) toast({ title: "Could not delete", description: error.message, variant: "destructive" });
+                    else void reload();
+                  };
+                  return (
+                    <div key={head.id} className="rounded-lg border border-border bg-secondary/40 p-3 space-y-2">
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 shrink-0 overflow-hidden rounded bg-background">
+                          {head.logo_url && <img src={head.logo_url} alt={head.title} className="h-full w-full object-cover" />}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium text-foreground truncate">{head.title}</p>
+                          <div className="flex gap-1 flex-wrap">
+                            <Badge variant="outline" className="text-[9px]">{head.platform}</Badge>
+                            <Badge variant="outline" className="text-[9px]">{group.length} link{group.length > 1 ? "s" : ""}</Badge>
+                          </div>
+                        </div>
+                        <Button size="sm" variant="outline" className="h-7 gap-1 px-2 text-xs" onClick={addUrl}><Plus size={12} /> URL</Button>
+                        <Button size="sm" variant="ghost" className="h-7 px-2 text-destructive" title="Delete platform" onClick={() => void deleteGroup()}><Trash2 size={13} /></Button>
                       </div>
-                      <a href={l.url} target="_blank" rel="noopener noreferrer" className="text-[11px] text-primary inline-flex items-center gap-1 truncate">
-                        <ExternalLink size={10} /> {l.url}
-                      </a>
+                      <ul className="space-y-1">
+                        {group.map((l, i) => (
+                          <li key={l.id} className="flex items-center gap-2 rounded bg-background/60 px-2 py-1">
+                            <span className="text-[10px] font-semibold text-muted-foreground">#{i + 1}</span>
+                            <a href={l.url} target="_blank" rel="noopener noreferrer" className="min-w-0 flex-1 truncate text-[11px] text-primary inline-flex items-center gap-1">
+                              <ExternalLink size={10} className="shrink-0" /> <span className="truncate">{l.url}</span>
+                            </a>
+                            {!l.is_active && <Badge className="bg-destructive/20 text-destructive text-[9px]">Hidden</Badge>}
+                            <Badge variant="outline" className="text-[9px]">{normalizeEmbedMode(l.embed_mode)}</Badge>
+                            <Button size="sm" variant="ghost" className="h-6 px-1.5" title="Edit URL" onClick={() => openEdit(l)}><Pencil size={12} /></Button>
+                            <Button size="sm" variant="ghost" className="h-6 px-1.5 text-destructive" title="Delete URL" onClick={() => void deleteLink(l)}><Trash2 size={12} /></Button>
+                          </li>
+                        ))}
+                      </ul>
                     </div>
-                    <div className="flex flex-col gap-1">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-7 px-2"
-                        onClick={() => {
-                          setLinkForm({
-                            id: l.id,
-                            category_id: l.category_id,
-                            title: l.title,
-                            description: l.description ?? "",
-                            url: l.url,
-                            logo_url: l.logo_url ? toAbsoluteAssetUrl(l.logo_url) : "",
-                            platform: l.platform,
-                            sort_order: l.sort_order,
-                            is_active: l.is_active,
-                            embed_mode: normalizeEmbedMode(l.embed_mode),
-                            allow_fullscreen: l.allow_fullscreen ?? true,
-                          });
-                          setLinkEditing(true);
-                          setAdditionalUrls([]);
-                          setLinkOpen(true);
-                        }}
-                      >
-                        <Pencil size={13} />
-                      </Button>
-                      <Button size="sm" variant="ghost" className="h-7 px-2 text-destructive" onClick={() => void deleteLink(l)}>
-                        <Trash2 size={13} />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
                 {linksFor(c.id).length === 0 && (
                   <p className="text-xs text-muted-foreground">No links yet in this category.</p>
                 )}
