@@ -15,6 +15,7 @@ import { useContent, type ContentCategory, type ContentLink } from "@/hooks/useC
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { normalizeEmbedMode } from "@/lib/watchPlayback";
 import { toAbsoluteAssetUrl } from "@/lib/assetUrl";
+import { groupLinks } from "@/lib/linkGroups";
 
 const PLATFORMS = ["web", "android", "ios", "tv", "software"];
 

@@ -15,6 +15,7 @@ import laligaLogo from "@/assets/sports/laliga.jpg.asset.json";
 import { useNavigate } from "react-router-dom";
 import { watchPath } from "@/lib/watchPlayback";
 import { toAbsoluteAssetUrl } from "@/lib/assetUrl";
+import { groupLinks } from "@/lib/linkGroups";
 
 const ROTATION_ACK_KEY = "link-rotation-acknowledged";
 
@@ -34,8 +35,6 @@ const FEATURED: FeaturedPlatform[] = [
   { name: "LaLiga", aliases: ["laliga", "la liga"], logo: toAbsoluteAssetUrl(laligaLogo.url), monogram: "LALIGA" },
 ];
 
-const keyFor = (link: ContentLink) => `${link.title.trim().toLowerCase()}|${link.platform}`;
-
 const WatchHub = ({ unlocked, onUnlockClick, sportsOnly = false }: { unlocked: boolean; onUnlockClick: () => void; sportsOnly?: boolean }) => {
   const navigate = useNavigate();
   const { categories, links, loading } = useContent();
@@ -49,21 +48,14 @@ const WatchHub = ({ unlocked, onUnlockClick, sportsOnly = false }: { unlocked: b
   );
   const relevantLinks = useMemo(() => links.filter((link) => activeCategoryIds.has(link.category_id)), [activeCategoryIds, links]);
 
-  const grouped = useMemo(() => {
-    const groups = new Map<string, ContentLink[]>();
-    relevantLinks.forEach((link) => {
-      const key = keyFor(link);
-      groups.set(key, [...(groups.get(key) ?? []), link]);
-    });
-    return [...groups.values()];
-  }, [relevantLinks]);
+  const grouped = useMemo(() => groupLinks(relevantLinks), [relevantLinks]);
 
+  // A featured platform collects every group whose title matches, so all admin URLs appear in one picker.
   const featuredGroups = useMemo(() => (sportsOnly ? FEATURED.slice(2) : FEATURED).map((platform) => ({
     platform,
-    links: grouped.find((group) => {
-      const searchable = `${group[0]?.title ?? ""} ${group[0]?.platform ?? ""}`.toLowerCase();
-      return platform.aliases.some((alias) => searchable.includes(alias));
-    }) ?? [],
+    links: grouped
+      .filter((group) => platform.aliases.some((alias) => (group[0]?.title ?? "").toLowerCase().includes(alias)))
+      .flat(),
   })), [grouped, sportsOnly]);
 
   const usedIds = new Set(featuredGroups.flatMap((group) => group.links.map((link) => link.id)));
@@ -162,8 +154,8 @@ const WatchHub = ({ unlocked, onUnlockClick, sportsOnly = false }: { unlocked: b
           </DialogHeader>
           <div className="space-y-2">
             {selected?.links.length ? selected.links.map((link, index) => (
-              <Button key={link.id} className="h-11 w-full justify-between" onClick={() => requestOpen(link)}>
-                {selected.links.length > 1 ? `Open link ${index + 1}` : "Open platform"}<Play size={16} className="fill-current" />
+              <Button key={link.id} variant={index === 0 ? "default" : "secondary"} className="h-11 w-full justify-between" onClick={() => requestOpen(link)}>
+                <span className="flex items-center gap-2"><span className="grid h-6 w-6 place-items-center rounded-full bg-background/25 text-xs">{index + 1}</span>{selected.platform.name} · Server {index + 1}</span><Play size={16} className="fill-current" />
               </Button>
             )) : (
               <div className="rounded-lg border border-border bg-secondary p-4 text-sm text-muted-foreground">No active link is published for this platform yet. Please check More platforms or try again later.</div>
