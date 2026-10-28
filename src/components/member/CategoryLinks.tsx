@@ -3,7 +3,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ExternalLink, Link2, Lock, RefreshCw } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
 import { useContent, type ContentLink } from "@/hooks/useContent";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -50,7 +49,6 @@ interface Props {
 /** One card can carry several URLs for the same title — each becomes its own button. */
 const LinkCard = ({ links, slug, unlocked, onUnlockClick }: { links: ContentLink[]; slug: string; unlocked: boolean; onUnlockClick?: () => void }) => {
   const navigate = useNavigate();
-  const { toast } = useToast();
   const link = links[0];
   const [pending, setPending] = useState<{ action: "open"; link: ContentLink } | null>(null);
 
