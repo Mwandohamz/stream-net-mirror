@@ -25,6 +25,11 @@ import { useAppSettings } from "@/hooks/useAppSettings";
 import { openExternalUrl } from "@/lib/native";
 import ApkDownloadButton from "@/components/ApkDownloadButton";
 import AccountActivity from "@/components/member/AccountActivity";
+import { movies as catalogMovies, series as catalogSeries } from "@/data/catalog";
+import moviesHero from "@/assets/dashboard-movies.jpg";
+
+// Interleave movies and series into a 20-title home row.
+const homeTitles = Array.from({ length: 10 }).flatMap((_, i) => [catalogMovies[i], catalogSeries[i]]).filter(Boolean);
 
 interface Ticket {
   id: string;
@@ -216,7 +221,9 @@ const MemberDashboard = () => {
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-3xl mx-auto space-y-6">
           {tab === "dashboard" && (<>
           {/* Welcome hero */}
-          <div className="relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-primary/15 via-card to-card p-5 md:p-6">
+          <div className="relative overflow-hidden rounded-2xl border border-border bg-card p-5 md:p-6">
+            <img src={moviesHero} alt="" aria-hidden="true" className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-60" />
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-background/95 via-background/70 to-background/10" />
             <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-primary/20 blur-3xl" />
             <div className="relative space-y-4">
               <div className="space-y-1">
@@ -276,6 +283,26 @@ const MemberDashboard = () => {
             </div>
           </div>
 
+
+          {/* Available titles — same catalogue as the public Movies/TV pages */}
+          <section aria-labelledby="home-titles" className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h2 id="home-titles" className="text-lg font-semibold text-foreground">Popular right now</h2>
+              <Button variant="ghost" size="sm" className="gap-1 text-primary" onClick={() => setTab("movies")}>See all <ChevronRight size={14} /></Button>
+            </div>
+            <div className="-mx-4 flex snap-x gap-3 overflow-x-auto px-4 pb-2 md:mx-0 md:grid md:grid-cols-5 md:overflow-visible md:px-0">
+              {homeTitles.map(item => (
+                <button key={item.title} type="button" onClick={() => setTab("movies")}
+                  className="group relative w-28 shrink-0 snap-start overflow-hidden rounded-xl border border-border bg-card text-left md:w-auto">
+                  <img src={item.poster} alt={item.title} loading="lazy" className="aspect-[2/3] w-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-background via-background/70 to-transparent p-2 pt-8">
+                    <p className="line-clamp-2 text-xs font-semibold text-foreground">{item.title}</p>
+                    <p className="text-[10px] text-muted-foreground">{item.platform} · ★ {item.rating}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </section>
 
           {/* Account & subscription overview */}
           <AccountOverviewCard />
