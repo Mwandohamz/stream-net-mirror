@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import playNeon from "@/assets/brand/play-neon.png.asset.json";
+import playNeonSrc from "@/assets/brand/play-neon.png";
+const playNeon = { url: playNeonSrc };
 import { toAbsoluteAssetUrl } from "@/lib/assetUrl";
 
 /** Branded loader: the neon play icon with a filling ring and a 0–100% counter. */

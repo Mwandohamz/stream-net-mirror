@@ -13,7 +13,8 @@ import {
 import { Clapperboard, Volleyball, LogOut, Settings, Home, Play, ChevronDown, Menu, Receipt } from "lucide-react";
 import { Sheet, SheetContent, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import NotificationInbox from "@/components/member/NotificationInbox";
-import playNeon from "@/assets/brand/play-neon.png.asset.json";
+import playNeonSrc from "@/assets/brand/play-neon.png";
+const playNeon = { url: playNeonSrc };
 import { LEAGUE_OPTIONS } from "@/lib/fixtures";
 import LogoShowcase from "@/components/LogoShowcase";
 import CountdownBadge from "@/components/CountdownBadge";
@@ -24,7 +25,8 @@ import { useSubscriber, subscriptionAccessEnd } from "@/hooks/useSubscriber";
 import { DEFAULT_PROFILE_AVATAR } from "@/lib/profileAvatars";
 import moviesBackdrop from "@/assets/dashboard-movies.jpg";
 import footballBackdrop from "@/assets/dashboard-football.jpg";
-import logoAsset from "@/assets/brand/streamnetmirror-logo.png.asset.json";
+import logoAssetSrc from "@/assets/brand/streamnetmirror-logo.png";
+const logoAsset = { url: logoAssetSrc };
 import { toAbsoluteAssetUrl } from "@/lib/assetUrl";
 import ApkDownloadButton from "@/components/ApkDownloadButton";
 
