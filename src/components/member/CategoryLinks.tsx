@@ -2,8 +2,7 @@ import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, Copy, Link2, Lock, RefreshCw } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { ExternalLink, Link2, Lock, RefreshCw } from "lucide-react";
 import { useContent, type ContentLink } from "@/hooks/useContent";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -50,22 +49,17 @@ interface Props {
 /** One card can carry several URLs for the same title — each becomes its own button. */
 const LinkCard = ({ links, slug, unlocked, onUnlockClick }: { links: ContentLink[]; slug: string; unlocked: boolean; onUnlockClick?: () => void }) => {
   const navigate = useNavigate();
-  const { toast } = useToast();
   const link = links[0];
-  const [pending, setPending] = useState<{ action: "open" | "copy"; link: ContentLink } | null>(null);
+  const [pending, setPending] = useState<{ action: "open"; link: ContentLink } | null>(null);
 
   const doOpen = (item: ContentLink) => {
     if (isStreamingCategory(slug)) navigate(watchPath(item.id));
     else void openExternalUrl(item.url);
   };
-  const doCopy = (url: string) => {
-    void navigator.clipboard.writeText(url);
-    toast({ title: "Link copied", description: link.title });
-  };
 
-  const request = (action: "open" | "copy", item: ContentLink) => {
+  const request = (action: "open", item: ContentLink) => {
     if (rotationAcknowledged()) {
-      action === "open" ? doOpen(item) : doCopy(item.url);
+      doOpen(item);
       return;
     }
     setPending({ action, link: item });
@@ -76,8 +70,7 @@ const LinkCard = ({ links, slug, unlocked, onUnlockClick }: { links: ContentLink
     const p = pending;
     setPending(null);
     if (!p) return;
-    if (p.action === "open") doOpen(p.link);
-    if (p.action === "copy") doCopy(p.link.url);
+    doOpen(p.link);
   };
 
 
@@ -110,14 +103,6 @@ const LinkCard = ({ links, slug, unlocked, onUnlockClick }: { links: ContentLink
                 <ExternalLink size={13} /> {links.length > 1 ? `Open link ${i + 1}` : "Open"}
               </Button>
             ))}
-            <Button
-              size="sm"
-              variant="outline"
-              className="h-8 gap-1 border-border text-foreground"
-              onClick={() => request("copy", link)}
-            >
-              <Copy size={13} /> Copy
-            </Button>
           </div>
         ) : (
           <Button size="sm" variant="outline" className="mt-1 h-8 gap-1 border-primary/40 text-foreground" onClick={onUnlockClick}>

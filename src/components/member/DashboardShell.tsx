@@ -19,6 +19,7 @@ import LogoShowcase from "@/components/LogoShowcase";
 import CountdownBadge from "@/components/CountdownBadge";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useProfile";
+import WelcomeGreeting from "@/components/member/WelcomeGreeting";
 import { useSubscriber, subscriptionAccessEnd } from "@/hooks/useSubscriber";
 import { DEFAULT_PROFILE_AVATAR } from "@/lib/profileAvatars";
 import moviesBackdrop from "@/assets/dashboard-movies.jpg";
@@ -79,6 +80,7 @@ const DashboardShell = ({ tab, onTabChange, children }: Props) => {
 
   return (
     <div className={`theme-dashboard dashboard-tab-${tab} relative min-h-screen overflow-hidden bg-background font-sans`}>
+      <WelcomeGreeting userId={profile?.id} name={profile?.full_name} />
       {backdrop && (
         <div className="pointer-events-none fixed inset-0 z-0 md:left-60" aria-hidden="true">
           <img
@@ -112,12 +114,12 @@ const DashboardShell = ({ tab, onTabChange, children }: Props) => {
                     <AvatarFallback className="bg-secondary text-[11px]">{initials}</AvatarFallback>
                   </Avatar>
                   <span className="hidden sm:block max-w-[120px] truncate text-xs text-foreground">
-                    {profile?.full_name || profile?.email || "Account"}
+                    {profile?.full_name?.split(" ")[0] || "Account"}
                   </span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56 bg-popover">
-                <DropdownMenuLabel className="truncate">{profile?.email}</DropdownMenuLabel>
+                <DropdownMenuLabel className="truncate">{profile?.full_name || "My account"}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => onTabChange("account")}>
                   <Settings className="mr-2 h-4 w-4" /> Account settings
