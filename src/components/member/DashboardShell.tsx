@@ -215,25 +215,25 @@ const DashboardShell = ({ tab, onTabChange, children }: Props) => {
 
       {/* Mobile bottom navigation */}
       <nav className="dashboard-bottom-nav fixed bottom-0 left-0 right-0 z-40 grid h-[72px] grid-cols-5 border-t border-border bg-background/95 px-1 backdrop-blur md:hidden" aria-label="Dashboard navigation">
-        {DASHBOARD_TABS.map((t, index) => (
-          <Button
-            variant="ghost"
+        {DASHBOARD_TABS.map((t) => (
+          <button
+            type="button"
             key={t.id}
             onClick={() => onTabChange(t.id)}
-            className={`relative h-[72px] min-w-0 flex-col items-center gap-1 rounded-none px-0 text-[10px] ${
-              t.id === "watch" ? "-top-4" : ""} ${
+            aria-current={tab === t.id ? "page" : undefined}
+            className={`relative flex h-[72px] min-w-0 flex-col items-center justify-end gap-1 bg-transparent pb-2 text-[10px] outline-none focus-visible:ring-2 focus-visible:ring-ring ${
               tab === t.id ? "text-primary" : "text-muted-foreground"
             }`}
           >
             {t.id === "watch" ? (
-              <span className="grid h-16 w-16 place-items-center overflow-hidden rounded-full border-4 border-background bg-background shadow-[0_0_24px_hsl(var(--primary)/0.45)]">
-                <img src={toAbsoluteAssetUrl(playNeon.url)} alt="" aria-hidden="true" className="h-full w-full scale-110 object-cover" />
+              <span className="streaming-play-surface absolute -top-6 left-1/2 grid h-14 w-14 -translate-x-1/2 place-items-center rounded-full ring-4 ring-background">
+                <Play size={24} className="ml-0.5 fill-current text-primary-foreground" />
               </span>
             ) : (
               <span className="grid h-7 place-items-center"><t.icon size={20} /></span>
             )}
-            <span className={index === 2 ? "font-semibold text-primary" : "truncate"}>{t.short}</span>
-          </Button>
+            <span className={t.id === "watch" ? "font-semibold" : "truncate"}>{t.short}</span>
+          </button>
         ))}
       </nav>
     </div>
