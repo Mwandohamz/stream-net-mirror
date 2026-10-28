@@ -45,6 +45,14 @@ jobs:
       - name: Build web app (production)
         run: bun run build
 
+      - name: Generate app icon + splash from resources/ (if provided)
+        run: |
+          if [ -f resources/icon.png ]; then
+            bunx @capacitor/assets@3 generate --android --iconBackgroundColor '#07090F' --splashBackgroundColor '#07090F'
+          else
+            echo "::notice::resources/icon.png not found — keeping existing Android icons."
+          fi
+
       - name: Sync Capacitor Android (bundled dist, no live-reload URL)
         run: |
           unset CAP_SERVER_URL
