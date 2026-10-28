@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Maximize, Minimize, X } from "lucide-react";
+import { ArrowLeft, ExternalLink, Maximize, Minimize, X } from "lucide-react";
 import { InAppBrowser, ToolBarType } from "@capgo/inappbrowser";
 import type { PluginListenerHandle } from "@capacitor/core";
 import { Button } from "@/components/ui/button";
@@ -29,7 +29,8 @@ const Watch = () => {
   const content = useRef<HTMLDivElement>(null);
   const native = isNativeApp();
   const mode = normalizeEmbedMode(source?.embed_mode);
-  const nativeView = native && mode === "webview" && !nativeFallback;
+  // Native always uses a real WebView: many stream sites forbid iframes (X-Frame-Options/CSP).
+  const nativeView = native && !nativeFallback;
 
   const close = useCallback(() => {
     if (typeof window.history.state?.idx === "number" && window.history.state.idx > 0) navigate(-1);
@@ -131,6 +132,19 @@ const Watch = () => {
     return () => { document.removeEventListener("fullscreenchange", changed); };
   }, []);
 
+  // Sites that refuse to be framed still play when opened as their own page.
+  const openPlayer = async () => {
+    if (!source) return;
+    if (native) {
+      try {
+        await InAppBrowser.openWebView({ url: source.url, toolbarType: ToolBarType.NAVIGATION, title: source.title, preventDeeplink: true, openBlankTargetInWebView: true });
+      } catch { toast({ title: "Unable to open this source", description: "Try another link.", variant: "destructive" }); }
+      return;
+    }
+    const tab = window.open(source.url, "_blank", "noopener,noreferrer");
+    if (!tab) window.location.assign(source.url);
+  };
+
   const toggleFullscreen = async () => {
     try {
       if (document.fullscreenElement) await document.exitFullscreen();
@@ -157,8 +171,11 @@ const Watch = () => {
       <div ref={content} className="relative flex min-h-0 flex-1 flex-col pb-[env(safe-area-inset-bottom)]">
         {!nativeView && <>
            <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-border bg-card px-3 py-2">
-            <p role="status" className="text-xs text-muted-foreground">{failed ? "This source isn't loading" : "Having trouble with this source?"}</p>
-            <Button size="sm" variant="outline" className="h-8 gap-2" onClick={close}><ArrowLeft size={14} /> Switch platform</Button>
+            <p role="status" className="text-xs text-muted-foreground">{failed ? "Blank or refused? Tap Open player" : "Not loading? Tap Open player"}</p>
+            <div className="flex gap-2">
+              <Button size="sm" className="h-8 gap-2" onClick={openPlayer}><ExternalLink size={14} /> Open player</Button>
+              <Button size="sm" variant="outline" className="h-8 gap-2" onClick={close}><ArrowLeft size={14} /> Switch</Button>
+            </div>
           </div>
           <iframe
             key={source.id}
