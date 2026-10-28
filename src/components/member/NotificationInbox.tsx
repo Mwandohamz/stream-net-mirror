@@ -1,6 +1,7 @@
 import { Bell, CheckCheck } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -24,6 +25,19 @@ export default function NotificationInbox() {
     return { items, readAt: stored, userId: session.user.id };
   }});
   const unread = query.data?.items.filter(i => new Date(i.time).getTime() > Math.max(readAt, query.data?.readAt ?? 0)).length ?? 0;
+  // In-app alert: pop a toast when a new unread update arrives while the app is open.
+  const lastToastRef = useRef<string | null>(null);
+  useEffect(() => {
+    const newest = query.data?.items.find(i => new Date(i.time).getTime() > Math.max(readAt, query.data?.readAt ?? 0));
+    if (!newest || !query.data?.userId) return;
+    const key = `${newest.id}:${newest.time}`;
+    let shown = "";
+    try { shown = localStorage.getItem(`notifications-toast-${query.data.userId}`) ?? ""; } catch { /* optional */ }
+    if (lastToastRef.current === key || shown === key) return;
+    lastToastRef.current = key;
+    try { localStorage.setItem(`notifications-toast-${query.data.userId}`, key); } catch { /* optional */ }
+    toast({ title: newest.title, description: newest.text });
+  }, [query.data, readAt]);
   return <Popover><PopoverTrigger asChild><Button variant="ghost" size="icon" aria-label={`Notifications${unread ? `, ${unread} unread` : ""}`} className="relative h-10 w-10 shrink-0"><Bell size={19} />{unread > 0 && <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-accent" />}</Button></PopoverTrigger>
     <PopoverContent align="end" className="theme-dashboard max-h-[70dvh] w-80 max-w-[calc(100vw-24px)] overflow-y-auto bg-popover text-foreground">
       <div className="flex items-center justify-between"><h2 className="font-semibold">Notifications</h2><Button size="icon" variant="ghost" aria-label="Mark all as read" onClick={() => { const now = Date.now(); setReadAt(now); try { if (query.data?.userId) localStorage.setItem(`notifications-read-${query.data.userId}`, String(now)); } catch { /* optional persistence */ } }}><CheckCheck size={18} /></Button></div>

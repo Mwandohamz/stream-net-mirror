@@ -13,6 +13,7 @@ import {
 import { Clapperboard, Volleyball, LogOut, Settings, Home, Play, ChevronDown, Menu, Receipt } from "lucide-react";
 import { Sheet, SheetContent, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import NotificationInbox from "@/components/member/NotificationInbox";
+import playNeon from "@/assets/brand/play-neon.png.asset.json";
 import { LEAGUE_OPTIONS } from "@/lib/fixtures";
 import LogoShowcase from "@/components/LogoShowcase";
 import CountdownBadge from "@/components/CountdownBadge";
@@ -224,9 +225,13 @@ const DashboardShell = ({ tab, onTabChange, children }: Props) => {
               tab === t.id ? "text-primary" : "text-muted-foreground"
             }`}
           >
-            <span className={t.id === "watch" ? "streaming-play-surface grid h-14 w-14 place-items-center rounded-full border-4 border-background text-accent-foreground" : "grid h-7 place-items-center"}>
-              <t.icon size={t.id === "watch" ? 23 : 20} className={t.id === "watch" ? "fill-current" : ""} />
-            </span>
+            {t.id === "watch" ? (
+              <span className="grid h-16 w-16 place-items-center overflow-hidden rounded-full border-4 border-background bg-background shadow-[0_0_24px_hsl(var(--primary)/0.45)]">
+                <img src={toAbsoluteAssetUrl(playNeon.url)} alt="" aria-hidden="true" className="h-full w-full scale-110 object-cover" />
+              </span>
+            ) : (
+              <span className="grid h-7 place-items-center"><t.icon size={20} /></span>
+            )}
             <span className={index === 2 ? "font-semibold text-primary" : "truncate"}>{t.short}</span>
           </Button>
         ))}

@@ -58,11 +58,20 @@ export default function PaymentModal({ isOpen, onClose, onSuccess, onFailure, us
   const localAmount = priceUsd === null ? null : convertFromUSD(priceUsd, country.currency);
   const fxRate = rateFor(country.currency);
 
-  // Handle payment result
+  // Handle payment result: show the success receipt briefly, then continue once.
+  const successFiredRef = useRef(false);
+  const finishSuccess = () => {
+    if (successFiredRef.current || !depositId) return;
+    successFiredRef.current = true;
+    resetModal();
+    onSuccess(depositId);
+  };
   useEffect(() => {
-    if (paymentResult.status === "COMPLETED") {
-      onSuccess(depositId!);
-    }
+    if (paymentResult.status !== "COMPLETED") return;
+    const timer = window.setTimeout(finishSuccess, 6000);
+    return () => window.clearTimeout(timer);
+  }, [paymentResult.status]);
+  useEffect(() => {
     // The mobile money prompt only lives for 10 minutes — record the expiry so
     // the admin dashboard shows why the payment never completed.
     if (paymentResult.status === "TIMEOUT" && depositId) {
@@ -182,7 +191,7 @@ export default function PaymentModal({ isOpen, onClose, onSuccess, onFailure, us
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) { resetModal(); onClose(); } }}>
+    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) { if (paymentResult.status === "COMPLETED") { finishSuccess(); return; } resetModal(); onClose(); } }}>
       <DialogContent className="sm:max-w-md p-0 gap-0 bg-card border-border overflow-hidden max-h-[90vh] overflow-y-auto">
         {/* Progress bar */}
         <div className="flex gap-1 p-4 pb-0">
@@ -369,18 +378,32 @@ export default function PaymentModal({ isOpen, onClose, onSuccess, onFailure, us
                 {/* SUCCESS */}
                 {paymentResult.status === "COMPLETED" && (
                   <>
-                    <div className="w-16 h-16 rounded-full bg-green-500/20 border-2 border-green-500 flex items-center justify-center mx-auto">
-                      <Check size={32} className="text-green-500" />
+                    <div className="relative mx-auto h-24 w-24">
+                      <span className="absolute inset-0 animate-ping rounded-full bg-green-500/25" />
+                      <div className="relative flex h-24 w-24 items-center justify-center rounded-full bg-green-500 shadow-[0_0_40px_rgba(34,197,94,0.5)]">
+                        <Check size={48} strokeWidth={3} className="text-background" />
+                      </div>
                     </div>
-                    <h3 className="netflix-title text-2xl text-foreground">PAYMENT SUCCESSFUL! 🎉</h3>
-                    <p className="text-sm text-muted-foreground">
-                      {localAmount !== null ? formatCurrencyAmount(localAmount, country.currency) : "..."} paid via {selectedProvider?.displayName}
-                    </p>
-                    {paymentResult.data?.providerTransactionId && (
-                      <p className="text-xs text-muted-foreground">Ref: {paymentResult.data.providerTransactionId}</p>
-                    )}
-                    <Button onClick={() => { resetModal(); onSuccess(depositId!); }} className="w-full bg-primary text-primary-foreground hover:bg-primary/80">
-                      Access Streaming Portal
+                    <div>
+                      <h3 className="text-2xl font-bold text-foreground">Payment Successful!</h3>
+                      <p className="text-sm text-muted-foreground">Your access is now unlocked.</p>
+                    </div>
+                    <div className="space-y-2 rounded-xl border border-border bg-card/70 p-4 text-left text-sm">
+                      <p className="font-semibold text-foreground">Payment receipt</p>
+                      {[
+                        ["Amount paid", localAmount !== null ? formatCurrencyAmount(localAmount, country.currency) : "—"],
+                        ["Paid with", selectedProvider?.displayName ?? "—"],
+                        ["Reference", paymentResult.data?.providerTransactionId ?? depositId ?? "—"],
+                        ["Date", new Date().toLocaleString()],
+                      ].map(([k, v]) => (
+                        <div key={k} className="flex justify-between gap-3"><span className="text-muted-foreground">{k}</span><span className="break-all text-right font-medium text-foreground">{v}</span></div>
+                      ))}
+                    </div>
+                    <div className="flex items-center gap-2 rounded-lg border border-green-500/30 bg-green-500/10 p-3 text-left text-xs text-foreground">
+                      <Check size={16} className="shrink-0 text-green-500" /> Your account has been updated and the payment recorded.
+                    </div>
+                    <Button onClick={finishSuccess} className="h-12 w-full streaming-play-surface font-semibold text-primary-foreground">
+                      Start Watching
                     </Button>
                   </>
                 )}
