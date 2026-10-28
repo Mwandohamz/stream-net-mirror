@@ -112,12 +112,12 @@ const DashboardShell = ({ tab, onTabChange, children }: Props) => {
                     <AvatarFallback className="bg-secondary text-[11px]">{initials}</AvatarFallback>
                   </Avatar>
                   <span className="hidden sm:block max-w-[120px] truncate text-xs text-foreground">
-                    {profile?.full_name || profile?.email || "Account"}
+                    {profile?.full_name?.split(" ")[0] || "Account"}
                   </span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56 bg-popover">
-                <DropdownMenuLabel className="truncate">{profile?.email}</DropdownMenuLabel>
+                <DropdownMenuLabel className="truncate">{profile?.full_name || "My account"}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => onTabChange("account")}>
                   <Settings className="mr-2 h-4 w-4" /> Account settings
