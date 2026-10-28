@@ -191,7 +191,7 @@ export default function PaymentModal({ isOpen, onClose, onSuccess, onFailure, us
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) { resetModal(); onClose(); } }}>
+    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) { if (paymentResult.status === "COMPLETED") { finishSuccess(); return; } resetModal(); onClose(); } }}>
       <DialogContent className="sm:max-w-md p-0 gap-0 bg-card border-border overflow-hidden max-h-[90vh] overflow-y-auto">
         {/* Progress bar */}
         <div className="flex gap-1 p-4 pb-0">
