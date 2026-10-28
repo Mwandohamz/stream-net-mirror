@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { isNativeApp } from "@/lib/native";
 import { toAbsoluteAssetUrl } from "@/lib/assetUrl";
-import logo from "@/assets/brand/streamnetmirror-logo.png.asset.json";
-import playNeon from "@/assets/brand/play-neon.png.asset.json";
+import logoSrc from "@/assets/brand/streamnetmirror-logo.png";
+const logo = { url: logoSrc };
+import playNeonSrc from "@/assets/brand/play-neon.png";
+const playNeon = { url: playNeonSrc };
 import movies from "@/assets/dashboard-movies.jpg";
 import football from "@/assets/dashboard-football.jpg";
 
