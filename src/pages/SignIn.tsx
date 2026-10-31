@@ -112,6 +112,7 @@ const SignIn = () => {
                       <div className="pt-1">
                         <p className="text-xs text-muted-foreground mb-1">Your email isn't verified yet.</p>
                         <Button
+                          type="button"
                           size="sm"
                           variant="outline"
                           onClick={handleResendVerification}
