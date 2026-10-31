@@ -1,7 +1,8 @@
 # Roadmap — dashboard native polish + in-app streaming + APK downloads
 
 ## Current request
-- [ ] Native 14-day session policy, password-manager-friendly sign-in, official-domain email verification and code alternative; test and deploy email changes
+- [x] Native 14-day reauthentication window, password-manager-friendly sign-in, official-domain verification and email-code alternative; 13 tests, email sender validation/deploy and signed-in dashboard browser check passed
+- [ ] Verify newly delivered email link/code and Android autofill on rebuilt release APK — requires recipient inbox and Android device; hosted session timebox/inactivity limits not exposed by available settings tools
 - [x] Browser fallback on each stream and player; switch links in a popup without leaving playback — 10 tests and signed-in browser switching/tab-opening checks passed; native device check requires rebuilt APK
 - [x] Native-only entry routing: splash → login/signup → dashboard, no website landing pages
 - [x] Verified 26 tests and clean preview compilation; browser-emulated native splash/signup/saved-session dashboard and unchanged web homepage; documented APK rebuild (real-device check still manual)
