@@ -23,7 +23,7 @@ describe("email code verification", () => {
     auth.verifyOtp.mockResolvedValue({ data: { session: { user: { id: "user" } }, user: { id: "user", email_confirmed_at: "2026-10-31T11:00:00Z" } }, error: null });
     mount();
     fireEvent.change(screen.getByLabelText("Verification code"), { target: { value: "123456" } });
-    fireEvent.click(screen.getByRole("button", { name: "Verify email", exact: true }));
+    fireEvent.click(screen.getByRole("button", { name: /^Verify email$/ }));
     await waitFor(() => expect(screen.queryByTestId("dashboard")).not.toBeNull());
     expect(auth.verifyOtp).toHaveBeenCalledWith({ email: "member@example.test", token: "123456", type: "signup" });
   });
@@ -31,7 +31,7 @@ describe("email code verification", () => {
     auth.verifyOtp.mockResolvedValue({ data: { session: null, user: null }, error: { message: "Expired" } });
     mount();
     fireEvent.change(screen.getByLabelText("Verification code"), { target: { value: "123456" } });
-    fireEvent.click(screen.getByRole("button", { name: "Verify email", exact: true }));
+    fireEvent.click(screen.getByRole("button", { name: /^Verify email$/ }));
     await waitFor(() => expect(screen.queryByRole("alert")).not.toBeNull());
     expect(auth.verifyOtp).toHaveBeenCalledTimes(1);
     expect(screen.queryByTestId("dashboard")).toBeNull();
