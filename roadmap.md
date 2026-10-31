@@ -1,7 +1,7 @@
 # Roadmap — dashboard native polish + in-app streaming + APK downloads
 
 ## Current request
-- [ ] Browser fallback on each stream and player; switch links in a popup without leaving playback
+- [x] Browser fallback on each stream and player; switch links in a popup without leaving playback — 10 tests and signed-in browser switching/tab-opening checks passed; native device check requires rebuilt APK
 - [x] Native-only entry routing: splash → login/signup → dashboard, no website landing pages
 - [x] Verified 26 tests and clean preview compilation; browser-emulated native splash/signup/saved-session dashboard and unchanged web homepage; documented APK rebuild (real-device check still manual)
 - [x] Mobile sidebar and gradient Play action
@@ -14,7 +14,7 @@
 
 - [x] Swap dashboard tab icons: House for Home, ball for Football (bottom nav + sidebar)
 - [x] Login/signup/account creation → straight to /dashboard (already in place, verified)
-- [x] All stream links open inside the app; removed external-open options; iframe back button + platform switcher + popup/redirect blocking
+- [x] In-app streaming is the default with explicit browser recovery; iframe back button + popup platform switcher + popup/redirect blocking
 - [x] APK download for everyone, tracked downloads (device/time) visible in admin Settings
 - [x] LIVE badge on live football fixtures
 - [x] Reduced dashboard text; compact link-rotation notice
