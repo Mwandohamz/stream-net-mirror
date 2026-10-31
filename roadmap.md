@@ -1,6 +1,7 @@
 # Roadmap — dashboard native polish + in-app streaming + APK downloads
 
 ## Current request
+- [ ] Browser fallback on each stream and player; switch links in a popup without leaving playback
 - [x] Native-only entry routing: splash → login/signup → dashboard, no website landing pages
 - [x] Verified 26 tests and clean preview compilation; browser-emulated native splash/signup/saved-session dashboard and unchanged web homepage; documented APK rebuild (real-device check still manual)
 - [x] Mobile sidebar and gradient Play action
