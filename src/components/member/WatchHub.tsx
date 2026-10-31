@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { ChevronDown, Link2, Lock, Play, RefreshCw } from "lucide-react";
+import { ChevronDown, Link2, Lock, Play, RefreshCw, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
@@ -16,6 +16,8 @@ import { useNavigate } from "react-router-dom";
 import { watchPath } from "@/lib/watchPlayback";
 import { toAbsoluteAssetUrl } from "@/lib/assetUrl";
 import { groupLinks } from "@/lib/linkGroups";
+import { openStreamInBrowser } from "@/lib/streamBrowser";
+import { useToast } from "@/hooks/use-toast";
 
 const ROTATION_ACK_KEY = "link-rotation-acknowledged";
 
@@ -40,6 +42,8 @@ const WatchHub = ({ unlocked, onUnlockClick, sportsOnly = false }: { unlocked: b
   const { categories, links, loading } = useContent();
   const [selected, setSelected] = useState<{ platform: FeaturedPlatform; links: ContentLink[] } | null>(null);
   const [pendingLink, setPendingLink] = useState<ContentLink | null>(null);
+  const [pendingBrowser, setPendingBrowser] = useState(false);
+  const { toast } = useToast();
   const [moreOpen, setMoreOpen] = useState(false);
 
   const activeCategoryIds = useMemo(
@@ -61,10 +65,17 @@ const WatchHub = ({ unlocked, onUnlockClick, sportsOnly = false }: { unlocked: b
   const usedIds = new Set(featuredGroups.flatMap((group) => group.links.map((link) => link.id)));
   const remaining = grouped.filter((group) => !group.some((link) => usedIds.has(link.id)));
 
-  const requestOpen = (link: ContentLink) => {
+  const openBrowser = async (link: ContentLink) => {
+    try { await openStreamInBrowser(link.id); }
+    catch { toast({ title: "Unable to open browser", description: "Allow popups or try another link.", variant: "destructive" }); }
+  };
+
+  const requestOpen = (link: ContentLink, browser = false) => {
+    setPendingBrowser(browser);
     try {
       if (sessionStorage.getItem(ROTATION_ACK_KEY) === "1") {
-        navigate(watchPath(link.id));
+        if (browser) void openBrowser(link);
+        else navigate(watchPath(link.id));
         return;
       }
     } catch {
@@ -79,7 +90,8 @@ const WatchHub = ({ unlocked, onUnlockClick, sportsOnly = false }: { unlocked: b
     setPendingLink(null);
     if (!link) return;
     try { sessionStorage.setItem(ROTATION_ACK_KEY, "1"); } catch { /* no-op */ }
-    navigate(watchPath(link.id));
+    if (pendingBrowser) void openBrowser(link);
+    else navigate(watchPath(link.id));
   };
 
   const choosePlatform = (platform: FeaturedPlatform, platformLinks: ContentLink[]) => {
@@ -154,9 +166,12 @@ const WatchHub = ({ unlocked, onUnlockClick, sportsOnly = false }: { unlocked: b
           </DialogHeader>
           <div className="space-y-2">
             {selected?.links.length ? selected.links.map((link, index) => (
-              <Button key={link.id} variant={index === 0 ? "default" : "secondary"} className="h-11 w-full justify-between" onClick={() => requestOpen(link)}>
+              <div key={link.id} className="flex gap-2">
+              <Button variant={index === 0 ? "default" : "secondary"} className="h-11 min-w-0 flex-1 justify-between" onClick={() => requestOpen(link)}>
                 <span className="flex items-center gap-2"><span className="grid h-6 w-6 place-items-center rounded-full bg-background/25 text-xs">{index + 1}</span>{selected.platform.name} · Server {index + 1}</span><Play size={16} className="fill-current" />
               </Button>
+              <Button variant="outline" className="h-11 shrink-0" size="icon" aria-label={`Open ${selected.platform.name} server ${index + 1} in browser`} title="Open in browser" onClick={() => requestOpen(link, true)}><ExternalLink size={18} /></Button>
+              </div>
             )) : (
               <div className="rounded-lg border border-border bg-secondary p-4 text-sm text-muted-foreground">No active link is published for this platform yet. Please check More platforms or try again later.</div>
             )}
