@@ -2,6 +2,11 @@ import { describe, expect, it } from "vitest";
 import { emailVerificationUrl, verificationDestination } from "@/lib/emailVerification";
 
 describe("email verification destinations", () => {
+  it("uses the official domain from preview and bundled native origins", () => {
+    for (const origin of ["https://preview.lovable.app", "https://localhost", "capacitor://localhost"]) {
+      expect(emailVerificationUrl(origin, null)).toBe("https://streamnetmirror.app/verify");
+    }
+  });
   it("lands verification emails on the public help route", () => {
     expect(emailVerificationUrl("https://streamnetmirror.app", null)).toBe("https://streamnetmirror.app/verify");
   });
