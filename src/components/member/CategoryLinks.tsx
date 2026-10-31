@@ -11,6 +11,8 @@ import {
 import { openExternalUrl } from "@/lib/native";
 import { useNavigate } from "react-router-dom";
 import { isStreamingCategory, watchPath } from "@/lib/watchPlayback";
+import { openStreamInBrowser } from "@/lib/streamBrowser";
+import { useToast } from "@/hooks/use-toast";
 
 const ROTATION_ACK_KEY = "link-rotation-acknowledged";
 
@@ -50,16 +52,18 @@ interface Props {
 const LinkCard = ({ links, slug, unlocked, onUnlockClick }: { links: ContentLink[]; slug: string; unlocked: boolean; onUnlockClick?: () => void }) => {
   const navigate = useNavigate();
   const link = links[0];
-  const [pending, setPending] = useState<{ action: "open"; link: ContentLink } | null>(null);
+  const [pending, setPending] = useState<{ action: "open" | "browser"; link: ContentLink } | null>(null);
+  const { toast } = useToast();
 
-  const doOpen = (item: ContentLink) => {
-    if (isStreamingCategory(slug)) navigate(watchPath(item.id));
+  const doOpen = (item: ContentLink, action: "open" | "browser" = "open") => {
+    if (isStreamingCategory(slug) && action === "browser") void openStreamInBrowser(item.id).catch(() => toast({ title: "Unable to open browser", description: "Allow popups or try another link.", variant: "destructive" }));
+    else if (isStreamingCategory(slug)) navigate(watchPath(item.id));
     else void openExternalUrl(item.url);
   };
 
-  const request = (action: "open", item: ContentLink) => {
+  const request = (action: "open" | "browser", item: ContentLink) => {
     if (rotationAcknowledged()) {
-      doOpen(item);
+      doOpen(item, action);
       return;
     }
     setPending({ action, link: item });
@@ -70,7 +74,7 @@ const LinkCard = ({ links, slug, unlocked, onUnlockClick }: { links: ContentLink
     const p = pending;
     setPending(null);
     if (!p) return;
-    doOpen(p.link);
+    doOpen(p.link, p.action);
   };
 
 
@@ -94,14 +98,16 @@ const LinkCard = ({ links, slug, unlocked, onUnlockClick }: { links: ContentLink
         {unlocked ? (
           <div className="flex flex-wrap gap-2 pt-1">
             {links.map((l, i) => (
+              <div key={l.id} className="flex gap-1">
               <Button
-                key={l.id}
                 size="sm"
                 className="h-8 gap-1 bg-primary text-primary-foreground"
                 onClick={() => request("open", l)}
               >
                 <ExternalLink size={13} /> {links.length > 1 ? `Open link ${i + 1}` : "Open"}
               </Button>
+              {isStreamingCategory(slug) && <Button size="sm" variant="outline" className="h-8" aria-label={`Open ${l.title} link ${i + 1} in browser`} title="Open in browser" onClick={() => request("browser", l)}><ExternalLink size={13} /> Browser</Button>}
+              </div>
             ))}
           </div>
         ) : (
