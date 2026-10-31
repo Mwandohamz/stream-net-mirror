@@ -4,5 +4,7 @@ export function verificationDestination(next: string | null): string {
 
 export function emailVerificationUrl(origin: string, next: string | null): string {
   const destination = verificationDestination(next);
-  return `${origin}/verify${destination === "/dashboard" ? "" : `?next=${encodeURIComponent(destination)}`}`;
+  // Email links always land on the official site, including from preview/native.
+  void origin;
+  return `https://streamnetmirror.app/verify${destination === "/dashboard" ? "" : `?next=${encodeURIComponent(destination)}`}`;
 }

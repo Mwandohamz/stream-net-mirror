@@ -3,6 +3,7 @@
 - Fixtures are public cached metadata synced only by the protected football-fixtures function; fixture Watch actions reuse the live-sports platform picker and never create per-match stream URLs.
 
 - Signup and all verification resends share `src/lib/emailVerification.ts` to land on the public `/verify` route and preserve safe internal checkout destinations on success.
+- Native session age is enforced by NativeSessionGuard independently of refresh-token renewal; store only expiry metadata and use OS/password-manager autofill, never stored passwords.
 - Streaming buttons route to the authenticated Watch page, which resolves current URLs with `resolve_watch_link`; cached content URLs are not player authority.
 - Explicit browser fallback uses `streamBrowser.ts` and the same entitled resolver; the player switcher uses cached catalog metadata and keeps playback navigation within Watch.
 - Native streams use a sized, toolbar-less Capgo WebView below the React header; never pass app credentials or inject the Capacitor bridge into third-party content.

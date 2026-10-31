@@ -15,6 +15,8 @@ import ProfileAvatarPicker from "@/components/ProfileAvatarPicker";
 import { DEFAULT_PROFILE_AVATAR } from "@/lib/profileAvatars";
 import AuthShell from "@/components/AuthShell";
 import { emailVerificationUrl } from "@/lib/emailVerification";
+import { isNativeApp } from "@/lib/native";
+import { startNativeSession } from "@/lib/nativeSession";
 
 const SignUp = () => {
   const navigate = useNavigate();
@@ -86,6 +88,7 @@ const SignUp = () => {
       // When email confirmation is off, the account is signed in right away —
       // take them straight into their dashboard.
       if (data.session) {
+        if (isNativeApp()) startNativeSession(data.session.user.id);
         toast({ title: "Welcome!", description: "Your account is ready." });
         navigate(safeNext || "/dashboard", { replace: true });
         return;
@@ -114,9 +117,9 @@ const SignUp = () => {
                 </div>
                 <h2 className="netflix-title text-2xl text-foreground">ACCOUNT CREATED!</h2>
                 <p className="text-sm text-muted-foreground">
-                  We sent a verification link to <span className="text-foreground">{email}</span>. Verify your email,
-                  sign in, then choose your plan to unlock streaming.
+                  We sent a verification link and code to <span className="text-foreground">{email}</span>.
                 </p>
+                <Button onClick={() => navigate(`/verify${safeNext ? `?next=${encodeURIComponent(safeNext)}` : ""}`, { state: { email } })} className="w-full">Enter verification code</Button>
                 <Button onClick={() => navigate(safeNext ? `/signin?next=${encodeURIComponent(safeNext)}` : "/signin")} className="w-full bg-primary text-primary-foreground hover:bg-primary/80">
                   Go to Sign In
                 </Button>

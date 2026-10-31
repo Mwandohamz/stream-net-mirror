@@ -19,6 +19,7 @@ interface SignupEmailProps {
   siteUrl: string
   recipient: string
   confirmationUrl: string
+  token?: string
 }
 
 export const SignupEmail = ({
@@ -26,6 +27,7 @@ export const SignupEmail = ({
   siteUrl,
   recipient,
   confirmationUrl,
+  token,
 }: SignupEmailProps) => (
   <Html lang="en" dir="ltr">
     <Head>
@@ -52,6 +54,11 @@ export const SignupEmail = ({
         <Button className="dm-btn" style={button} href={confirmationUrl}>
           Verify Email
         </Button>
+        {token && <>
+          <Text style={text}>Or enter this verification code in Stream NetMirror:</Text>
+          <Text style={{ ...h1, fontSize: '28px', letterSpacing: '4px' }}>{token}</Text>
+          <Text style={text}>Use the newest email. Never share this code with anyone.</Text>
+        </>}
         <Text style={footer}>
           If you didn't create an account, you can safely ignore this email.
         </Text>
