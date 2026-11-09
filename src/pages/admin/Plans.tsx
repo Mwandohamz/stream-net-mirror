@@ -16,6 +16,7 @@ import { usePlans, planIntervalLabel, type Plan } from "@/hooks/usePlans";
 import { useContent } from "@/hooks/useContent";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useFxRates } from "@/hooks/useFxRates";
+import { planDurationDays } from "../../../supabase/functions/_shared/planDuration";
 import { formatCurrencyAmount } from "@/lib/currency";
 
 
@@ -68,6 +69,10 @@ const AdminPlans = () => {
   };
 
   const save = async () => {
+    if (!Number.isInteger(form.interval_count) || form.interval_count < 1) {
+      toast({ title: "Enter a whole number of days greater than zero", variant: "destructive" });
+      return;
+    }
     setSaving(true);
     const payload = {
       name: form.name.trim(),
@@ -181,7 +186,7 @@ const AdminPlans = () => {
       </div>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md max-h-[90dvh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editing ? "Edit plan" : "New plan"}</DialogTitle>
             <DialogDescription>Customers see this price converted into their own currency.</DialogDescription>
@@ -207,6 +212,7 @@ const AdminPlans = () => {
                   <option value="year">Year</option>
                   <option value="week">Week</option>
                   <option value="lifetime">Lifetime</option>
+                  <option value="day">Custom days</option>
                 </select>
               </div>
               <div className="space-y-1.5">
@@ -214,6 +220,11 @@ const AdminPlans = () => {
                 <Input type="number" min={1} value={form.interval_count} onChange={(e) => setForm({ ...form, interval_count: Number(e.target.value) })} />
               </div>
             </div>
+            {form.interval !== "lifetime" && <div className="space-y-1.5">
+              <Label htmlFor="plan-days">Access duration (days)</Label>
+              <Input id="plan-days" type="number" min={1} step={1} value={planDurationDays(form)} onChange={(e) => setForm({ ...form, interval: "day", interval_count: Number(e.target.value) })} />
+              <p className="text-xs text-muted-foreground">Default: 30 days. Changes apply to future activations and renewals, not existing expiry dates. No extra grace days are added.</p>
+            </div>}
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label>Price (USD)</Label>

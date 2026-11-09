@@ -2,35 +2,12 @@ import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, Link2, Lock, RefreshCw } from "lucide-react";
+import { ExternalLink, Link2, Lock, Play } from "lucide-react";
 import { useContent, type ContentLink } from "@/hooks/useContent";
-import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { openExternalUrl } from "@/lib/native";
 import { useNavigate } from "react-router-dom";
 import { isStreamingCategory, watchPath } from "@/lib/watchPlayback";
-import { openStreamInBrowser } from "@/lib/streamBrowser";
-import { useToast } from "@/hooks/use-toast";
-
-const ROTATION_ACK_KEY = "link-rotation-acknowledged";
-
-/** The notice is shown once per browser session so it never becomes annoying. */
-const rotationAcknowledged = () => {
-  try {
-    return sessionStorage.getItem(ROTATION_ACK_KEY) === "1";
-  } catch {
-    return false;
-  }
-};
-const rememberRotationAck = () => {
-  try {
-    sessionStorage.setItem(ROTATION_ACK_KEY, "1");
-  } catch {
-    /* private mode — just show it again next time */
-  }
-};
+import StreamLaunchDialog from "@/components/member/StreamLaunchDialog";
 
 const PLATFORM_LABEL: Record<string, string> = {
   web: "Web / Laptop",
@@ -52,29 +29,10 @@ interface Props {
 const LinkCard = ({ links, slug, unlocked, onUnlockClick }: { links: ContentLink[]; slug: string; unlocked: boolean; onUnlockClick?: () => void }) => {
   const navigate = useNavigate();
   const link = links[0];
-  const [pending, setPending] = useState<{ action: "open" | "browser"; link: ContentLink } | null>(null);
-  const { toast } = useToast();
-
-  const doOpen = (item: ContentLink, action: "open" | "browser" = "open") => {
-    if (isStreamingCategory(slug) && action === "browser") void openStreamInBrowser(item.id).catch(() => toast({ title: "Unable to open browser", description: "Allow popups or try another link.", variant: "destructive" }));
-    else if (isStreamingCategory(slug)) navigate(watchPath(item.id));
+  const [pending, setPending] = useState<ContentLink | null>(null);
+  const request = (item: ContentLink) => {
+    if (isStreamingCategory(slug)) setPending(item);
     else void openExternalUrl(item.url);
-  };
-
-  const request = (action: "open" | "browser", item: ContentLink) => {
-    if (rotationAcknowledged()) {
-      doOpen(item, action);
-      return;
-    }
-    setPending({ action, link: item });
-  };
-
-  const confirm = () => {
-    rememberRotationAck();
-    const p = pending;
-    setPending(null);
-    if (!p) return;
-    doOpen(p.link, p.action);
   };
 
 
@@ -102,11 +60,10 @@ const LinkCard = ({ links, slug, unlocked, onUnlockClick }: { links: ContentLink
               <Button
                 size="sm"
                 className="h-8 gap-1 bg-primary text-primary-foreground"
-                onClick={() => request("open", l)}
+                onClick={() => request(l)}
               >
-                <ExternalLink size={13} /> {links.length > 1 ? `Open link ${i + 1}` : "Open"}
+                <Play size={13} /> {links.length > 1 ? `Server ${i + 1}` : "Watch now"}
               </Button>
-              {isStreamingCategory(slug) && <Button size="sm" variant="outline" className="h-8" aria-label={`Open ${l.title} link ${i + 1} in browser`} title="Open in browser" onClick={() => request("browser", l)}><ExternalLink size={13} /> Browser</Button>}
               </div>
             ))}
           </div>
@@ -117,24 +74,7 @@ const LinkCard = ({ links, slug, unlocked, onUnlockClick }: { links: ContentLink
         )}
       </div>
 
-      <AlertDialog open={!!pending} onOpenChange={(open) => !open && setPending(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <RefreshCw size={16} className="text-primary" /> These links change often
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              Streaming links rotate and can stop working at any time — especially in a phone browser or on
-              iPhone. If this one stops loading, come back to your account here and use the refreshed link.
-              We keep testing and replacing them for you.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Not now</AlertDialogCancel>
-            <AlertDialogAction onClick={confirm}>Okay, I understand</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <StreamLaunchDialog link={pending} onClose={() => setPending(null)} onInApp={(id) => navigate(watchPath(id))} />
     </div>
   );
 };

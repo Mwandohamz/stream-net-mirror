@@ -42,6 +42,7 @@ export function usePlans(includeInactive = false) {
       const bMonthly = b.interval === "month" && b.interval_count === 1;
       return Number(bMonthly) - Number(aMonthly) || a.sort_order - b.sort_order;
     });
+    if (force) planCache.clear();
     planCache.set(cacheKey, { value: next, at: Date.now() });
     setPlans(next);
     setLoading(false);
@@ -60,6 +61,7 @@ export function usePlans(includeInactive = false) {
 export function planIntervalLabel(plan: Pick<Plan, "interval" | "interval_count">): string {
   if (plan.interval === "lifetime") return "one-time";
   const normalized = plan.interval.replace(/ly$/, "");
+  if (normalized === "day") return `${plan.interval_count} days`;
   const unit = normalized === "year" ? "year" : normalized === "week" ? "week" : "month";
   return plan.interval_count > 1 ? `every ${plan.interval_count} ${unit}s` : `per ${unit}`;
 }

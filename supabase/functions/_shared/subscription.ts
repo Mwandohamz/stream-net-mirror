@@ -1,3 +1,4 @@
+import { planPeriodEnd } from "./planDuration.ts";
 // Shared subscription activation used by pawapay-callback and pawapay-proxy.
 // Runs with the service role client.
 
@@ -11,28 +12,6 @@ export interface ActivationResult {
 /** Escapes LIKE/ILIKE wildcards so user input cannot pattern-match other rows. */
 export function escapeLike(value: string): string {
   return value.replace(/[\\%_]/g, (c) => `\\${c}`);
-}
-
-function addInterval(from: Date, interval: string, count: number): Date {
-  const d = new Date(from);
-  const n = count && count > 0 ? count : 1;
-  switch (interval) {
-    case "lifetime":
-      d.setFullYear(d.getFullYear() + 100);
-      break;
-    case "year":
-      d.setFullYear(d.getFullYear() + n);
-      break;
-    case "week":
-      d.setDate(d.getDate() + 7 * n);
-      break;
-    case "day":
-      d.setDate(d.getDate() + n);
-      break;
-    default:
-      d.setMonth(d.getMonth() + n);
-  }
-  return d;
 }
 
 /**
@@ -135,7 +114,7 @@ export async function activateSubscriptionForPayment(
   const now = new Date();
   const startFrom =
     existing && new Date(existing.current_period_end) > now ? new Date(existing.current_period_end) : now;
-  const periodEnd = addInterval(startFrom, interval, intervalCount);
+  const periodEnd = planPeriodEnd(startFrom, { interval, interval_count: intervalCount });
 
   let subscriptionId: string | undefined;
 
@@ -145,6 +124,7 @@ export async function activateSubscriptionForPayment(
       .update({
         plan_id: plan?.id ?? existing.plan_id,
         status: "active",
+        grace_days: 0,
         current_period_start: existing.current_period_start ?? now.toISOString(),
         current_period_end: periodEnd.toISOString(),
         cancel_at: null,
@@ -165,6 +145,7 @@ export async function activateSubscriptionForPayment(
         user_id: userId,
         plan_id: plan?.id ?? null,
         status: "active",
+        grace_days: 0,
         current_period_start: now.toISOString(),
         current_period_end: periodEnd.toISOString(),
       })
