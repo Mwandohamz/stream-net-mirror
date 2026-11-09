@@ -6,6 +6,8 @@
 - Native session age is enforced by NativeSessionGuard independently of refresh-token renewal; store only expiry metadata and use OS/password-manager autofill, never stored passwords.
 - Streaming buttons route to the authenticated Watch page, which resolves current URLs with `resolve_watch_link`; cached content URLs are not player authority.
 - Explicit browser fallback uses `streamBrowser.ts` and the same entitled resolver; the player switcher uses cached catalog metadata and keeps playback navigation within Watch.
+- Member launch buttons and player switching use StreamLaunchDialog for a warning and in-app/external choices on every launch; never persist an acknowledgement that skips this choice.
+- Custom plan days reuse interval=day and interval_count, while shared planDuration calculates fixed-day activation periods and activation explicitly clears grace days; this avoids a parallel duration field and implicit expiry extensions.
 - Native streams use a sized, toolbar-less Capgo WebView below the React header; never pass app credentials or inject the Capacitor bridge into third-party content.
 - Asset pointer URLs pass through `toAbsoluteAssetUrl` so bundled native builds do not request hosted asset routes from localhost.
 - `resolve_watch_link` must check the nonempty entitled URL from `list_content_links`, not just the publicly listed ID, before returning a source or recording a session.
