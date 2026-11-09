@@ -1,6 +1,9 @@
 # Roadmap — dashboard native polish + in-app streaming + APK downloads
 
 ## Current request
+- [ ] Shared streaming warning with in-app and external website choices for every platform and player switch
+- [ ] Admin-editable plan duration (30-day default), remove implicit extra grace for new activations, and validate saved values
+- [ ] Verify streaming choices and plan editing with tests and signed-in browser checks
 - [x] Native 14-day reauthentication window, password-manager-friendly sign-in, official-domain verification and email-code alternative; 13 tests, email sender validation/deploy and signed-in dashboard browser check passed
 - [ ] Verify newly delivered email link/code and Android autofill on rebuilt release APK — requires recipient inbox and Android device; hosted session timebox/inactivity limits not exposed by available settings tools
 - [x] Browser fallback on each stream and player; switch links in a popup without leaving playback — 10 tests and signed-in browser switching/tab-opening checks passed; native device check requires rebuilt APK
