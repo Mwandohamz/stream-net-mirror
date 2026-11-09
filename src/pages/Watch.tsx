@@ -14,7 +14,7 @@ import { FRAME_TIMEOUT_MS, isSafeStreamUrl, normalizeEmbedMode } from "@/lib/wat
 import { watchPath, isStreamingCategory } from "@/lib/watchPlayback";
 import { useContent } from "@/hooks/useContent";
 import { groupLinks } from "@/lib/linkGroups";
-import { openStreamInBrowser } from "@/lib/streamBrowser";
+import StreamLaunchDialog from "@/components/member/StreamLaunchDialog";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 type Source = { id: string; title: string; url: string; embed_mode: string; allow_fullscreen: boolean };
@@ -31,7 +31,7 @@ const Watch = () => {
   const [fullscreen, setFullscreen] = useState(false);
   const [nativeFallback, setNativeFallback] = useState(false);
   const [switchOpen, setSwitchOpen] = useState(false);
-  const [browserBusy, setBrowserBusy] = useState<string | null>(null);
+  const [launchLink, setLaunchLink] = useState<{ id: string; title: string } | null>(null);
   const { categories, links, loading: linksLoading } = useContent();
   const streamCategoryIds = new Set(categories.filter((category) => isStreamingCategory(category.slug)).map((category) => category.id));
   const platformGroups = groupLinks(links.filter((link) => streamCategoryIds.has(link.category_id)));
@@ -40,7 +40,7 @@ const Watch = () => {
   const native = isNativeApp();
   const mode = normalizeEmbedMode(source?.embed_mode);
   // Native always uses a real WebView: many stream sites forbid iframes (X-Frame-Options/CSP).
-  const nativeView = native && !nativeFallback && !switchOpen;
+  const nativeView = native && !nativeFallback && !switchOpen && !launchLink;
 
   const close = useCallback(() => {
     if (typeof window.history.state?.idx === "number" && window.history.state.idx > 0) navigate(-1);
@@ -144,17 +144,13 @@ const Watch = () => {
   }, []);
 
   // Sites that refuse to be framed still play when opened as their own page.
-  const openPlayer = async () => {
-    if (!source) return;
-    await openBrowser(source.id);
+  const openPlayer = () => {
+    if (source) setLaunchLink(source);
   };
 
-  const openBrowser = async (id: string) => {
-    setBrowserBusy(id);
-    try { await openStreamInBrowser(id); }
-    catch { toast({ title: "Unable to open browser", description: "Allow popups or try another link.", variant: "destructive" }); }
-    finally { setBrowserBusy(null); }
-  };
+  const launchDialog = <StreamLaunchDialog link={launchLink} onClose={() => setLaunchLink(null)} onInApp={(id) => {
+    if (id !== linkId) navigate(watchPath(id), { replace: true });
+  }} />;
 
   const picker = <Dialog open={switchOpen} onOpenChange={setSwitchOpen}>
     <DialogContent className="theme-dashboard z-[60] max-h-[80dvh] w-[calc(100%-1.5rem)] max-w-lg overflow-y-auto rounded-lg">
@@ -165,8 +161,7 @@ const Watch = () => {
       {linksLoading ? <PlayLoader label="Loading platforms" /> : platformGroups.length ? platformGroups.map((group) => <section key={group[0].id} className="space-y-2">
         <h2 className="text-sm font-semibold text-foreground">{group[0].title}</h2>
         {group.map((link, index) => <div key={link.id} className="flex items-center gap-2">
-          <Button variant={link.id === linkId ? "secondary" : "outline"} className="min-w-0 flex-1 justify-start gap-2" onClick={() => { setSwitchOpen(false); if (link.id !== linkId) navigate(watchPath(link.id), { replace: true }); }}><Play size={16} /> Server {index + 1}{link.id === linkId ? " · Playing" : ""}</Button>
-          <Button variant="outline" className="gap-2" disabled={browserBusy !== null} onClick={() => void openBrowser(link.id)}><ExternalLink size={16} /> Browser</Button>
+          <Button variant={link.id === linkId ? "secondary" : "outline"} className="min-w-0 flex-1 justify-start gap-2" onClick={() => { setSwitchOpen(false); setLaunchLink(link); }}><Play size={16} /> Server {index + 1}{link.id === linkId ? " · Playing" : ""}</Button>
         </div>)}
       </section>) : <p className="text-sm text-muted-foreground">No alternative streams are available.</p>}
     </DialogContent>
@@ -179,7 +174,7 @@ const Watch = () => {
     } catch { toast({ title: "Fullscreen isn't supported on this device" }); }
   };
 
-  if (!source) return <div className="theme-dashboard min-h-screen bg-background flex items-center justify-center">{failed ? <Button onClick={() => setSwitchOpen(true)}>Choose another link</Button> : <PlayLoader label="Loading stream" />}{picker}</div>;
+  if (!source) return <div className="theme-dashboard min-h-screen bg-background flex items-center justify-center">{failed ? <Button onClick={() => setSwitchOpen(true)}>Choose another link</Button> : <PlayLoader label="Loading stream" />}{picker}{launchDialog}</div>;
 
   return (
     <div ref={container} className="theme-dashboard fixed inset-0 z-50 flex h-dvh flex-col overflow-hidden bg-background">
@@ -190,7 +185,7 @@ const Watch = () => {
             <p className="dashboard-heading text-xs font-bold text-foreground sm:text-sm">STREAMNETMIRROR</p>
             <h1 className="truncate text-sm text-muted-foreground">{source.title}</h1>
           </div>
-          <Button variant="ghost" size="icon" aria-label="Open in browser" title="Open in browser" disabled={browserBusy !== null} onClick={() => void openPlayer()}><ExternalLink size={20} /></Button>
+          <Button variant="ghost" size="icon" aria-label="Open in browser" title="Open in browser" onClick={() => void openPlayer()}><ExternalLink size={20} /></Button>
           <Button variant="ghost" size="icon" aria-label="Switch platforms" title="Switch platforms" onClick={() => setSwitchOpen(true)}><RefreshCw size={20} /></Button>
           {mode === "iframe" && source.allow_fullscreen && <Button variant="ghost" size="icon" aria-label={fullscreen ? "Exit fullscreen" : "Enter fullscreen"} title={fullscreen ? "Exit fullscreen" : "Enter fullscreen"} onClick={() => void toggleFullscreen()}>{fullscreen ? <Minimize size={20} /> : <Maximize size={20} />}</Button>}
           <Button variant="ghost" size="icon" aria-label="Back to platforms" title="Back to platforms" onClick={close}><ArrowLeft size={22} /></Button>
@@ -202,7 +197,7 @@ const Watch = () => {
            <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-border bg-card px-3 py-2">
             <p role="status" className="text-xs text-muted-foreground">{failed ? "Stream unavailable here" : "Having trouble streaming?"}</p>
             <div className="flex gap-2">
-              <Button size="sm" className="h-8 gap-2" disabled={browserBusy !== null} onClick={() => void openPlayer()}><ExternalLink size={14} /> Open in browser</Button>
+              <Button size="sm" className="h-8 gap-2" onClick={() => void openPlayer()}><ExternalLink size={14} /> Open in browser</Button>
               <Button size="sm" variant="outline" className="h-8 gap-2" onClick={() => setSwitchOpen(true)}><RefreshCw size={14} /> Switch</Button>
             </div>
           </div>
@@ -224,6 +219,7 @@ const Watch = () => {
         {nativeView && <div className="flex flex-1 items-center justify-center"><PlayLoader label="Opening stream" /></div>}
       </div>
       {picker}
+      {launchDialog}
     </div>
   );
 };
