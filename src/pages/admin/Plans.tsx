@@ -39,6 +39,7 @@ const AdminPlans = () => {
   const { convertFromUSD } = useFxRates();
   const { categories } = useContent(true);
   const [form, setForm] = useState(emptyPlan);
+  const [daysInput, setDaysInput] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -51,8 +52,9 @@ const AdminPlans = () => {
         : [...f.category_slugs, slug],
     }));
 
-  const openCreate = () => { setForm(emptyPlan); setEditing(false); setOpen(true); };
+  const openCreate = () => { setForm(emptyPlan); setDaysInput(null); setEditing(false); setOpen(true); };
   const openEdit = (p: Plan) => {
+    setDaysInput(null);
     setForm({
       id: p.id,
       name: p.name,
@@ -78,7 +80,7 @@ const AdminPlans = () => {
       name: form.name.trim(),
       description: form.description.trim() || null,
       interval: form.interval,
-      interval_count: Number(form.interval_count) || 1,
+      interval_count: form.interval_count,
       price_usd: Number(form.price_usd),
       is_active: form.is_active,
       sort_order: Number(form.sort_order) || 0,
@@ -205,7 +207,7 @@ const AdminPlans = () => {
                 <Label>Billing interval</Label>
                 <select
                   value={form.interval}
-                  onChange={(e) => setForm({ ...form, interval: e.target.value })}
+                  onChange={(e) => { setDaysInput(null); setForm({ ...form, interval: e.target.value }); }}
                   className="w-full h-10 rounded-md border border-border bg-background px-3 text-sm"
                 >
                   <option value="month">Month</option>
@@ -217,12 +219,12 @@ const AdminPlans = () => {
               </div>
               <div className="space-y-1.5">
                 <Label>Every</Label>
-                <Input type="number" min={1} value={form.interval_count} onChange={(e) => setForm({ ...form, interval_count: Number(e.target.value) })} />
+                <Input type="number" min={1} value={form.interval_count} onChange={(e) => { setDaysInput(null); setForm({ ...form, interval_count: Number(e.target.value) }); }} />
               </div>
             </div>
             {form.interval !== "lifetime" && <div className="space-y-1.5">
               <Label htmlFor="plan-days">Access duration (days)</Label>
-              <Input id="plan-days" type="number" min={1} step={1} value={planDurationDays(form)} onChange={(e) => setForm({ ...form, interval: "day", interval_count: Number(e.target.value) })} />
+              <Input id="plan-days" type="number" min={1} step={1} value={daysInput ?? planDurationDays(form)} onChange={(e) => { setDaysInput(e.target.value); setForm({ ...form, interval: "day", interval_count: Number(e.target.value) }); }} />
               <p className="text-xs text-muted-foreground">Default: 30 days. Changes apply to future activations and renewals, not existing expiry dates. No extra grace days are added.</p>
             </div>}
             <div className="grid grid-cols-2 gap-3">
