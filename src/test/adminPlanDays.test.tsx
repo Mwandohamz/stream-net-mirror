@@ -38,13 +38,13 @@ describe("admin plan duration entry", () => {
     // Append keystrokes to the displayed value, reproducing backspace then typing.
     fireEvent.change(days, { target: { value: days.value + "4" } });
     fireEvent.change(days, { target: { value: days.value + "5" } });
-    fireEvent.click(screen.getByRole("button", { name: "Save", exact: true }));
+    fireEvent.click(screen.getByRole("button", { name: /^Save$/ }));
     await waitFor(() => expect(mocks.insert).toHaveBeenCalledWith(expect.objectContaining({ interval: "day", interval_count: 45 })));
   });
 
   it.each(["", "0", "-1", "1.5"])("rejects invalid duration %j without saving", (value) => {
     fireEvent.change(screen.getByLabelText("Access duration (days)"), { target: { value } });
-    fireEvent.click(screen.getByRole("button", { name: "Save", exact: true }));
+    fireEvent.click(screen.getByRole("button", { name: /^Save$/ }));
     expect(mocks.insert).not.toHaveBeenCalled();
     expect(mocks.toast).toHaveBeenCalledWith(expect.objectContaining({ variant: "destructive" }));
   });
