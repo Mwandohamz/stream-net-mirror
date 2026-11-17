@@ -29,3 +29,5 @@ project_id = "rhobeyejmrnnreepacmr"
     verify_jwt = false
   [functions.admin-telegram]
     verify_jwt = false
+  [functions.tmdb-catalog]
+  verify_jwt = false
