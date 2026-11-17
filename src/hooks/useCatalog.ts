@@ -1,5 +1,6 @@
 
 import { useQuery } from "@tanstack/react-query";
+import { useDisplayCurrency } from "@/context/CurrencyContext";
 import {
   fetchTMDB,
   type TMDBMediaType,
@@ -19,6 +20,8 @@ export function useCatalog({
   page = 1,
   enabled = true,
 }: UseCatalogOptions) {
+  const { country } = useDisplayCurrency();
+  const region = country.iso2;
   const normalizedQuery = query.trim();
 
   return useQuery({
@@ -27,33 +30,28 @@ export function useCatalog({
       mediaType,
       normalizedQuery || "trending",
       page,
+      region,
     ],
 
     queryFn: () =>
-      normalizedQuery
-        ? fetchTMDB<TMDBResponse>({
-            action: "search",
-            mediaType,
-            query: normalizedQuery,
-            page,
-          })
-        : fetchTMDB<TMDBResponse>({
-            action: "trending",
-            mediaType,
-            page,
-          }),
+      fetchTMDB<TMDBResponse>({
+        action: normalizedQuery ? "search" : "trending",
+        mediaType,
+        page,
+        ...(normalizedQuery ? { query: normalizedQuery } : {}),
+        region,
+      }),
 
-    enabled: enabled && (mediaType !== "multi" || !!normalizedQuery),
+    enabled,
 
-    staleTime: normalizedQuery ? 3 * 60 * 60 * 1000 : 12 * 60 * 60 * 1000,
+    staleTime: normalizedQuery
+      ? 3 * 60 * 60 * 1000
+      : 12 * 60 * 60 * 1000,
 
     gcTime: 24 * 60 * 60 * 1000,
-
     refetchOnWindowFocus: false,
     refetchOnMount: false,
-
     retry: 1,
-
     placeholderData: (previousData) => previousData,
   });
 }
