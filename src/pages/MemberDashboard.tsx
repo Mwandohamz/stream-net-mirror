@@ -27,6 +27,7 @@ import ApkDownloadButton from "@/components/ApkDownloadButton";
 import AccountActivity from "@/components/member/AccountActivity";
 import { movies as catalogMovies, series as catalogSeries } from "@/data/catalog";
 import moviesHero from "@/assets/dashboard-movies.jpg";
+import CatalogBrowser from "@/components/CatalogBrowser";
 
 // Interleave movies and series into a 20-title home row.
 const homeTitles = Array.from({ length: 10 }).flatMap((_, i) => [catalogMovies[i], catalogSeries[i]]).filter(Boolean);
