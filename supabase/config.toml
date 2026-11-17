@@ -31,3 +31,5 @@ project_id = "rhobeyejmrnnreepacmr"
     verify_jwt = false
   [functions.tmdb-catalog]
   verify_jwt = false
+  [functions.sync-football-highlights]
+  verify_jwt = true
