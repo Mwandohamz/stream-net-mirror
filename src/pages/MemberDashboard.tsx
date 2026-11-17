@@ -345,9 +345,27 @@ const MemberDashboard = () => {
             <WatchHub unlocked={membership.isMember} onUnlockClick={() => navigate("/payment")} />
           )}
 
-          {tab === "movies" && (
-            <CategoryLinks slug="netmirror" unlocked={membership.isMember} onUnlockClick={() => navigate("/payment")} />
-          )}
+         {tab === "movies" && (
+  <>
+    <CatalogBrowser
+      title="MOVIES"
+      subtitle="Discover movies from around the world."
+      mediaType="movie"
+    />
+
+    <CatalogBrowser
+      title="TV SERIES"
+      subtitle="Explore trending series and discover your next favourite show."
+      mediaType="tv"
+    />
+
+    <CategoryLinks
+      slug="netmirror"
+      unlocked={membership.isMember}
+      onUnlockClick={() => navigate("/payment")}
+    />
+  </>
+)}
 
           {tab === "account" && <AccountOverviewCard />}
           {tab === "account" && <div id="transaction-history" className="scroll-mt-20"><AccountActivity /></div>}
