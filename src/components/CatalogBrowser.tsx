@@ -60,7 +60,6 @@ const GENRES: Record<number, string> = {
   10766: "Soap",
   10767: "Talk",
   10768: "War & Politics",
-  10759: "Action & Adventure",
 };
 
 const getGenres = (item: TMDBTitle) =>
