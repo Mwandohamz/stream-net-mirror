@@ -91,6 +91,9 @@ const LiveSports = () => {
         </header>
 
         <div className="mx-auto mt-8 max-w-5xl"><UpcomingFixtures onUnlock={go} /></div>
+        <div className="mx-auto mt-12 max-w-5xl">
+        <FootballHighlights title="LATEST FOOTBALL HIGHLIGHTS" limit={12} />
+        </div>
         <section className="mx-auto mt-10 grid max-w-5xl gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {cards.map((l, i) => (
             <motion.div
