@@ -88,11 +88,29 @@ Deno.serve(async (req: Request) => {
       language,
     };
 
-    let cacheType: "search" | "discover" | "trending" | "details";
+    let cacheType: "search" | "discover" | "trending" | "details" | "providers";
     let cacheMediaType: "movie" | "tv" | "multi" = mediaType;
     let ttlHours = 6;
 
     switch (action) {
+        case "providers": {
+        if (mediaType === "multi") {
+          return json({ error: "Providers require movie or tv" }, 400);
+        }
+
+        if (!region) {
+          return json({
+            error: "A country code is required to load streaming providers",
+          }, 400);
+        }
+
+        path = `/watch/providers/${mediaType}`;
+        params.watch_region = region;
+
+        cacheType = "providers";
+        ttlHours = 24;
+        break;
+      }
       case "search": {
         if (mediaType === "multi" && !payload.query) {
           return json({ error: "Search query is required" }, 400);
