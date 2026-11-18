@@ -1,6 +1,7 @@
 import Navbar from "@/components/Navbar";
 import HeroSection from "@/components/HeroSection";
 import TrendingSection from "@/components/TrendingSection";
+import DiscoverRows from "@/components/DiscoverRows";
 import OTTPartners from "@/components/OTTPartners";
 import PricingTier from "@/components/PricingTier";
 import FeaturesGrid from "@/components/FeaturesGrid";
@@ -16,6 +17,7 @@ const Index = () => {
       <Navbar />
       <HeroSection />
       <TrendingSection />
+      <DiscoverRows />
       <OTTPartners />
       <PricingTier />
       <FeaturesGrid />

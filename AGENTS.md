@@ -17,4 +17,5 @@
 - NativeEntryFlow replaces website landing/entertainment routes with session-aware dashboard destinations before rendering them; account verification, checkout and web routes stay unchanged.
 - Public and member catalogues share the server-only TMDB cache; region affects provider availability, not the global catalogue, and discover filters run before pagination.
 - Dashboard tab state follows router query changes so catalogue Watch actions and browser history select the intended platform hub without a remount.
-- Highlight sync preserves approval separately from metadata updates; fixture matching uses both teams in the title and only completed fixtures to avoid description-based false matches.
+- Highlight sync preserves approval separately from metadata updates; fixture matching uses both teams in the title and only completed fixtures to avoid description-based false matches.- Membership status starts from a device-local snapshot (`membershipCache.ts`, status/expiry only, cleared on sign-out) and is re-checked silently; an expired snapshot is never shown as active, preventing the inactive flash without trusting stale access.
+- Discovery rows (`TMDBRow`) read live TMDB trending/discover through the cached `tmdb-catalog` function; public Watch taps follow `publicWatchDestination` (account → payment → Watch).

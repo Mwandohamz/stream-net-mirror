@@ -25,13 +25,12 @@ import { useAppSettings } from "@/hooks/useAppSettings";
 import { openExternalUrl } from "@/lib/native";
 import ApkDownloadButton from "@/components/ApkDownloadButton";
 import AccountActivity from "@/components/member/AccountActivity";
-import { movies as catalogMovies, series as catalogSeries } from "@/data/catalog";
 import moviesHero from "@/assets/dashboard-movies.jpg";
 import CatalogBrowser from "@/components/CatalogBrowser";
 import FootballHighlights from "@/components/FootballHighlights";
+import TMDBRow from "@/components/TMDBRow";
 
 // Interleave movies and series into a 20-title home row.
-const homeTitles = Array.from({ length: 10 }).flatMap((_, i) => [catalogMovies[i], catalogSeries[i]]).filter(Boolean);
 
 interface Ticket {
   id: string;
@@ -93,7 +92,7 @@ const MemberDashboard = () => {
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session?.user) {
-        setUserName(session.user.user_metadata?.full_name || session.user.email || "");
+        setUserName(session.user.user_metadata?.full_name || (session.user.email || "").split("@")[0]);
         setUserEmail(session.user.email || "");
         // Check if user was granted access with temp password
         if (session.user.user_metadata?.temp_password) {
@@ -236,7 +235,7 @@ const MemberDashboard = () => {
               <div className="space-y-1">
                 <span
                   className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium ${
-                    membership.isMember
+                    membership.loading ? "border-border bg-muted/40 text-muted-foreground" : membership.isMember
                       ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-400"
                       : "border-amber-500/40 bg-amber-500/10 text-amber-400"
                   }`}
@@ -246,7 +245,7 @@ const MemberDashboard = () => {
                     ? membership.daysLeft !== null
                       ? `Membership active — ${membership.daysLeft} day${membership.daysLeft === 1 ? "" : "s"} left`
                       : "Membership active"
-                    : "Membership inactive"}
+                    : membership.loading ? "Checking membership…" : "Membership inactive"}
                 </span>
                 <h1 className="netflix-title break-words text-2xl leading-tight text-foreground md:text-4xl">
                   Welcome back{userName ? `, ${userName.split(" ")[0]}` : ""}
@@ -291,25 +290,10 @@ const MemberDashboard = () => {
           </div>
 
 
-          {/* Available titles — same catalogue as the public Movies/TV pages */}
-          <section aria-labelledby="home-titles" className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h2 id="home-titles" className="text-lg font-semibold text-foreground">Popular right now</h2>
-              <Button variant="ghost" size="sm" className="gap-1 text-primary" onClick={() => setTab("movies")}>See all <ChevronRight size={14} /></Button>
-            </div>
-            <div className="-mx-4 flex snap-x gap-3 overflow-x-auto px-4 pb-2 md:mx-0 md:grid md:grid-cols-5 md:overflow-visible md:px-0">
-              {homeTitles.map(item => (
-                <button key={item.title} type="button" onClick={() => setTab("movies")}
-                  className="group relative w-28 shrink-0 snap-start overflow-hidden rounded-xl border border-border bg-card text-left md:w-auto">
-                  <img src={item.poster} alt={item.title} loading="lazy" className="aspect-[2/3] w-full object-cover transition-transform duration-300 group-hover:scale-105" />
-                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-background via-background/70 to-transparent p-2 pt-8">
-                    <p className="line-clamp-2 text-xs font-semibold text-foreground">{item.title}</p>
-                    <p className="text-[10px] text-muted-foreground">{item.platform} · ★ {item.rating}</p>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </section>
+          {/* Football highlights come first on Home, then live TMDB popularity */}
+          <div id="home-highlights"><FootballHighlights title="FOOTBALL HIGHLIGHTS" limit={6} /></div>
+          <TMDBRow title="Popular right now" action="trending" mediaType="multi" onSeeMore={() => setTab("movies")} onSelect={() => navigate(membership.isMember ? "/dashboard?tab=watch" : "/payment")} />
+          <TMDBRow title="Trending series" action="trending" mediaType="tv" onSeeMore={() => setTab("movies")} onSelect={() => navigate(membership.isMember ? "/dashboard?tab=watch" : "/payment")} />
 
           {/* Account & subscription overview */}
           <AccountOverviewCard />
@@ -353,6 +337,7 @@ const MemberDashboard = () => {
 
          {tab === "movies" && (
   <>
+    <div id="catalog-search" className="scroll-mt-20" />
     <CatalogBrowser
       embedded
       title="MOVIES"
@@ -543,10 +528,10 @@ const MemberDashboard = () => {
             <>
               <UpcomingFixtures />
           
-              <FootballHighlights
+              <div id="football-highlights" className="scroll-mt-20"><FootballHighlights
                 title="LATEST FOOTBALL HIGHLIGHTS"
                 limit={12}
-              />
+              /></div>
           
               <CategoryLinks
                 slug="live-sports"

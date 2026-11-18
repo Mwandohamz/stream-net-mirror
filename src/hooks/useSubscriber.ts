@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
 import { validateAdminEmail } from "@/hooks/useAdmin";
+import { readCachedMembership, writeCachedMembership } from "@/lib/membershipCache";
 
 const LOADING_TIMEOUT_MS = 8000;
 
@@ -29,10 +30,20 @@ export function isSubscriptionActive(sub: SubscriptionRecord | null): boolean {
 }
 
 export const useSubscriber = () => {
-  const [user, setUser] = useState<User | null>(null);
-  const [isSubscriber, setIsSubscriber] = useState(false);
-  const [subscription, setSubscription] = useState<SubscriptionRecord | null>(null);
-  const [loading, setLoading] = useState(true);
+  // Start from the last confirmed snapshot so returning members see "active" instantly.
+  const [cached] = useState(() => readCachedMembership());
+  const [user, setUser] = useState<User | null>(() => (cached ? ({ id: cached.userId, email: cached.email ?? undefined } as User) : null));
+  const [isSubscriber, setIsSubscriberState] = useState(cached?.isSubscriber ?? false);
+  const [subscription, setSubscription] = useState<SubscriptionRecord | null>(cached?.subscription ?? null);
+  const [loading, setLoading] = useState(!cached);
+  const hasStateRef = useRef(!!cached);
+  const latestRef = useRef<{ user: User | null; sub: SubscriptionRecord | null }>({ user: cached ? ({ id: cached.userId } as User) : null, sub: cached?.subscription ?? null });
+  const setIsSubscriber = useCallback((value: boolean) => {
+    setIsSubscriberState(value);
+    const { user: u, sub } = latestRef.current;
+    writeCachedMembership(u ? { userId: u.id, email: u.email ?? null, isSubscriber: value, subscription: sub } : null);
+    hasStateRef.current = !!u;
+  }, []);
   const requestIdRef = useRef(0);
   const claimedRef = useRef(false);
 
@@ -41,6 +52,7 @@ export const useSubscriber = () => {
 
     try {
       setUser(currentUser);
+      latestRef.current = { user: currentUser, sub: null };
 
       if (!currentUser) {
         setIsSubscriber(false);
@@ -57,6 +69,7 @@ export const useSubscriber = () => {
 
       const subscriptionRecord = (sub as any as SubscriptionRecord) ?? null;
       setSubscription(subscriptionRecord);
+      latestRef.current.sub = subscriptionRecord;
 
       if (isSubscriptionActive(subscriptionRecord)) {
         setIsSubscriber(true);
@@ -78,6 +91,7 @@ export const useSubscriber = () => {
               .maybeSingle();
             const freshRecord = (fresh as any as SubscriptionRecord) ?? null;
             setSubscription(freshRecord);
+            latestRef.current.sub = freshRecord;
             if (isSubscriptionActive(freshRecord)) {
               setIsSubscriber(true);
               return;
@@ -112,13 +126,14 @@ export const useSubscriber = () => {
 
       setIsSubscriber(false);
     } catch {
-      setIsSubscriber(false);
+      // Network failure: keep the last confirmed state instead of flashing "inactive".
+      if (!hasStateRef.current) setIsSubscriberState(false);
     } finally {
       if (requestId === requestIdRef.current) {
         setLoading(false);
       }
     }
-  }, []);
+  }, [setIsSubscriber]);
 
   useEffect(() => {
     let mounted = true;
@@ -133,7 +148,8 @@ export const useSubscriber = () => {
       data: { subscription: authSub },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!mounted) return;
-      setLoading(true);
+      // Keep showing the known state while re-checking; only block on first load.
+      if (!hasStateRef.current || session?.user?.id !== latestRef.current.user?.id) setLoading(true);
       setTimeout(() => {
         if (!mounted) return;
         void resolveAccessState(session?.user ?? null);
@@ -155,7 +171,6 @@ export const useSubscriber = () => {
     const onRefresh = () => {
       if (!mounted) return;
       claimedRef.current = false;
-      setLoading(true);
       void supabase.auth.getSession().then(({ data: { session } }) => {
         if (!mounted) return;
         void resolveAccessState(session?.user ?? null);

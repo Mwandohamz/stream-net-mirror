@@ -4,6 +4,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Button } from "@/components/ui/button";
 import LogoShowcase from "@/components/LogoShowcase";
 import { useMembership } from "@/hooks/useMembership";
+import { Instagram, Facebook } from "lucide-react";
+
+export const SOCIAL_LINKS = [
+  { label: "Instagram", href: "https://www.instagram.com/streamnetmirror?hvrq=MWMybzlrcDFzdGd3ZA==", icon: Instagram },
+  { label: "Facebook", href: "https://www.facebook.com/share/1KJvbkytk1/", icon: Facebook },
+];
 
 
 const termsContent = [
@@ -77,8 +83,8 @@ const Footer = () => {
                   { label: "Sign In", href: "/signin" },
                 ]},
             { title: "Stream", items: [
-              { label: "Movies", href: "/#trending" },
-              { label: "TV Series", href: "/#trending" },
+              { label: "Movies", href: "/movies" },
+              { label: "TV Series", href: "/tv-series" },
               { label: "Live Sports", href: "/live-sports" },
               { label: "New Releases", href: "/#trending" },
             ]},
@@ -129,6 +135,12 @@ const Footer = () => {
             <Link to="/terms" className="hover:text-foreground transition-colors">Terms</Link>
             <Link to="/privacy" className="hover:text-foreground transition-colors">Privacy</Link>
             <a href="mailto:shuvaegonera@gmail.com" className="hover:text-foreground transition-colors">Contact</a>
+            {SOCIAL_LINKS.map(({ label, href, icon: Icon }) => (
+              <a key={label} href={href} target="_blank" rel="noopener noreferrer" aria-label={`StreamNetMirror on ${label}`}
+                className="grid h-9 w-9 place-items-center rounded-full border border-border text-foreground transition-colors hover:border-primary hover:text-primary">
+                <Icon size={16} />
+              </a>
+            ))}
           </div>
         </div>
       </div>

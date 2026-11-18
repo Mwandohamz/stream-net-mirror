@@ -162,6 +162,12 @@ Deno.serve(async (req: Request) => {
 
         const providerId = payload.providerId;
         if (payload.genreId !== undefined) params.with_genres = positiveInteger(payload.genreId, 20000);
+        if (payload.originalLanguage !== undefined) {
+          if (typeof payload.originalLanguage !== "string" || !/^[a-z]{2}$/.test(payload.originalLanguage)) {
+            return json({ error: "Invalid original language" }, 400);
+          }
+          params.with_original_language = payload.originalLanguage;
+        }
 
         if (providerId !== undefined && providerId !== null) {
           const parsedProvider = positiveInteger(providerId);

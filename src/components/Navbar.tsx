@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { SOCIAL_LINKS } from "@/components/Footer";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Menu, X, CheckCircle2 } from "lucide-react";
@@ -174,6 +175,14 @@ const Navbar = () => {
             >
               {ctaLabel}
             </Button>
+            <div className="mt-3 flex items-center justify-center gap-3 border-t border-border/60 pt-3">
+              {SOCIAL_LINKS.map(({ label, href, icon: Icon }) => (
+                <a key={label} href={href} target="_blank" rel="noopener noreferrer" aria-label={`StreamNetMirror on ${label}`}
+                  className="inline-flex items-center gap-2 rounded-full border border-border px-3 py-2 text-xs text-muted-foreground hover:text-primary">
+                  <Icon size={15} /> {label}
+                </a>
+              ))}
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

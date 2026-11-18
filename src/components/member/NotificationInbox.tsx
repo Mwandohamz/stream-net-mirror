@@ -8,18 +8,32 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 
 export default function NotificationInbox() {
   const [readAt, setReadAt] = useState(0);
-  const query = useQuery({ queryKey: ["member-notifications"], refetchInterval: 60000, queryFn: async () => {
+  const query = useQuery({ queryKey: ["member-notifications"], refetchInterval: 5 * 60_000, staleTime: 2 * 60_000, queryFn: async () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return { items: [], readAt: 0, userId: "" };
-    const [sub, tickets] = await Promise.all([
+    const [sub, tickets, payments] = await Promise.all([
       supabase.from("subscriptions").select("id,status,current_period_end,updated_at").eq("user_id", session.user.id).order("created_at", { ascending: false }).limit(1).abortSignal(AbortSignal.timeout(8000)),
       supabase.from("support_tickets").select("id,subject,status,updated_at").eq("user_id", session.user.id).order("updated_at", { ascending: false }).limit(5).abortSignal(AbortSignal.timeout(8000)),
+      supabase.from("payments").select("id,amount,currency,updated_at,created_at").eq("email", session.user.email ?? "").eq("status", "completed").order("created_at", { ascending: false }).limit(3).abortSignal(AbortSignal.timeout(8000)),
     ]);
     if (sub.error) throw sub.error;
     if (tickets.error) throw tickets.error;
     const items = (tickets.data ?? []).map(t => ({ id: t.id, title: t.subject, text: `Support · ${t.status}`, time: t.updated_at }));
+    for (const p of (payments.data ?? []) as any[]) items.push({ id: `pay-${p.id}`, title: "Payment confirmed", text: `${p.currency ?? ""} ${Number(p.amount ?? 0).toFixed(2)} received — thank you!`.trim(), time: p.updated_at ?? p.created_at });
     const s = sub.data?.[0];
-    if (s) items.unshift({ id: s.id, title: `Subscription · ${s.status}`, text: `Period ends ${new Date(s.current_period_end).toLocaleDateString()}`, time: s.updated_at });
+    if (s) {
+      const end = new Date(s.current_period_end).getTime();
+      const now = Date.now();
+      const DAY = 86_400_000;
+      if (s.status === "active" && end > now) items.push({ id: `sub-${s.id}`, title: "Subscription activated", text: `Access until ${new Date(end).toLocaleDateString()}`, time: s.updated_at });
+      // Expiry reminders surface once 3 days and 1 day remain.
+      for (const days of [3, 1]) {
+        const at = end - days * DAY;
+        if (now >= at && now < end) items.push({ id: `exp-${days}-${s.id}`, title: `Membership ends in ${days} day${days === 1 ? "" : "s"}`, text: "Renew now to keep watching without interruption.", time: new Date(at).toISOString() });
+      }
+      if (end <= now) items.push({ id: `ended-${s.id}`, title: "Membership ended", text: "Renew to unlock streaming again.", time: new Date(end).toISOString() });
+    }
+    items.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
     let stored = 0;
     try { stored = Number(localStorage.getItem(`notifications-read-${session.user.id}`)) || 0; } catch { /* storage unavailable */ }
     return { items, readAt: stored, userId: session.user.id };

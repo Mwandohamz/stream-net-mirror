@@ -36,6 +36,7 @@ interface TMDBRequest {
   year?: number;
   id?: number;
   language?: string;
+  originalLanguage?: string;
 }
 
 export interface TMDBProvider {
