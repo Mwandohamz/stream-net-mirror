@@ -11,6 +11,7 @@ interface UseCatalogOptions {
   mediaType: TMDBMediaType;
   query?: string;
   page?: number;
+  providerId?: number;
   enabled?: boolean;
 }
 
@@ -18,28 +19,38 @@ export function useCatalog({
   mediaType,
   query = "",
   page = 1,
+  providerId,
   enabled = true,
 }: UseCatalogOptions) {
   const { country } = useDisplayCurrency();
-  const region = country.iso2;
   const normalizedQuery = query.trim();
+
+  const action = normalizedQuery
+    ? "search"
+    : providerId
+      ? "discover"
+      : "trending";
 
   return useQuery({
     queryKey: [
       "tmdb-catalog",
       mediaType,
-      normalizedQuery || "trending",
+      normalizedQuery || action,
       page,
-      region,
+      providerId ?? null,
+      providerId ? country.iso2 : null,
     ],
 
     queryFn: () =>
       fetchTMDB<TMDBResponse>({
-        action: normalizedQuery ? "search" : "trending",
+        action,
         mediaType,
         page,
         ...(normalizedQuery ? { query: normalizedQuery } : {}),
-        region,
+        ...(providerId ? {
+          providerId,
+          region: country.iso2,
+        } : {}),
       }),
 
     enabled,
