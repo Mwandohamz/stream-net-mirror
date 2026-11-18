@@ -159,10 +159,9 @@ const DashboardShell = ({ tab, onTabChange, children }: Props) => {
           </div>
           <nav className="space-y-1" aria-label="Mobile sidebar">
             {DASHBOARD_TABS.map(t => <div key={t.id}><Button variant="ghost" onClick={() => changeTab(t.id)} className={`h-12 w-full justify-start gap-3 ${tab === t.id ? "bg-secondary text-foreground" : "text-muted-foreground"}`}><t.icon size={20} className={t.id === "watch" ? "fill-current text-primary" : ""} />{t.label}</Button>
-              {t.id === "football" && <div className="ml-8 border-l border-border pl-2">{LEAGUE_OPTIONS.map(l => <Button key={l.code} variant="ghost" size="sm" className={`h-10 w-full justify-start text-xs ${activeLeague === l.code && tab === "football" ? "text-primary" : "text-muted-foreground"}`} onClick={() => openLeague(l.code)}>{l.label}</Button>)}</div>}
+              {t.id === "dashboard" && <Button variant="ghost" className="h-12 w-full justify-start gap-3 text-muted-foreground" onClick={openSearch}><Search size={20} /> Browse &amp; Search</Button>}
+              {t.id === "football" && <div className="ml-8 border-l border-border pl-2">{LEAGUE_OPTIONS.map(l => <Button key={l.code} variant="ghost" size="sm" className={`h-10 w-full justify-start text-xs ${activeLeague === l.code && tab === "football" ? "text-primary" : "text-muted-foreground"}`} onClick={() => openLeague(l.code)}>{l.label}</Button>)}<Button variant="ghost" size="sm" className="h-10 w-full justify-start gap-2 text-xs text-muted-foreground" onClick={openHighlights}><Video size={14} /> Highlights</Button></div>}
             </div>)}
-            <Button variant="ghost" className="h-12 w-full justify-start gap-3 text-muted-foreground" onClick={openSearch}><Search size={20} /> Browse &amp; Search</Button>
-            <Button variant="ghost" className="h-12 w-full justify-start gap-3 text-muted-foreground" onClick={openHighlights}><Video size={20} /> Highlights</Button>
             <Button variant="ghost" className="h-12 w-full justify-start gap-3 text-muted-foreground" onClick={() => { changeTab("account"); setTimeout(() => document.getElementById("transaction-history")?.scrollIntoView({ behavior: "smooth" }), 100); }}><Receipt size={20} /> Transaction history</Button>
           </nav>
           <div className="mt-auto space-y-2 border-t border-border pt-4"><ApkDownloadButton label="Download App" variant="outline" className="h-11 w-full gap-2" /><Button variant="ghost" className="h-11 w-full justify-start gap-3 text-muted-foreground" onClick={signOut}><LogOut size={18} /> Sign out</Button></div>
@@ -214,12 +213,21 @@ const DashboardShell = ({ tab, onTabChange, children }: Props) => {
                         {league.label}
                       </Button>
                     ))}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={openHighlights}
+                      className="h-8 w-full justify-start gap-2 rounded-md px-2 text-xs text-muted-foreground hover:text-foreground"
+                    >
+                      <Video size={14} /> Highlights
+                    </Button>
                   </div>
+                )}
+                {t.id === "dashboard" && (
+                  <Button variant="ghost" className="mt-1 h-11 w-full justify-start gap-3 px-3 text-muted-foreground hover:text-foreground" onClick={openSearch}><Search size={18} /> Browse &amp; Search</Button>
                 )}
               </div>
             ))}
-            <Button variant="ghost" className="h-11 w-full justify-start gap-3 px-3 text-muted-foreground hover:text-foreground" onClick={openSearch}><Search size={18} /> Browse &amp; Search</Button>
-            <Button variant="ghost" className="h-11 w-full justify-start gap-3 px-3 text-muted-foreground hover:text-foreground" onClick={openHighlights}><Video size={18} /> Highlights</Button>
           </nav>
         </div>
         <div className="space-y-1 border-t border-border pt-3">
