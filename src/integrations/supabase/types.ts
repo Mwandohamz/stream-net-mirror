@@ -654,6 +654,27 @@ export type Database = {
         }
         Relationships: []
       }
+      request_rate_limits: {
+        Row: {
+          bucket: string
+          created_at: string
+          id: number
+          subject: string
+        }
+        Insert: {
+          bucket: string
+          created_at?: string
+          id?: never
+          subject: string
+        }
+        Update: {
+          bucket?: string
+          created_at?: string
+          id?: never
+          subject?: string
+        }
+        Relationships: []
+      }
       stream_sessions: {
         Row: {
           embed_mode: string | null
@@ -993,6 +1014,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_rate_limit: {
+        Args: {
+          p_block_seconds: number
+          p_bucket: string
+          p_max: number
+          p_subject: string
+          p_window_seconds: number
+        }
+        Returns: Json
+      }
       has_active_access: { Args: { _user_id: string }; Returns: boolean }
       has_role: {
         Args: {

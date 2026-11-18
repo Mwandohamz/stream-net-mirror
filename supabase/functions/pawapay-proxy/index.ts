@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { checkRateLimit, rateLimitSubject } from "../_shared/rateLimit.ts";
 import { activateSubscriptionForPayment } from "../_shared/subscription.ts";
 import { sendPaymentConfirmation } from "../_shared/notify.ts";
 import { notifyPaymentTelegram, activationLabel } from "../_shared/telegramPaymentNotifications.ts";
@@ -126,6 +127,15 @@ serve(async (req) => {
       if (!authUser?.email) {
         return new Response(JSON.stringify({ error: "Sign in required before paying" }), {
           status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Guard rail: at most 10 payment attempts per account per hour.
+      const payLimit = await checkRateLimit(supabase as any, "payment-deposit", await rateLimitSubject(req, authUser.id), 10, 3600);
+      if (!payLimit.allowed) {
+        return new Response(JSON.stringify({ error: "Too many payment attempts. Please wait a while and try again." }), {
+          status: 429,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }

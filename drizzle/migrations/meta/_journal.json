@@ -43,6 +43,13 @@
       "when": 1794986473586,
       "tag": "0005_allow_tmdb_provider_cache",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1795023432762,
+      "tag": "0006_request_rate_limits",
+      "breakpoints": true
     }
   ]
 }

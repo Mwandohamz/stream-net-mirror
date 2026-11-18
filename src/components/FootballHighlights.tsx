@@ -1,6 +1,7 @@
 
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -20,6 +21,11 @@ interface Highlight {
   fixture_id: number | null;
 }
 
+const REFRESH_BLOCK_SECONDS = 3 * 3600;
+const REFRESH_BLOCK_KEY = "snm:highlights-refresh-block";
+function readRefreshBlock(): number { try { return Number(localStorage.getItem(REFRESH_BLOCK_KEY)) || 0; } catch { return 0; } }
+function writeRefreshBlock(until: number) { try { localStorage.setItem(REFRESH_BLOCK_KEY, String(until)); } catch { /* optional */ } }
+
 interface Props {
   competition?: string;
   title?: string;
@@ -32,6 +38,7 @@ const FootballHighlights = ({
   limit = 12,
 }: Props) => {
   const [playing, setPlaying] = useState<string | null>(null);
+  const queryClient = useQueryClient();
   const highlights = useQuery({
     queryKey: ["football-highlights", competition ?? null],
     queryFn: async (): Promise<Highlight[]> => {
@@ -49,11 +56,29 @@ const FootballHighlights = ({
   const error = highlights.isError;
   // Refresh is limited to once every 30 seconds so it cannot be spammed.
   const [cooldown, setCooldown] = useState(false);
-  const loadHighlights = () => {
-    if (cooldown) return;
+  const [blockedUntil, setBlockedUntil] = useState(() => readRefreshBlock());
+  const blocked = blockedUntil > Date.now();
+  const loadHighlights = async () => {
+    if (cooldown || blocked) return;
     setCooldown(true);
     setTimeout(() => setCooldown(false), 30_000);
-    return highlights.refetch();
+    const { data, error } = await supabase.functions.invoke("get-football-highlights", { body: { ...(competition ? { competition } : {}), refresh: true } });
+    const status = (error as any)?.context?.status;
+    if (status === 429) {
+      const body = await (error as any).context.json?.().catch(() => null);
+      const until = Date.now() + (Number(body?.retryAfter) || REFRESH_BLOCK_SECONDS) * 1000;
+      writeRefreshBlock(until);
+      setBlockedUntil(until);
+      toast({ title: "Refresh paused for 3 hours", description: "Highlights still update automatically." });
+      return;
+    }
+    if (error || !data?.success) return;
+    queryClient.setQueryData(["football-highlights", competition ?? null], data.highlights ?? []);
+    const remaining = data.refreshRemaining;
+    if (typeof remaining === "number" && remaining <= 2) {
+      toast({ title: "Refresh limit almost reached", description: remaining === 0 ? "Further refreshes are paused for 3 hours. Highlights still update automatically." : `${remaining} refresh${remaining === 1 ? "" : "es"} left before a 3-hour pause.` });
+      if (remaining === 0) { const until = Date.now() + REFRESH_BLOCK_SECONDS * 1000; writeRefreshBlock(until); setBlockedUntil(until); }
+    }
   };
 
   const formatDate = (date: string | null) => {
@@ -90,7 +115,7 @@ const FootballHighlights = ({
           variant="outline"
           size="sm"
           onClick={() => void loadHighlights()}
-          disabled={loading || cooldown}
+          disabled={loading || cooldown || blocked}
           className="shrink-0 gap-2"
         >
           <RefreshCw size={14} className={loading ? "animate-spin" : ""} />

@@ -1,6 +1,7 @@
 
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import { checkRateLimit, rateLimitSubject } from "../_shared/rateLimit.ts";
 
 
 const json = (body: unknown, status = 200) =>
@@ -36,11 +37,24 @@ Deno.serve(async (req: Request) => {
 
     const requestUrl = new URL(req.url);
     let competition = requestUrl.searchParams.get("competition");
+    let refresh = false;
 
     if (req.method === "POST") {
       const body = await req.json().catch(() => null);
       if (!body || typeof body !== "object" || Array.isArray(body)) return json({ error: "Invalid request body" }, 400);
       competition = body?.competition ?? competition;
+      refresh = body?.refresh === true;
+    }
+
+    // Guard rails: manual refreshes allow 7 per 3 hours (warning from the 5th), plus a general per-visitor cap.
+    const subject = await rateLimitSubject(req);
+    const general = await checkRateLimit(admin, "highlights-read", subject, 120, 3600);
+    if (!general.allowed) return json({ error: "Too many requests. Please try again later.", retryAfter: general.retryAfter }, 429);
+    let refreshRemaining: number | null = null;
+    if (refresh) {
+      const r = await checkRateLimit(admin, "highlights-refresh", subject, 7, 3 * 3600, 3 * 3600);
+      if (!r.allowed) return json({ error: "Refresh is paused. Highlights still update automatically.", retryAfter: r.retryAfter, blocked: true }, 429);
+      refreshRemaining = r.remaining;
     }
 
     if (
@@ -84,6 +98,7 @@ Deno.serve(async (req: Request) => {
 
     return json({
       success: true,
+      refreshRemaining,
       highlights: data || [],
       count: data?.length || 0,
     });
