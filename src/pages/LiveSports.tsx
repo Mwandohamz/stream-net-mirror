@@ -16,6 +16,7 @@ import epl from "@/assets/sports/premier-league.jpg.asset.json";
 import laliga from "@/assets/sports/laliga.jpg.asset.json";
 import bundesliga from "@/assets/sports/bundesliga.jpg.asset.json";
 import sky from "@/assets/sports/sky-sports-football.jpg.asset.json";
+import FootballHighlights from "@/components/FootballHighlights";
 
 /** Fallback league line-up shown even before the admin adds links. */
 const LEAGUES = [
