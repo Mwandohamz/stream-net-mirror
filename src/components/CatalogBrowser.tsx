@@ -25,6 +25,8 @@ import {
   type TMDBMediaType,
   type TMDBTitle,
 } from "@/lib/tmdb";
+import { useDisplayCurrency } from "@/context/CurrencyContext";
+import { useTMDBProviders } from "@/hooks/useTMDBProviders";
 
 interface Props {
   title: string;
@@ -145,6 +147,11 @@ const Poster = ({
 const CatalogBrowser = ({ title, subtitle, mediaType }: Props) => {
   const navigate = useNavigate();
   const { isMember, ctaHref } = useMembership();
+  const { country, countries, setCountryIso2 } = useDisplayCurrency();
+
+  const [providerId, setProviderId] = useState<number | undefined>(undefined);
+
+  const providersQuery = useTMDBProviders(mediaType);
 
   const [query, setQuery] = useState("");
   const [activeGenre, setActiveGenre] = useState("All");
@@ -152,9 +159,10 @@ const CatalogBrowser = ({ title, subtitle, mediaType }: Props) => {
   const [page, setPage] = useState(1);
 
   const catalogQuery = useCatalog({
-    mediaType,
-    query,
-    page,
+  mediaType,
+  query,
+  page,
+  providerId,
   });
 
   const items = catalogQuery.data?.results || [];
@@ -182,10 +190,14 @@ const CatalogBrowser = ({ title, subtitle, mediaType }: Props) => {
   const watch = () => navigate(isMember ? ctaHref : "/signup");
 
   const handleSearch = (value: string) => {
-    setQuery(value);
-    setPage(1);
-    setActiveGenre("All");
-  };
+  setQuery(value);
+  setPage(1);
+  setActiveGenre("All");
+
+  if (value.trim()) {
+    setProviderId(undefined);
+  }
+};
 
   const handleGenre = (genre: string) => {
     setActiveGenre(genre);
@@ -230,6 +242,70 @@ const CatalogBrowser = ({ title, subtitle, mediaType }: Props) => {
           )}
         </div>
       </div>
+
+            <div className="mx-auto mt-4 flex max-w-3xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-center">
+
+        <div className="flex flex-1 flex-col gap-1">
+          <label className="text-xs font-medium text-muted-foreground">
+            Availability country
+          </label>
+
+          <select
+            value={country.iso2}
+            onChange={(e) => {
+              setCountryIso2(e.target.value);
+              setProviderId(undefined);
+              setPage(1);
+            }}
+            className="h-10 w-full rounded-lg border border-border bg-secondary px-3 text-sm text-foreground"
+          >
+            {countries.map((c) => (
+              <option key={c.iso2} value={c.iso2}>
+                {c.flag} {c.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="flex flex-1 flex-col gap-1">
+          <label className="text-xs font-medium text-muted-foreground">
+            Streaming platform
+          </label>
+
+          <select
+            value={providerId ? String(providerId) : "all"}
+            onChange={(e) => {
+              setProviderId(
+                e.target.value === "all"
+                  ? undefined
+                  : Number(e.target.value)
+              );
+              setPage(1);
+              setActiveGenre("All");
+            }}
+            disabled={providersQuery.isLoading || !!query.trim()}
+            className="h-10 w-full rounded-lg border border-border bg-secondary px-3 text-sm text-foreground disabled:opacity-50"
+          >
+            <option value="all">All platforms</option>
+
+            {(providersQuery.data?.results || []).map((provider) => (
+              <option
+                key={provider.provider_id}
+                value={provider.provider_id}
+              >
+                {provider.provider_name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+      </div>
+
+      {query.trim() && (
+        <p className="mt-2 text-center text-xs text-muted-foreground">
+          Clear your search to filter titles by streaming platform.
+        </p>
+      )}
 
       {!catalogQuery.isLoading && categories.length > 1 && (
         <div className="mt-4 flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
