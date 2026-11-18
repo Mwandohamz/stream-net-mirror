@@ -1,12 +1,20 @@
 
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import { authenticateCronRequest } from "../_shared/cron-auth.ts";
+import { videoAvailability } from "../_shared/catalogRules.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
+interface VideoSource {
+  id: string; source_name: string; youtube_channel_id: string | null;
+  last_synced_at: string | null; sync_interval_minutes: number; competition_code: string | null;
+}
+interface YouTubeVideo {
+  id: string;
+  snippet?: { title?: string; description?: string; channelTitle?: string; publishedAt?: string; thumbnails?: Record<string, { url?: string }> };
+  status?: { embeddable?: boolean; privacyStatus?: string; uploadStatus?: string };
+}
+interface PlaylistItem { contentDetails?: { videoId?: string }; snippet?: { resourceId?: { videoId?: string } } }
+
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
@@ -60,7 +68,6 @@ Deno.serve(async (req: Request) => {
     return json({ error: "Method not allowed" }, 405);
   }
 
-  const startedAt = new Date();
 
   try {
     // 1. Verify the signed-in caller.
@@ -69,47 +76,24 @@ Deno.serve(async (req: Request) => {
       return json({ error: "Unauthorized" }, 401);
     }
 
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
-    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 
     const userClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
     });
-
-    const { data: { user }, error: authError } =
-      await userClient.auth.getUser();
-
-    if (authError || !user) {
-      return json({ error: "Invalid authentication" }, 401);
-    }
 
     // 2. Verify admin role.
     const admin = createClient(supabaseUrl, serviceKey, {
       auth: { persistSession: false },
     });
 
-    const callerEmail = (user.email || "").trim().toLowerCase();
-    const adminEmails = (Deno.env.get("ADMIN_EMAILS") || "")
-      .split(",")
-      .map((email) => email.trim().toLowerCase())
-      .filter(Boolean);
-
-    let isAdmin = adminEmails.includes(callerEmail);
-
-    if (!isAdmin) {
-      const { data: role } = await admin
-        .from("user_roles")
-        .select("id")
-        .eq("user_id", user.id)
-        .eq("role", "admin")
-        .maybeSingle();
-
-      isAdmin = !!role;
-    }
-
-    if (!isAdmin) {
-      return json({ error: "Administrator access required" }, 403);
+    if (authenticateCronRequest(req) !== null) {
+      const { data: { user }, error: authError } = await userClient.auth.getUser();
+      if (authError || !user) return json({ error: "Invalid authentication" }, 401);
+      const { data: role, error: roleError } = await userClient.rpc("has_role", { _user_id: user.id, _role: "admin" });
+      if (roleError || !role) return json({ error: "Administrator access required" }, 403);
     }
 
     // 3. Read enabled sources.
@@ -121,12 +105,12 @@ Deno.serve(async (req: Request) => {
     if (sourceError) throw sourceError;
 
     const configuredSources = (sources || []).filter(
-      (source: any) => !!source.youtube_channel_id,
+      (source: VideoSource) => !!source.youtube_channel_id && /^UC[A-Za-z0-9_-]{22}$/.test(source.youtube_channel_id),
     );
 
     const now = new Date();
 
-    const dueSources = configuredSources.filter((source: any) => {
+    const dueSources = configuredSources.filter((source: VideoSource) => {
       if (!source.last_synced_at) return true;
 
       const interval = Math.max(
@@ -156,17 +140,17 @@ Deno.serve(async (req: Request) => {
     let successfulSources = 0;
     let failedSources = 0;
 
-    const sourceResults: any[] = [];
+    const sourceResults: Array<Record<string, string | number>> = [];
 
     // 4. Synchronise each configured channel.
-    for (const source of dueSources as any[]) {
+    for (const source of dueSources as VideoSource[]) {
       const runStartedAt = new Date();
 
       const { data: run, error: runInsertError } = await admin
         .from("football_highlight_sync_runs")
         .insert({
           source_id: source.id,
-          status: "running",
+          status: "started",
           request_count: 0,
           videos_found: 0,
           started_at: runStartedAt.toISOString(),
@@ -190,12 +174,12 @@ Deno.serve(async (req: Request) => {
 
       try {
         // 4a. Get the channel's uploads playlist.
-        const channelData = await youtubeRequest("channels", {
-          part: "contentDetails,snippet",
-          id: source.youtube_channel_id,
-        });
         sourceRequestCount++;
         totalRequests++;
+        const channelData = await youtubeRequest("channels", {
+          part: "contentDetails,snippet",
+          id: source.youtube_channel_id ?? "",
+        });
 
         const channel = channelData.items?.[0];
         const uploadsPlaylist =
@@ -206,16 +190,16 @@ Deno.serve(async (req: Request) => {
         }
 
         // 4b. Get the latest 20 uploads.
+        sourceRequestCount++;
+        totalRequests++;
         const playlistData = await youtubeRequest("playlistItems", {
           part: "snippet,contentDetails",
           playlistId: uploadsPlaylist,
           maxResults: String(MAX_VIDEOS_PER_CHANNEL),
         });
-        sourceRequestCount++;
-        totalRequests++;
 
         const videoIds = (playlistData.items || [])
-          .map((item: any) =>
+          .map((item: PlaylistItem) =>
             item.contentDetails?.videoId || item.snippet?.resourceId?.videoId
           )
           .filter(Boolean);
@@ -253,42 +237,33 @@ Deno.serve(async (req: Request) => {
         }
 
         // 4c. Retrieve video metadata and embeddability.
+        sourceRequestCount++;
+        totalRequests++;
         const videoData = await youtubeRequest("videos", {
           part: "snippet,status,contentDetails",
           id: videoIds.join(","),
           maxResults: String(MAX_VIDEOS_PER_CHANNEL),
         });
-        sourceRequestCount++;
-        totalRequests++;
 
-        const videos = videoData.items || [];
+        const videos: YouTubeVideo[] = videoData.items || [];
+        // Deleted/private videos omitted by YouTube must stop appearing publicly.
+        const returnedIds = new Set(videos.map(video => video.id));
+        for (const id of videoIds as string[]) {
+          if (!returnedIds.has(id)) {
+            const { error } = await admin.from("football_highlights").update({ availability_status: "unavailable", is_embeddable: false })
+              .eq("source_id", source.id).eq("youtube_video_id", id);
+            if (error) throw error;
+          }
+        }
         sourceVideosFound = videos.length;
         totalVideosFound += videos.length;
-
-        // 4d. Preserve publication approval for existing videos.
-        const existingIds = videos.map((video: any) => video.id);
-
-        const { data: existingRows, error: existingError } = await admin
-          .from("football_highlights")
-          .select("youtube_video_id,is_published")
-          .eq("source_id", source.id)
-          .in("youtube_video_id", existingIds);
-
-        if (existingError) throw existingError;
-
-        const publishedMap = new Map(
-          (existingRows || []).map((row: any) => [
-            row.youtube_video_id,
-            row.is_published,
-          ]),
-        );
 
         const fetchedAt = new Date();
         const expiresAt = new Date(
           fetchedAt.getTime() + CACHE_HOURS * 60 * 60 * 1000,
         );
 
-        const records = videos.map((video: any) => {
+        const records = videos.map((video: YouTubeVideo) => {
           const snippet = video.snippet || {};
           const status = video.status || {};
           const thumbnails = snippet.thumbnails || {};
@@ -311,26 +286,24 @@ Deno.serve(async (req: Request) => {
             published_at: snippet.publishedAt || null,
             competition_code: source.competition_code || null,
             is_embeddable: status.embeddable === true,
-            availability_status: status.embeddable === true
-              ? "available"
-              : "blocked",
-            is_published: publishedMap.has(video.id)
-              ? publishedMap.get(video.id)
-              : false,
+            availability_status: videoAvailability(status),
             api_data_fetched_at: fetchedAt.toISOString(),
             api_data_expires_at: expiresAt.toISOString(),
             updated_at: fetchedAt.toISOString(),
           };
         });
 
-        // 4e. Upsert without creating duplicate source/video combinations.
-        const { error: upsertError } = await admin
-          .from("football_highlights")
-          .upsert(records, {
-            onConflict: "source_id,youtube_video_id",
-          });
-
-        if (upsertError) throw upsertError;
+        // New rows default to unpublished; metadata updates never overwrite approval.
+        for (const record of records) {
+          const { error: insertError } = await admin.from("football_highlights").upsert(
+            { ...record, is_published: false },
+            { onConflict: "source_id,youtube_video_id", ignoreDuplicates: true },
+          );
+          if (insertError) throw insertError;
+          const { error: updateError } = await admin.from("football_highlights").update(record)
+            .eq("source_id", source.id).eq("youtube_video_id", record.youtube_video_id);
+          if (updateError) throw updateError;
+        }
 
         // 4f. Update source sync timestamps.
         const syncedAt = new Date();

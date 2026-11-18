@@ -12,6 +12,7 @@ interface UseCatalogOptions {
   query?: string;
   page?: number;
   providerId?: number;
+  genreId?: number;
   enabled?: boolean;
 }
 
@@ -20,6 +21,7 @@ export function useCatalog({
   query = "",
   page = 1,
   providerId,
+  genreId,
   enabled = true,
 }: UseCatalogOptions) {
   const { country } = useDisplayCurrency();
@@ -27,7 +29,7 @@ export function useCatalog({
 
   const action = normalizedQuery
     ? "search"
-    : providerId
+    : providerId || genreId
       ? "discover"
       : "trending";
 
@@ -38,6 +40,7 @@ export function useCatalog({
       normalizedQuery || action,
       page,
       providerId ?? null,
+      genreId ?? null,
       providerId ? country.iso2 : null,
     ],
 
@@ -47,6 +50,7 @@ export function useCatalog({
         mediaType,
         page,
         ...(normalizedQuery ? { query: normalizedQuery } : {}),
+        ...(!normalizedQuery && genreId ? { genreId } : {}),
         ...(providerId ? {
           providerId,
           region: country.iso2,

@@ -2,6 +2,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders as sdkCorsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { tmdbRequest } from "../_shared/tmdb.ts";
+import { positiveInteger, regionCode } from "../_shared/catalogRules.ts";
 
 const corsHeaders = {
   ...sdkCorsHeaders,
@@ -17,17 +18,9 @@ const json = (body: unknown, status = 200) =>
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 
-const validRegion = (value: unknown): string | undefined => {
-  if (value === undefined || value === null || value === "") return undefined;
-  if (typeof value !== "string" || !/^[A-Za-z]{2}$/.test(value)) {
-    throw new Error("Region must be a valid two-letter country code");
-  }
-  return value.toUpperCase();
-};
-
 const validMediaType = (value: unknown): "movie" | "tv" | "multi" => {
   if (value !== "movie" && value !== "tv" && value !== "multi") {
-    throw new Error("Invalid media type");
+    throw new TypeError("Invalid media type");
   }
   return value;
 };
@@ -60,7 +53,7 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    const payload = await req.json();
+    const payload = await req.json().catch(() => null);
 
     if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
       return json({ error: "Invalid request body" }, 400);
@@ -68,9 +61,9 @@ Deno.serve(async (req: Request) => {
 
     const action = payload.action;
     const mediaType = validMediaType(payload.mediaType);
-    const page = Number(payload.page ?? 1);
+    const page = positiveInteger(payload.page ?? 1, 500);
     const language = payload.language ?? "en-US";
-    const region = validRegion(payload.region);
+    const region = regionCode(payload.region);
 
     if (!Number.isInteger(page) || page < 1 || page > 500) {
       return json({ error: "Invalid page number" }, 400);
@@ -116,7 +109,8 @@ Deno.serve(async (req: Request) => {
           return json({ error: "Search query is required" }, 400);
         }
 
-        const query = String(payload.query ?? "").trim();
+        if (typeof payload.query !== "string") return json({ error: "Invalid search query" }, 400);
+        const query = payload.query.trim();
 
         if (!query || query.length > 120) {
           return json({ error: "Search query must be 1–120 characters" }, 400);
@@ -167,9 +161,10 @@ Deno.serve(async (req: Request) => {
         }
 
         const providerId = payload.providerId;
+        if (payload.genreId !== undefined) params.with_genres = positiveInteger(payload.genreId, 20000);
 
         if (providerId !== undefined && providerId !== null) {
-          const parsedProvider = Number(providerId);
+          const parsedProvider = positiveInteger(providerId);
 
           if (!Number.isInteger(parsedProvider) || parsedProvider <= 0) {
             return json({ error: "Invalid provider ID" }, 400);
@@ -218,14 +213,14 @@ Deno.serve(async (req: Request) => {
       mediaType: cacheMediaType,
       path,
       params,
-      region: region ?? null,
+      region: params.watch_region ?? null,
     };
 
     const cacheKey = await makeCacheKey(cacheInput);
 
     const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
       { auth: { persistSession: false } },
     );
 
@@ -286,6 +281,7 @@ Deno.serve(async (req: Request) => {
       data,
     });
   } catch (error) {
+    if (error instanceof TypeError) return json({ error: error.message }, 400);
     const status = (error as { status?: number }).status;
 
     console.error("TMDB catalogue error:", error);

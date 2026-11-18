@@ -1,0 +1,1 @@
+ALTER TABLE public.tmdb_catalog_cache DROP CONSTRAINT tmdb_catalog_cache_query_type_check; ALTER TABLE public.tmdb_catalog_cache ADD CONSTRAINT tmdb_catalog_cache_query_type_check CHECK (query_type IN ('search','discover','trending','details','providers'));

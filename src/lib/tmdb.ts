@@ -32,6 +32,7 @@ interface TMDBRequest {
   query?: string;
   region?: string;
   providerId?: number;
+  genreId?: number;
   year?: number;
   id?: number;
   language?: string;

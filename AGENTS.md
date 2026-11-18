@@ -15,3 +15,5 @@
 - Account history and notification inbox read existing RLS-protected subscription, payment and ticket records via cached queries; never create a parallel payment or notification authority.
 - The native launch animation runs once per cold app mount above routes; it must not replay on resume or initiate payments or tracking.
 - NativeEntryFlow replaces website landing/entertainment routes with session-aware dashboard destinations before rendering them; account verification, checkout and web routes stay unchanged.
+- Public and member catalogues share the server-only TMDB cache; region affects provider availability, not the global catalogue, and discover filters run before pagination.
+- Highlight sync preserves approval separately from metadata updates; fixture matching uses both teams in the title and only completed fixtures to avoid description-based false matches.

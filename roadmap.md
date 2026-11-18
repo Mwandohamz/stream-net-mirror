@@ -1,6 +1,9 @@
 # Roadmap — dashboard native polish + in-app streaming + APK downloads
 
 ## Current request
+- [ ] Audit and correct TMDB catalogue, provider/genre filters, caching and highlights integration
+- [ ] Verify protected tables, function deployment, credentials, source configuration and scheduling
+- [ ] Run automated/browser checks, publish verified updates and report remaining manual checks
 - [x] Shared streaming warning with in-app and external website choices for every platform and player switch
 - [x] Admin-editable exact plan days using existing fields; default 30 days and zero implicit grace on future activations; 16 tests passed and preview compilation clean
 - [ ] Deploy duration activation changes and verify signed-in streaming/admin plan save — hosted database is paused; deployment of pawapay-proxy, pawapay-callback and claim-payments was refused; public browser check passed with no runtime errors

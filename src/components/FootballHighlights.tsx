@@ -1,5 +1,6 @@
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -30,33 +31,23 @@ const FootballHighlights = ({
   title = "LATEST FOOTBALL HIGHLIGHTS",
   limit = 12,
 }: Props) => {
-  const [videos, setVideos] = useState<Highlight[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
   const [playing, setPlaying] = useState<string | null>(null);
-
-  const loadHighlights = async () => {
-    setLoading(true);
-    setError(false);
-
-    const { data, error: invokeError } =
-      await supabase.functions.invoke("get-football-highlights", {
-        body: competition ? { competition } : {},
-      });
-
-    if (invokeError || !data?.success) {
-      setError(true);
-      setVideos([]);
-    } else {
-      setVideos((data.highlights || []).slice(0, limit));
-    }
-
-    setLoading(false);
-  };
-
-  useEffect(() => {
-    void loadHighlights();
-  }, [competition, limit]);
+  const highlights = useQuery({
+    queryKey: ["football-highlights", competition ?? null],
+    queryFn: async (): Promise<Highlight[]> => {
+      const { data, error } = await supabase.functions.invoke("get-football-highlights", { body: competition ? { competition } : {} });
+      if (error || !data?.success) throw new Error("Highlights unavailable");
+      return data.highlights ?? [];
+    },
+    staleTime: 2 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+    retry: 1,
+    refetchOnWindowFocus: false,
+  });
+  const videos = (highlights.data ?? []).slice(0, limit);
+  const loading = highlights.isLoading;
+  const error = highlights.isError;
+  const loadHighlights = () => highlights.refetch();
 
   const formatDate = (date: string | null) => {
     if (!date) return "Recently added";
@@ -146,7 +137,7 @@ const FootballHighlights = ({
               key={video.id}
               className="overflow-hidden border-border bg-card"
             >
-              <div className="relative aspect-video bg-black">
+              <div className="relative aspect-video bg-background">
                 {playing === video.id ? (
                   <iframe
                     src={`https://www.youtube-nocookie.com/embed/${encodeURIComponent(video.youtube_video_id)}?autoplay=1&rel=0`}
@@ -171,7 +162,7 @@ const FootballHighlights = ({
                         className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                       />
                     )}
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/25 transition-colors group-hover:bg-black/40">
+                    <div className="absolute inset-0 flex items-center justify-center bg-background/25 transition-colors group-hover:bg-background/40">
                       <span className="flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg">
                         <Play size={24} className="ml-1 fill-current" />
                       </span>

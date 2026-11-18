@@ -36,6 +36,13 @@
       "when": 1792998665546,
       "tag": "0004_create_apk_downloads",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1794986473586,
+      "tag": "0005_allow_tmdb_provider_cache",
+      "breakpoints": true
     }
   ]
 }

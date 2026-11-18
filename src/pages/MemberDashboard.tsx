@@ -349,12 +349,14 @@ const MemberDashboard = () => {
          {tab === "movies" && (
   <>
     <CatalogBrowser
+      embedded
       title="MOVIES"
       subtitle="Discover movies from around the world."
       mediaType="movie"
     />
 
     <CatalogBrowser
+      embedded
       title="TV SERIES"
       subtitle="Explore trending series and discover your next favourite show."
       mediaType="tv"

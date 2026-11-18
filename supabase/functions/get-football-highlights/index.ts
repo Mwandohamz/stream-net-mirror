@@ -1,12 +1,7 @@
 
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-};
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
@@ -43,13 +38,14 @@ Deno.serve(async (req: Request) => {
     let competition = requestUrl.searchParams.get("competition");
 
     if (req.method === "POST") {
-      const body = await req.json().catch(() => ({}));
+      const body = await req.json().catch(() => null);
+      if (!body || typeof body !== "object" || Array.isArray(body)) return json({ error: "Invalid request body" }, 400);
       competition = body?.competition ?? competition;
     }
 
     if (
       competition &&
-      !/^[A-Z0-9]{2,10}$/.test(competition)
+      (typeof competition !== "string" || !/^[A-Z0-9]{2,10}$/.test(competition))
     ) {
       return json({ error: "Invalid competition code" }, 400);
     }
@@ -71,6 +67,7 @@ Deno.serve(async (req: Request) => {
       .eq("is_published", true)
       .eq("is_embeddable", true)
       .eq("availability_status", "available")
+      .gt("api_data_expires_at", new Date().toISOString())
       .order("published_at", { ascending: false })
       .limit(40);
 

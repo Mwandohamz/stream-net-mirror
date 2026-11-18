@@ -1,38 +1,14 @@
 
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import { containsTeam, reliableFixture } from "../_shared/catalogRules.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
     status,
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
-
-function normalize(value: string): string {
-  return value
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/&/g, " and ")
-    .replace(/[^a-z0-9]+/g, " ")
-    .trim()
-    .replace(/\s+/g, " ");
-}
-
-function containsTeam(text: string, team: string): boolean {
-  const normalizedText = ` ${normalize(text)} `;
-  const normalizedTeam = normalize(team);
-
-  if (!normalizedTeam) return false;
-
-  return normalizedText.includes(` ${normalizedTeam} `);
-}
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
@@ -50,9 +26,9 @@ Deno.serve(async (req: Request) => {
       return json({ error: "Unauthorized" }, 401);
     }
 
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
-    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 
     const userClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authorization } },
@@ -69,27 +45,9 @@ Deno.serve(async (req: Request) => {
       auth: { persistSession: false },
     });
 
-    const email = (user.email || "").trim().toLowerCase();
+    const { data: isAdmin, error: roleError } = await userClient.rpc("has_role", { _user_id: user.id, _role: "admin" });
 
-    const adminEmails = (Deno.env.get("ADMIN_EMAILS") || "")
-      .split(",")
-      .map((item) => item.trim().toLowerCase())
-      .filter(Boolean);
-
-    let isAdmin = adminEmails.includes(email);
-
-    if (!isAdmin) {
-      const { data: role } = await admin
-        .from("user_roles")
-        .select("id")
-        .eq("user_id", user.id)
-        .eq("role", "admin")
-        .maybeSingle();
-
-      isAdmin = !!role;
-    }
-
-    if (!isAdmin) {
+    if (roleError || !isAdmin) {
       return json({ error: "Administrator access required" }, 403);
     }
 
@@ -117,7 +75,7 @@ Deno.serve(async (req: Request) => {
     let unmatched = 0;
     let ambiguous = 0;
 
-    const results: any[] = [];
+    const results: Array<Record<string, string | number>> = [];
 
     for (const highlight of highlights || []) {
       const publishedAt = new Date(highlight.published_at);
@@ -145,6 +103,7 @@ Deno.serve(async (req: Request) => {
           kickoff_utc
         `)
         .gte("kickoff_utc", earliestKickoff.toISOString())
+        .eq("status", "FINISHED")
         .lte("kickoff_utc", latestKickoff.toISOString());
 
       if (highlight.competition_code) {
@@ -160,9 +119,9 @@ Deno.serve(async (req: Request) => {
       if (fixtureError) throw fixtureError;
 
       const searchableText =
-        `${highlight.title || ""} ${highlight.description || ""}`;
+        highlight.title || "";
 
-      const candidates = (fixtures || []).filter((fixture: any) => {
+      const candidates = (fixtures || []).filter((fixture) => {
         const homeFound = containsTeam(
           searchableText,
           fixture.home_team,
@@ -176,8 +135,8 @@ Deno.serve(async (req: Request) => {
         return homeFound && awayFound;
       });
 
-      if (candidates.length === 1) {
-        const fixture = candidates[0];
+      const fixture = reliableFixture(searchableText, fixtures || []);
+      if (fixture) {
 
         const matchLabel =
           `${fixture.home_team} vs ${fixture.away_team}`;

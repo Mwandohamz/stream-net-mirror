@@ -1,5 +1,5 @@
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -32,6 +32,7 @@ interface Props {
   title: string;
   subtitle: string;
   mediaType: "movie" | "tv";
+  embedded?: boolean;
 }
 
 const GENRES: Record<number, string> = {
@@ -123,7 +124,7 @@ const Poster = ({
       <div className="flex gap-1.5 p-2">
         <Button
           size="sm"
-          className="h-8 flex-1 gap-1 bg-primary text-[11px] text-primary-foreground"
+          className="h-8 min-w-0 flex-1 gap-1 px-1.5 bg-primary text-[11px] text-primary-foreground"
           onClick={onWatch}
         >
           <Play size={12} className="fill-current" />
@@ -144,7 +145,7 @@ const Poster = ({
   );
 };
 
-const CatalogBrowser = ({ title, subtitle, mediaType }: Props) => {
+const CatalogBrowser = ({ title, subtitle, mediaType, embedded = false }: Props) => {
   const navigate = useNavigate();
   const { isMember, ctaHref } = useMembership();
   const { country, countries, setCountryIso2 } = useDisplayCurrency();
@@ -158,23 +159,29 @@ const CatalogBrowser = ({ title, subtitle, mediaType }: Props) => {
   const [selected, setSelected] = useState<TMDBTitle | null>(null);
   const [page, setPage] = useState(1);
 
+  useEffect(() => {
+    setProviderId(undefined);
+    setPage(1);
+  }, [country.iso2]);
+
   const catalogQuery = useCatalog({
   mediaType,
   query,
   page,
   providerId,
+  genreId: activeGenre === "All" ? undefined : Number(Object.entries(GENRES).find(([, name]) => name === activeGenre)?.[0]),
   });
 
-  const items = catalogQuery.data?.results || [];
+  const items = useMemo(() => catalogQuery.data?.results ?? [], [catalogQuery.data]);
 
   const categories = useMemo(
     () => [
       "All",
       ...Array.from(
-        new Set(items.flatMap((item) => getGenres(item))),
+        new Set(Object.entries(GENRES).filter(([id]) => mediaType === "movie" ? Number(id) < 10759 : ![28,12,14,36,27,10402,10749,878,10770,53,10752,37].includes(Number(id))).map(([, name]) => name)),
       ).sort(),
     ],
-    [items],
+    [mediaType],
   );
 
   const filtered = useMemo(
@@ -187,7 +194,7 @@ const CatalogBrowser = ({ title, subtitle, mediaType }: Props) => {
     [items, activeGenre],
   );
 
-  const watch = () => navigate(isMember ? ctaHref : "/signup");
+  const watch = () => navigate(isMember ? "/dashboard?tab=watch" : ctaHref);
 
   const handleSearch = (value: string) => {
   setQuery(value);
@@ -201,12 +208,13 @@ const CatalogBrowser = ({ title, subtitle, mediaType }: Props) => {
 
   const handleGenre = (genre: string) => {
     setActiveGenre(genre);
+    setPage(1);
   };
 
   const selectedGenres = selected ? getGenres(selected) : [];
 
   return (
-    <section className="container mx-auto px-4 pb-16 pt-24 md:pt-28">
+    <section className={`container mx-auto px-4 pb-16 ${embedded ? "pt-8" : "pt-36 md:pt-28"}`}>
       <header className="mx-auto max-w-2xl space-y-2 text-center">
         <h1 className="netflix-title text-3xl text-foreground md:text-5xl">
           {title}
@@ -246,11 +254,12 @@ const CatalogBrowser = ({ title, subtitle, mediaType }: Props) => {
             <div className="mx-auto mt-4 flex max-w-3xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-center">
 
         <div className="flex flex-1 flex-col gap-1">
-          <label className="text-xs font-medium text-muted-foreground">
+          <label htmlFor={`country-${mediaType}`} className="text-xs font-medium text-muted-foreground">
             Availability country
           </label>
 
           <select
+            id={`country-${mediaType}`}
             value={country.iso2}
             onChange={(e) => {
               setCountryIso2(e.target.value);
@@ -268,11 +277,12 @@ const CatalogBrowser = ({ title, subtitle, mediaType }: Props) => {
         </div>
 
         <div className="flex flex-1 flex-col gap-1">
-          <label className="text-xs font-medium text-muted-foreground">
+          <label htmlFor={`provider-${mediaType}`} className="text-xs font-medium text-muted-foreground">
             Streaming platform
           </label>
 
           <select
+            id={`provider-${mediaType}`}
             value={providerId ? String(providerId) : "all"}
             onChange={(e) => {
               setProviderId(
@@ -384,19 +394,20 @@ const CatalogBrowser = ({ title, subtitle, mediaType }: Props) => {
             </Button>
 
             <span className="text-sm text-muted-foreground">
-              Page {page} of {catalogQuery.data?.total_pages || 1}
+              Page {page} of {Math.min(500, catalogQuery.data?.total_pages || 1)}
             </span>
 
             <Button
               variant="outline"
               disabled={
-                page >= (catalogQuery.data?.total_pages || 1) ||
+                page >= Math.min(500, catalogQuery.data?.total_pages || 1) ||
                 catalogQuery.isFetching
               }
               onClick={() =>
                 setPage((current) =>
                   Math.min(
                     catalogQuery.data?.total_pages || current,
+                    500,
                     current + 1,
                   ),
                 )
@@ -469,7 +480,7 @@ const CatalogBrowser = ({ title, subtitle, mediaType }: Props) => {
                       onClick={watch}
                     >
                       <Play size={15} className="fill-current" />
-                      Watch now
+          <span className="truncate">Watch now</span>
                     </Button>
 
                     <Button
