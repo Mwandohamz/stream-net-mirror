@@ -244,6 +244,176 @@ export type Database = {
         }
         Relationships: []
       }
+      football_highlight_sync_runs: {
+        Row: {
+          completed_at: string | null
+          error_code: string | null
+          id: string
+          request_count: number
+          source_id: string | null
+          started_at: string
+          status: string
+          videos_found: number
+        }
+        Insert: {
+          completed_at?: string | null
+          error_code?: string | null
+          id?: string
+          request_count?: number
+          source_id?: string | null
+          started_at?: string
+          status?: string
+          videos_found?: number
+        }
+        Update: {
+          completed_at?: string | null
+          error_code?: string | null
+          id?: string
+          request_count?: number
+          source_id?: string | null
+          started_at?: string
+          status?: string
+          videos_found?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "football_highlight_sync_runs_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "football_video_sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      football_highlights: {
+        Row: {
+          api_data_expires_at: string
+          api_data_fetched_at: string
+          availability_status: string
+          channel_title: string | null
+          competition_code: string | null
+          created_at: string
+          description: string | null
+          fixture_id: number | null
+          id: string
+          is_embeddable: boolean
+          is_published: boolean
+          match_label: string | null
+          published_at: string | null
+          source_id: string
+          thumbnail_url: string | null
+          title: string
+          updated_at: string
+          youtube_video_id: string
+        }
+        Insert: {
+          api_data_expires_at?: string
+          api_data_fetched_at?: string
+          availability_status?: string
+          channel_title?: string | null
+          competition_code?: string | null
+          created_at?: string
+          description?: string | null
+          fixture_id?: number | null
+          id?: string
+          is_embeddable?: boolean
+          is_published?: boolean
+          match_label?: string | null
+          published_at?: string | null
+          source_id: string
+          thumbnail_url?: string | null
+          title: string
+          updated_at?: string
+          youtube_video_id: string
+        }
+        Update: {
+          api_data_expires_at?: string
+          api_data_fetched_at?: string
+          availability_status?: string
+          channel_title?: string | null
+          competition_code?: string | null
+          created_at?: string
+          description?: string | null
+          fixture_id?: number | null
+          id?: string
+          is_embeddable?: boolean
+          is_published?: boolean
+          match_label?: string | null
+          published_at?: string | null
+          source_id?: string
+          thumbnail_url?: string | null
+          title?: string
+          updated_at?: string
+          youtube_video_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "football_highlights_fixture_id_fkey"
+            columns: ["fixture_id"]
+            isOneToOne: false
+            referencedRelation: "fixtures"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "football_highlights_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "football_video_sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      football_video_sources: {
+        Row: {
+          api_data_expires_at: string | null
+          channel_url: string | null
+          competition_code: string | null
+          created_at: string
+          id: string
+          is_enabled: boolean
+          last_synced_at: string | null
+          notes: string | null
+          source_name: string
+          source_type: string
+          sync_interval_minutes: number
+          updated_at: string
+          youtube_channel_id: string | null
+          youtube_handle: string | null
+        }
+        Insert: {
+          api_data_expires_at?: string | null
+          channel_url?: string | null
+          competition_code?: string | null
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          last_synced_at?: string | null
+          notes?: string | null
+          source_name: string
+          source_type: string
+          sync_interval_minutes?: number
+          updated_at?: string
+          youtube_channel_id?: string | null
+          youtube_handle?: string | null
+        }
+        Update: {
+          api_data_expires_at?: string | null
+          channel_url?: string | null
+          competition_code?: string | null
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          last_synced_at?: string | null
+          notes?: string | null
+          source_name?: string
+          source_type?: string
+          sync_interval_minutes?: number
+          updated_at?: string
+          youtube_channel_id?: string | null
+          youtube_handle?: string | null
+        }
+        Relationships: []
+      }
       influencers: {
         Row: {
           created_at: string
@@ -754,6 +924,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      tmdb_catalog_cache: {
+        Row: {
+          cache_key: string
+          created_at: string
+          expires_at: string
+          fetched_at: string
+          media_type: string
+          page: number
+          payload: Json
+          provider_id: number | null
+          query_text: string | null
+          query_type: string
+          region: string | null
+          updated_at: string
+        }
+        Insert: {
+          cache_key: string
+          created_at?: string
+          expires_at: string
+          fetched_at?: string
+          media_type: string
+          page?: number
+          payload: Json
+          provider_id?: number | null
+          query_text?: string | null
+          query_type: string
+          region?: string | null
+          updated_at?: string
+        }
+        Update: {
+          cache_key?: string
+          created_at?: string
+          expires_at?: string
+          fetched_at?: string
+          media_type?: string
+          page?: number
+          payload?: Json
+          provider_id?: number | null
+          query_text?: string | null
+          query_type?: string
+          region?: string | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       user_roles: {
         Row: {
