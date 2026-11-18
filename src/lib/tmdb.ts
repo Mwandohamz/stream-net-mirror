@@ -26,7 +26,7 @@ export interface TMDBResponse {
 }
 
 interface TMDBRequest {
-  action: "trending" | "search" | "discover" | "details";
+  action: "trending" | "search" | "discover" | "details" | "providers";
   mediaType: TMDBMediaType;
   page?: number;
   query?: string;
@@ -37,6 +37,16 @@ interface TMDBRequest {
   language?: string;
 }
 
+export interface TMDBProvider {
+  provider_id: number;
+  provider_name: string;
+  logo_path: string | null;
+  display_priority: number;
+}
+
+export interface TMDBProviderResponse {
+  results: TMDBProvider[];
+}
 export async function fetchTMDB<T = TMDBResponse>(
   request: TMDBRequest,
 ): Promise<T> {
