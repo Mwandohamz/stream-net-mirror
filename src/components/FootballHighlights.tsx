@@ -47,7 +47,14 @@ const FootballHighlights = ({
   const videos = (highlights.data ?? []).slice(0, limit);
   const loading = highlights.isLoading;
   const error = highlights.isError;
-  const loadHighlights = () => highlights.refetch();
+  // Refresh is limited to once every 30 seconds so it cannot be spammed.
+  const [cooldown, setCooldown] = useState(false);
+  const loadHighlights = () => {
+    if (cooldown) return;
+    setCooldown(true);
+    setTimeout(() => setCooldown(false), 30_000);
+    return highlights.refetch();
+  };
 
   const formatDate = (date: string | null) => {
     if (!date) return "Recently added";
@@ -83,7 +90,7 @@ const FootballHighlights = ({
           variant="outline"
           size="sm"
           onClick={() => void loadHighlights()}
-          disabled={loading}
+          disabled={loading || cooldown}
           className="shrink-0 gap-2"
         >
           <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
