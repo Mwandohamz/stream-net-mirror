@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useMembership } from "@/hooks/useMembership";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -52,6 +52,7 @@ interface TicketMessage {
 
 const MemberDashboard = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
   const { settings } = useAppSettings();
   // The portal address is only delivered by the server to paid members.
@@ -77,13 +78,17 @@ const MemberDashboard = () => {
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showAccountSettings, setShowAccountSettings] = useState(false);
-  const initialTab = new URLSearchParams(window.location.search).get("tab");
+  const initialTab = new URLSearchParams(location.search).get("tab");
   const validInitialTab = (["dashboard", "movies", "watch", "football", "account"] as DashboardTab[]).includes(initialTab as DashboardTab)
     ? initialTab as DashboardTab
     : "dashboard";
   const [tab, setTab] = useState<DashboardTab>(validInitialTab);
   const membership = useMembership();
 
+  // Catalogue actions navigate within /dashboard without remounting it.
+  useEffect(() => {
+    setTab(validInitialTab);
+  }, [location.search, validInitialTab]);
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
