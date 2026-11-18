@@ -33,3 +33,5 @@ project_id = "rhobeyejmrnnreepacmr"
   verify_jwt = false
   [functions.sync-football-highlights]
   verify_jwt = true
+  [functions.match-football-highlights]
+  verify_jwt = true
