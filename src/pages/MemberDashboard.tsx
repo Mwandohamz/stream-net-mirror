@@ -87,7 +87,7 @@ const MemberDashboard = () => {
   // Catalogue actions navigate within /dashboard without remounting it.
   useEffect(() => {
     setTab(validInitialTab);
-  }, [location.search, validInitialTab]);
+  }, [location.key, location.search, validInitialTab]);
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
