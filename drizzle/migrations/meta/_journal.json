@@ -50,6 +50,13 @@
       "when": 1795023432762,
       "tag": "0006_request_rate_limits",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1795079117965,
+      "tag": "0007_harden_roles_subscribers_pageviews_storage",
+      "breakpoints": true
     }
   ]
 }

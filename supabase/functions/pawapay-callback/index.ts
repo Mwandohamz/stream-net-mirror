@@ -20,7 +20,7 @@ serve(async (req) => {
 
   try {
     const body = await req.json();
-    console.log("pawaPay callback received:", JSON.stringify(body));
+    console.log("pawaPay callback received for deposit:", typeof body?.depositId === "string" ? body.depositId : "unknown");
 
     const depositId = body.depositId;
 
@@ -89,9 +89,9 @@ serve(async (req) => {
       if (updateError) {
         console.error("Failed to update payment to completed:", updateError);
       } else {
-        console.log("Payment updated to completed:", JSON.stringify(updateResult));
+        console.log("Payment updated to completed");
         const activation = await activateSubscriptionForPayment(supabase, depositId);
-        console.log("Activation result:", JSON.stringify(activation));
+        console.log("Activation result:", (activation as any)?.ok ?? (activation as any)?.status ?? "done");
         try {
           await sendPaymentConfirmation(supabase, depositId);
         } catch (mailErr) {

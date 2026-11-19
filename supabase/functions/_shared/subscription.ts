@@ -49,7 +49,7 @@ export async function activateSubscriptionForPayment(
   }
 
   if (!userId) {
-    console.log("activate: no account yet for", payment.email, "- will activate at sign-up/admin grant");
+    console.log("activate: no account yet for payment", payment.id, "- will activate at sign-up/admin grant");
     return { activated: false, reason: "no_account" };
   }
 

@@ -114,7 +114,8 @@ const Payments = () => {
       p.transaction_id,
       new Date(p.created_at).toLocaleString(),
     ]);
-    const csv = [headers.join(","), ...rows.map((r: any) => r.join(","))].join("\n");
+    const csvCell = (v: unknown) => { let t = String(v ?? ""); if (/^[=+\-@\t\r]/.test(t)) t = "'" + t; return `"${t.replace(/"/g, '""')}"`; };
+    const csv = [headers.join(","), ...rows.map((r: any[]) => r.map(csvCell).join(","))].join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
