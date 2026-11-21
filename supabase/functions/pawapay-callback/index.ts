@@ -32,6 +32,18 @@ serve(async (req) => {
       });
     }
 
+    // Only query pawaPay for deposits this app actually created and has not finalised.
+    const validId = typeof depositId === "string" && /^[0-9a-fA-F-]{36}$/.test(depositId);
+    const { data: known } = validId
+      ? await supabase.from("payments").select("id").eq("deposit_id", depositId).eq("status", "pending").maybeSingle()
+      : { data: null };
+    if (!known) {
+      return new Response(JSON.stringify({ received: true }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // NEVER trust the webhook body: confirm the real status server-to-server with pawaPay.
     const PAWAPAY_TOKEN = Deno.env.get("PAWAPAY_API_TOKEN");
     const PAWAPAY_BASE = Deno.env.get("PAWAPAY_BASE_URL") || "https://api.sandbox.pawapay.io";
