@@ -22,6 +22,7 @@ export default function UpcomingFixtures({ onUnlock }: { onUnlock?: () => void }
   const selectLeague = (code: string) => {
     const next = new URLSearchParams(searchParams);
     if (code === "all") next.delete("league"); else next.set("league", code);
+    next.set("tab", "football");
     setSearchParams(next, { replace: true });
   };
 

@@ -1,5 +1,5 @@
 export const FIXTURE_LIMIT = 20;
-export const FIXTURE_LOOKBACK_MS = 2 * 60 * 60_000;
+export const FIXTURE_LOOKBACK_MS = 12 * 60 * 60_000;
 export const FIXTURE_CACHE_MS = 3 * 60_000;
 export const LEAGUE_OPTIONS = [
   { code: "all", label: "All" }, { code: "CL", label: "Champions League" },

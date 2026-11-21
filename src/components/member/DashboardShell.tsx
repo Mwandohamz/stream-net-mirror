@@ -59,8 +59,8 @@ const DashboardShell = ({ tab, onTabChange, children }: Props) => {
     const next = new URLSearchParams(searchParams);
     if (code === "all") next.delete("league"); else next.set("league", code);
     next.set("tab", "football");
+    // One navigation only: the dashboard derives the tab from the URL.
     setSearchParams(next, { replace: true });
-    onTabChange("football");
     setMenuOpen(false);
   };
   const { profile } = useProfile();
