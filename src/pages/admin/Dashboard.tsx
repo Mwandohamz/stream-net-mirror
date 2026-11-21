@@ -28,6 +28,9 @@ const EMPTY_STATS = {
   conversionRate: 0,
   totalSubscribers: 0,
   openTickets: 0,
+  mrrUsd: 0,
+  arrUsd: 0,
+  activeSubscriptions: 0,
 };
 
 const Dashboard = () => {
