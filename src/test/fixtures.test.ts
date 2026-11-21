@@ -8,7 +8,7 @@ describe("fixtures rules", () => {
     expect(isFresh("2026-10-21T11:50:01Z", now)).toBe(true);
     expect(isFresh("2026-10-21T11:50:00Z", now)).toBe(false);
   });
-  it("limits to twenty with a twelve-hour lookback", () => { expect(FIXTURE_LIMIT).toBe(20); expect(FIXTURE_LOOKBACK_MS).toBe(7200000); });
+  it("limits to twenty with a twelve-hour lookback", () => { expect(FIXTURE_LIMIT).toBe(20); expect(FIXTURE_LOOKBACK_MS).toBe(43200000); });
   it("uses each API match id and preserves null unplayed scores", () => {
     const row = mapMatch({ id: 321, homeTeam: { name: "Home" }, awayTeam: { name: "Away" }, utcDate: "2026-10-22T20:00:00Z", season: { startDate: "2026-08-01" } }, "PD", { name: "La Liga" }, "2026-10-21T00:00:00Z");
     expect(row?.id).toBe(321); expect(row?.season).toBe(2026); expect(row?.home_score).toBeNull(); expect(row?.competition_code).toBe("PD");
