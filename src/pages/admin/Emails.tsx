@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { functionErrorMessage } from "@/lib/functionError";
 import { supabase } from "@/integrations/supabase/client";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Input } from "@/components/ui/input";
@@ -101,7 +102,7 @@ const Emails = () => {
       const { data, error } = await supabase.functions.invoke("admin-users", {
         body: { action: "list", page: 0, perPage: 500 },
       });
-      if (error) throw new Error(error.message);
+      if (error) throw new Error(await functionErrorMessage(error));
       if ((data as any)?.error) throw new Error((data as any).error);
       const list: Recipient[] = ((data as any).users ?? [])
         .filter((u: any) => !!u.email)
@@ -196,7 +197,7 @@ const Emails = () => {
           emailType: templateKey,
         },
       });
-      if (error) throw new Error(error.message);
+      if (error) throw new Error(await functionErrorMessage(error));
       if ((data as any)?.error) throw new Error((data as any).error);
       toast({
         title: "Emails sent",

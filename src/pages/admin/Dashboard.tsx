@@ -3,6 +3,8 @@ import AdminLayout from "@/components/admin/AdminLayout";
 import { useAdminQuery, useAdminRefresh, fetchAdminMetrics } from "@/hooks/useAdminQuery";
 
 import StatCard from "@/components/admin/StatCard";
+import DateRangeFilter from "@/components/admin/DateRangeFilter";
+import { rangeParams, type DateRange } from "@/lib/dateRange";
 import { DollarSign, CreditCard, TrendingUp, BarChart3, HelpCircle, ChevronDown, ChevronRight, RefreshCw, MessageSquare, UserPlus } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts";
@@ -31,9 +33,11 @@ const EMPTY_STATS = {
 const Dashboard = () => {
   const [showGuide, setShowGuide] = useState(false);
   const refresh = useAdminRefresh();
+  const [range, setRange] = useState<DateRange>({ preset: "30d" });
+  const params = rangeParams(range);
 
-  const { data, isFetching } = useAdminQuery(["admin", "overview"], () =>
-    fetchAdminMetrics<{ stats: typeof EMPTY_STATS; days: any[]; recentPayments: any[] }>("overview")
+  const { data, isFetching } = useAdminQuery(["admin", "overview", params.from ?? "", params.to ?? ""], () =>
+    fetchAdminMetrics<{ stats: typeof EMPTY_STATS & { mrrUsd?: number; arrUsd?: number; activeSubscriptions?: number }; days: any[]; recentPayments: any[] }>("overview", params)
   );
 
   const stats = data?.stats ?? EMPTY_STATS;
@@ -41,7 +45,7 @@ const Dashboard = () => {
   const viewsData = data?.days ?? [];
   const recentPayments = data?.recentPayments ?? [];
   const refreshing = isFetching;
-  const fetchStats = () => refresh(["admin", "overview"]);
+  const fetchStats = () => refresh(["admin", "overview", params.from ?? "", params.to ?? ""]);
 
 
   return (
@@ -150,6 +154,17 @@ const Dashboard = () => {
           </Card>
         )}
 
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <DateRangeFilter value={range} onChange={setRange} />
+          <p className="text-xs text-muted-foreground">MRR and ARR use active subscriptions today; other figures follow the dates.</p>
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+          <StatCard title="MRR" value={formatUsd(Number(stats.mrrUsd ?? 0))} icon={TrendingUp} description="Monthly recurring revenue" />
+          <StatCard title="ARR" value={formatUsd(Number(stats.arrUsd ?? 0))} icon={BarChart3} description="MRR × 12" />
+          <StatCard title="Active subscriptions" value={Number(stats.activeSubscriptions ?? 0)} icon={UserPlus} description="Paying right now" />
+        </div>
+
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <StatCard title="Total Revenue" value={formatCurrencyAmount(stats.totalRevenue, "ZMW")} icon={DollarSign} description={`≈ ${formatUsd(stats.totalRevenueUsd)}`} />
           <StatCard title="Organic Revenue" value={formatCurrencyAmount(Number(stats.organicRevenue), "ZMW")} icon={DollarSign} description="No promo code" />
@@ -166,7 +181,7 @@ const Dashboard = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <Card className="bg-card border-border">
             <CardHeader>
-              <CardTitle className="netflix-title text-lg text-foreground">REVENUE (7 DAYS)</CardTitle>
+              <CardTitle className="netflix-title text-lg text-foreground">REVENUE (SELECTED DATES)</CardTitle>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={250}>
@@ -183,7 +198,7 @@ const Dashboard = () => {
 
           <Card className="bg-card border-border">
             <CardHeader>
-              <CardTitle className="netflix-title text-lg text-foreground">TRAFFIC (7 DAYS)</CardTitle>
+              <CardTitle className="netflix-title text-lg text-foreground">TRAFFIC (SELECTED DATES)</CardTitle>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={250}>

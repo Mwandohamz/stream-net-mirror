@@ -84,6 +84,15 @@ const MemberDashboard = () => {
   const [tab, setTab] = useState<DashboardTab>(validInitialTab);
   const membership = useMembership();
 
+  // Keep the URL as the source of truth so league filters and refreshes keep the selected tab.
+  const goTab = (next: DashboardTab) => {
+    const params = new URLSearchParams(location.search);
+    params.set("tab", next);
+    if (next !== "football") params.delete("league");
+    navigate({ search: params.toString() }, { replace: true });
+    setTab(next);
+  };
+
   // Catalogue actions navigate within /dashboard without remounting it.
   useEffect(() => {
     setTab(validInitialTab);
@@ -223,7 +232,7 @@ const MemberDashboard = () => {
   };
 
   return (
-    <DashboardShell tab={tab} onTabChange={setTab}>
+    <DashboardShell tab={tab} onTabChange={goTab}>
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-3xl mx-auto space-y-6">
           {tab === "dashboard" && (<>
           {/* Welcome hero */}
@@ -259,7 +268,7 @@ const MemberDashboard = () => {
                 <Button
                   size="sm"
                   className="gap-1 bg-primary text-primary-foreground hover:bg-primary/80"
-                  onClick={() => setTab("watch")}
+                  onClick={() => goTab("watch")}
                 >
                   <Play size={14} /> Start watching
                 </Button>
@@ -292,8 +301,8 @@ const MemberDashboard = () => {
 
           {/* Football highlights come first on Home, then live TMDB popularity */}
           <div id="home-highlights"><FootballHighlights title="FOOTBALL HIGHLIGHTS" limit={6} /></div>
-          <TMDBRow title="Popular right now" action="trending" mediaType="multi" onSeeMore={() => setTab("movies")} onSelect={() => navigate(membership.isMember ? "/dashboard?tab=watch" : "/payment")} />
-          <TMDBRow title="Trending series" action="trending" mediaType="tv" onSeeMore={() => setTab("movies")} onSelect={() => navigate(membership.isMember ? "/dashboard?tab=watch" : "/payment")} />
+          <TMDBRow title="Popular right now" action="trending" mediaType="multi" onSeeMore={() => goTab("movies")} onSelect={() => navigate(membership.isMember ? "/dashboard?tab=watch" : "/payment")} />
+          <TMDBRow title="Trending series" action="trending" mediaType="tv" onSeeMore={() => goTab("movies")} onSelect={() => navigate(membership.isMember ? "/dashboard?tab=watch" : "/payment")} />
 
           {/* Account & subscription overview */}
           <AccountOverviewCard />
@@ -312,7 +321,7 @@ const MemberDashboard = () => {
                   className="bg-primary text-primary-foreground shrink-0"
                   onClick={() => {
                     setShowAccountSettings(true);
-                    setTab("account");
+                    goTab("account");
                     setTimeout(() => {
                       document.getElementById("account-settings")?.scrollIntoView({ behavior: "smooth" });
                     }, 100);

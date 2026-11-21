@@ -153,7 +153,7 @@ const SignUp = () => {
                   <Label htmlFor="su-email" className="text-foreground text-sm">Email</Label>
                   <div className="relative">
                     <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                    <Input id="su-email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" className="h-12 rounded-lg bg-secondary pl-10 text-foreground" type="email" inputMode="email" autoComplete="email" autoCapitalize="none" enterKeyHint="next" />
+                    <Input id="su-email" name="username" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" className="h-12 rounded-lg bg-secondary pl-10 text-foreground" type="email" inputMode="email" autoComplete="username" autoCapitalize="none" enterKeyHint="next" />
                   </div>
                 </div>
 
@@ -190,7 +190,7 @@ const SignUp = () => {
                   <Label htmlFor="su-password" className="text-foreground text-sm">Password</Label>
                   <div className="relative">
                     <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                    <Input id="su-password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Min 8 characters" className="h-12 rounded-lg bg-secondary pl-10 pr-12 text-foreground" type={showPassword ? "text" : "password"} autoComplete="new-password" enterKeyHint="next" />
+                    <Input id="su-password" name="new-password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Min 8 characters" className="h-12 rounded-lg bg-secondary pl-10 pr-12 text-foreground" type={showPassword ? "text" : "password"} autoComplete="new-password" enterKeyHint="next" />
                     <Button type="button" variant="ghost" size="icon" onClick={() => setShowPassword((visible) => !visible)} className="absolute right-1 top-1 h-10 w-10 text-muted-foreground" aria-label={showPassword ? "Hide password" : "Show password"}>
                       {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                     </Button>

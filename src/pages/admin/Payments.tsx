@@ -16,6 +16,8 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import DateRangeFilter from "@/components/admin/DateRangeFilter";
+import { inDateRange, type DateRange } from "@/lib/dateRange";
 import { useAdminQuery, useAdminRefresh, fetchAdminMetrics } from "@/hooks/useAdminQuery";
 import { formatCurrencyAmount, formatUsd } from "@/lib/currency";
 
@@ -28,6 +30,7 @@ const Payments = () => {
   const { toast } = useToast();
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
+  const [range, setRange] = useState<DateRange>({ preset: "all" });
   const [editing, setEditing] = useState<any | null>(null);
   const [editStatus, setEditStatus] = useState("completed");
   const [editRef, setEditRef] = useState("");
@@ -48,15 +51,16 @@ const Payments = () => {
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return payments;
-    return payments.filter(
+    const dated = payments.filter((row: any) => inDateRange(row.created_at, range));
+    if (!q) return dated;
+    return dated.filter(
       (p) =>
         p.name?.toLowerCase().includes(q) ||
         p.email?.toLowerCase().includes(q) ||
         p.phone?.includes(q) ||
         p.transaction_id?.includes(q)
     );
-  }, [payments, search]);
+  }, [payments, search, range]);
 
   const openEdit = (p: any) => {
     setEditing(p);
@@ -145,7 +149,9 @@ const Payments = () => {
           </div>
         </div>
 
-        <div className="relative max-w-sm">
+        <div className="flex flex-wrap items-center gap-3">
+        <DateRangeFilter value={range} onChange={(r) => { setRange(r); setPage(0); }} />
+        <div className="relative max-w-sm flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search by name, email, phone..."
@@ -153,6 +159,7 @@ const Payments = () => {
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9 bg-secondary border-border text-foreground"
           />
+        </div>
         </div>
 
         <Card className="bg-card border-border">

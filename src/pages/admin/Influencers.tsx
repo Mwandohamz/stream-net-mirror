@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Trash2, Copy, ToggleLeft, ToggleRight, DollarSign, Users, TrendingUp, KeyRound } from "lucide-react";
+import { Pencil, Plus, Trash2, Copy, ToggleLeft, ToggleRight, DollarSign, Users, TrendingUp, KeyRound } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import StatCard from "@/components/admin/StatCard";
 import { getAdminCache, setAdminCache } from "@/lib/adminCache";
@@ -41,6 +41,9 @@ interface CachedInfluencers {
 
 const CACHE_KEY = "admin:influencers";
 
+export const normalizePromo = (v: string) => v.trim().toUpperCase().replace(/\s+/g, "-").replace(/[^A-Z0-9-]/g, "");
+export const isValidPromo = (v: string) => /^[A-Z0-9-]{3,30}$/.test(v);
+
 const Influencers = () => {
   const { toast } = useToast();
   const cached = getAdminCache<CachedInfluencers>(CACHE_KEY);
@@ -48,7 +51,10 @@ const Influencers = () => {
   const [stats, setStats] = useState<Record<string, InfluencerStats>>(cached?.stats ?? {});
   const [loading, setLoading] = useState(!cached);
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ full_name: "", email: "", phone: "" as string | undefined, discount_percent: "10", revenue_share_percent: "20" });
+  const [form, setForm] = useState({ full_name: "", email: "", phone: "" as string | undefined, discount_percent: "10", revenue_share_percent: "20", promo_code: "" });
+  const [editTarget, setEditTarget] = useState<Influencer | null>(null);
+  const [edit, setEdit] = useState({ full_name: "", email: "", phone: "", promo_code: "", discount_percent: "", revenue_share_percent: "", is_active: true });
+  const [deleteTarget, setDeleteTarget] = useState<Influencer | null>(null);
   const [saving, setSaving] = useState(false);
   const [phoneError, setPhoneError] = useState("");
   const [pwTarget, setPwTarget] = useState<Influencer | null>(null);
@@ -111,7 +117,9 @@ const Influencers = () => {
     }
 
     setSaving(true);
-    const promoCode = generatePromoCode(form.full_name);
+    const promoCode = normalizePromo(form.promo_code) || generatePromoCode(form.full_name);
+    if (!isValidPromo(promoCode)) { toast({ title: "Invalid promo code", description: "Use 3-30 letters, numbers or dashes.", variant: "destructive" }); setSaving(false); return; }
+    if (influencers.some((i) => i.promo_code.toUpperCase() === promoCode)) { toast({ title: "Promo code taken", description: "Choose a different code.", variant: "destructive" }); setSaving(false); return; }
 
     const { error } = await supabase.from("influencers" as any).insert({
       full_name: form.full_name.trim(),
@@ -127,7 +135,7 @@ const Influencers = () => {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } else {
       toast({ title: "Influencer added", description: `Promo code: ${promoCode}` });
-      setForm({ full_name: "", email: "", phone: "", discount_percent: "10", revenue_share_percent: "20" });
+      setForm({ full_name: "", email: "", phone: "", discount_percent: "10", revenue_share_percent: "20", promo_code: "" });
       setShowForm(false);
       fetchAll();
     }
@@ -140,9 +148,41 @@ const Influencers = () => {
   };
 
   const deleteInfluencer = async (id: string) => {
-    await supabase.from("influencers" as any).delete().eq("id", id);
+    const { error } = await supabase.from("influencers" as any).delete().eq("id", id);
+    setDeleteTarget(null);
+    if (error) { toast({ title: "Could not delete", description: error.message, variant: "destructive" }); return; }
     fetchAll();
     toast({ title: "Influencer removed" });
+  };
+
+  const openEdit = (inf: Influencer) => {
+    setEditTarget(inf);
+    setEdit({ full_name: inf.full_name, email: inf.email, phone: (inf as any).phone ?? "", promo_code: inf.promo_code, discount_percent: String(inf.discount_percent), revenue_share_percent: String(inf.revenue_share_percent), is_active: inf.is_active });
+  };
+
+  const saveEdit = async () => {
+    if (!editTarget) return;
+    const code = normalizePromo(edit.promo_code);
+    if (!edit.full_name.trim() || !edit.email.trim()) { toast({ title: "Name and email are required", variant: "destructive" }); return; }
+    if (!isValidPromo(code)) { toast({ title: "Invalid promo code", description: "Use 3-30 letters, numbers or dashes.", variant: "destructive" }); return; }
+    if (influencers.some((i) => i.id !== editTarget.id && i.promo_code.toUpperCase() === code)) { toast({ title: "Promo code taken", description: "Choose a different code.", variant: "destructive" }); return; }
+    let phone: string | null = edit.phone?.trim() || null;
+    if (phone) {
+      if (!isValidPhoneNumber(phone)) { toast({ title: "Invalid phone number", variant: "destructive" }); return; }
+      phone = parsePhoneNumber(phone)?.format("E.164") || phone;
+    }
+    const discount = Number(edit.discount_percent), share = Number(edit.revenue_share_percent);
+    if (!(discount >= 0 && discount <= 100) || !(share >= 0 && share <= 100)) { toast({ title: "Percentages must be 0-100", variant: "destructive" }); return; }
+    setSaving(true);
+    const { error } = await supabase.from("influencers" as any).update({
+      full_name: edit.full_name.trim(), email: edit.email.trim().toLowerCase(), phone, promo_code: code,
+      discount_percent: discount, revenue_share_percent: share, is_active: edit.is_active,
+    } as any).eq("id", editTarget.id);
+    setSaving(false);
+    if (error) { toast({ title: "Could not save", description: error.message, variant: "destructive" }); return; }
+    toast({ title: "Influencer updated" });
+    setEditTarget(null);
+    fetchAll();
   };
 
   const savePassword = async () => {
@@ -214,6 +254,10 @@ const Influencers = () => {
                   <Input value={form.discount_percent} onChange={(e) => setForm({ ...form, discount_percent: e.target.value })} placeholder="10" className="bg-secondary border-border text-foreground" type="number" />
                 </div>
                 <div className="space-y-1">
+                  <Label className="text-foreground text-sm">Promo code</Label>
+                  <Input value={form.promo_code} onChange={(e) => setForm({ ...form, promo_code: e.target.value.toUpperCase() })} placeholder={generatePromoCode(form.full_name) || "Auto from name"} className="bg-secondary border-border text-foreground" maxLength={30} />
+                </div>
+                <div className="space-y-1">
                   <Label className="text-foreground text-sm">Revenue Share %</Label>
                   <Input value={form.revenue_share_percent} onChange={(e) => setForm({ ...form, revenue_share_percent: e.target.value })} placeholder="20" className="bg-secondary border-border text-foreground" type="number" />
                 </div>
@@ -278,7 +322,10 @@ const Influencers = () => {
                           <Button variant="ghost" size="icon" onClick={() => copyLink(inf.promo_code)} title="Copy dashboard link">
                             <Copy size={14} className="text-muted-foreground" />
                           </Button>
-                          <Button variant="ghost" size="icon" onClick={() => deleteInfluencer(inf.id)} title="Delete">
+                          <Button variant="ghost" size="icon" onClick={() => openEdit(inf)} title="Edit">
+                            <Pencil size={14} className="text-muted-foreground" />
+                          </Button>
+                          <Button variant="ghost" size="icon" onClick={() => setDeleteTarget(inf)} title="Delete">
                             <Trash2 size={14} className="text-destructive" />
                           </Button>
                         </div>
@@ -290,6 +337,31 @@ const Influencers = () => {
             </Table>
           </CardContent>
         </Card>
+
+        <Dialog open={!!editTarget} onOpenChange={(o) => { if (!o) setEditTarget(null); }}>
+          <DialogContent className="bg-card border-border">
+            <DialogHeader><DialogTitle className="text-foreground">Edit influencer</DialogTitle></DialogHeader>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1"><Label>Full name</Label><Input value={edit.full_name} onChange={(e) => setEdit({ ...edit, full_name: e.target.value })} maxLength={100} /></div>
+              <div className="space-y-1"><Label>Email</Label><Input type="email" value={edit.email} onChange={(e) => setEdit({ ...edit, email: e.target.value })} maxLength={255} /></div>
+              <div className="space-y-1"><Label>Phone</Label><PhoneInput international defaultCountry="ZM" value={edit.phone || undefined} onChange={(v) => setEdit({ ...edit, phone: v || "" })} className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm" /></div>
+              <div className="space-y-1"><Label>Promo code</Label><Input value={edit.promo_code} onChange={(e) => setEdit({ ...edit, promo_code: e.target.value.toUpperCase() })} maxLength={30} /></div>
+              <div className="space-y-1"><Label>Discount %</Label><Input type="number" min={0} max={100} value={edit.discount_percent} onChange={(e) => setEdit({ ...edit, discount_percent: e.target.value })} /></div>
+              <div className="space-y-1"><Label>Revenue share %</Label><Input type="number" min={0} max={100} value={edit.revenue_share_percent} onChange={(e) => setEdit({ ...edit, revenue_share_percent: e.target.value })} /></div>
+              <label className="flex items-center gap-2 text-sm text-foreground sm:col-span-2"><input type="checkbox" checked={edit.is_active} onChange={(e) => setEdit({ ...edit, is_active: e.target.checked })} /> Active</label>
+            </div>
+            {editTarget && normalizePromo(edit.promo_code) !== editTarget.promo_code.toUpperCase() && <p className="text-xs text-muted-foreground">Past payments stay credited to the old code; new sales use the new code.</p>}
+            <div className="flex justify-end gap-2"><Button variant="ghost" onClick={() => setEditTarget(null)}>Cancel</Button><Button onClick={saveEdit} disabled={saving}>{saving ? "Saving..." : "Save changes"}</Button></div>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={!!deleteTarget} onOpenChange={(o) => { if (!o) setDeleteTarget(null); }}>
+          <DialogContent className="bg-card border-border">
+            <DialogHeader><DialogTitle className="text-foreground">Delete {deleteTarget?.full_name}?</DialogTitle></DialogHeader>
+            <p className="text-sm text-muted-foreground">Their promo code {deleteTarget?.promo_code} will stop working. Past payments are kept.</p>
+            <div className="flex justify-end gap-2"><Button variant="ghost" onClick={() => setDeleteTarget(null)}>Cancel</Button><Button variant="destructive" onClick={() => deleteTarget && deleteInfluencer(deleteTarget.id)}>Delete</Button></div>
+          </DialogContent>
+        </Dialog>
 
         <Dialog open={!!pwTarget} onOpenChange={(o) => { if (!o) { setPwTarget(null); setNewPassword(""); } }}>
           <DialogContent className="bg-card border-border">

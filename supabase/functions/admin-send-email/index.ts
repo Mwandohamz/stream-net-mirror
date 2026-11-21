@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { requireAdmin } from "../_shared/adminAuth.ts";
 import { sendTemplateEmail } from "../_shared/transactional-email-templates/send-email.ts";
 
 const corsHeaders = {
@@ -20,32 +21,9 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
-    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader?.startsWith("Bearer ")) return json({ error: "Unauthorized" }, 401);
-
-    const userClient = createClient(supabaseUrl, anonKey, {
-      global: { headers: { Authorization: authHeader } },
-    });
-    const { data: { user }, error: userError } = await userClient.auth.getUser();
-    if (userError || !user) return json({ error: "Invalid token" }, 401);
-
-    const admin = createClient(supabaseUrl, serviceKey);
-
-    const callerEmail = (user.email || "").toLowerCase();
-    const allowList = (Deno.env.get("ADMIN_EMAILS") || "")
-      .split(",").map((e) => e.trim().toLowerCase()).filter(Boolean);
-
-    let isAdmin = allowList.includes(callerEmail);
-    if (!isAdmin) {
-      const { data: roleRow } = await admin
-        .from("user_roles").select("id").eq("user_id", user.id).eq("role", "admin").maybeSingle();
-      isAdmin = !!roleRow;
-    }
-    if (!isAdmin) return json({ error: "Not authorized" }, 403);
+    const auth = await requireAdmin(req);
+    if (!auth.ok) return json({ error: auth.error }, auth.status);
+    const { admin, email: callerEmail } = auth;
 
     const body = await req.json().catch(() => ({}));
     const emails: string[] = Array.isArray(body?.emails)
@@ -71,7 +49,21 @@ serve(async (req) => {
       .select("id, email, full_name")
       .in("email", emails);
 
-    const valid = (profiles ?? []).filter((p: any) => p.email);
+    const valid: any[] = (profiles ?? []).filter((p: any) => p.email);
+    // Accounts without a profile row (e.g. admins) are still registered users.
+    const missing = new Set(emails.filter((e) => !valid.some((p) => String(p.email).toLowerCase() === e)));
+    for (let page = 1; missing.size > 0 && page <= 10; page++) {
+      const { data: list } = await admin.auth.admin.listUsers({ page, perPage: 1000 });
+      const users = list?.users ?? [];
+      for (const u of users) {
+        const e = (u.email || "").toLowerCase();
+        if (missing.has(e)) {
+          valid.push({ id: u.id, email: e, full_name: (u.user_metadata as any)?.full_name || null });
+          missing.delete(e);
+        }
+      }
+      if (users.length < 1000) break;
+    }
     if (valid.length === 0) return json({ error: "No matching accounts found" }, 400);
 
     let sent = 0;

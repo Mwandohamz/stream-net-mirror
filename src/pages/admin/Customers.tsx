@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { Search, ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
+import DateRangeFilter from "@/components/admin/DateRangeFilter";
+import { inDateRange, type DateRange } from "@/lib/dateRange";
 import { useAdminQuery, useAdminRefresh, fetchAdminMetrics } from "@/hooks/useAdminQuery";
 import { formatCurrencyAmount, formatUsd } from "@/lib/currency";
 
@@ -14,6 +16,7 @@ const QUERY_KEY = ["admin", "customers"];
 const Customers = () => {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
+  const [range, setRange] = useState<DateRange>({ preset: "all" });
   const refresh = useAdminRefresh();
 
   const { data, isLoading, isFetching } = useAdminQuery<{ customers: any[] }>(
@@ -25,14 +28,15 @@ const Customers = () => {
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return customers;
-    return customers.filter(
+    const dated = customers.filter((row: any) => inDateRange(row.created_at, range));
+    if (!q) return dated;
+    return dated.filter(
       (c) =>
         c.name?.toLowerCase().includes(q) ||
         c.email?.toLowerCase().includes(q) ||
         c.phone?.includes(q)
     );
-  }, [customers, search]);
+  }, [customers, search, range]);
 
   const totalCount = filtered.length;
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
@@ -48,7 +52,9 @@ const Customers = () => {
           </Button>
         </div>
 
-        <div className="relative max-w-sm">
+        <div className="flex flex-wrap items-center gap-3">
+        <DateRangeFilter value={range} onChange={(r) => { setRange(r); setPage(0); }} />
+        <div className="relative max-w-sm flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search customers..."
@@ -56,6 +62,7 @@ const Customers = () => {
             onChange={(e) => { setSearch(e.target.value); setPage(0); }}
             className="pl-9 bg-secondary border-border text-foreground"
           />
+        </div>
         </div>
 
         <Card className="bg-card border-border">

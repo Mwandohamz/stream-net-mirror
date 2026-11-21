@@ -18,7 +18,8 @@ const SignIn = () => {
   const nextParam = searchParams.get("next");
   const safeNext = nextParam && /^\/(?!\/)/.test(nextParam) ? nextParam : null;
   const { toast } = useToast();
-  const [email, setEmail] = useState("");
+  // Only the email is remembered on this device; passwords stay with the phone's password manager.
+  const [email, setEmail] = useState(() => { try { return localStorage.getItem("snm:last-email") ?? ""; } catch { return ""; } });
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -73,6 +74,7 @@ const SignIn = () => {
         password,
       });
 
+      if (!authError) { try { localStorage.setItem("snm:last-email", email.trim().toLowerCase()); } catch { /* storage unavailable */ } }
       if (authError) {
         setError(authError.message);
         if (authError.message.toLowerCase().includes("email not confirmed")) {

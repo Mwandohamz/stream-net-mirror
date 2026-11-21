@@ -92,10 +92,37 @@ serve(async (req) => {
       return json({ customers, total: customers.length });
     }
 
-    // overview
+    // overview — optional date range (ISO strings) narrows revenue, payments and visits.
+    const fromMs = body?.from ? Date.parse(String(body.from)) : NaN;
+    const toMs = body?.to ? Date.parse(String(body.to)) : NaN;
+    const inRange = (iso: string) => {
+      const t = Date.parse(iso);
+      return (Number.isNaN(fromMs) || t >= fromMs) && (Number.isNaN(toMs) || t <= toMs);
+    };
+    const allPayments = payments;
+    const rangedPayments = allPayments.filter((p) => inRange(p.created_at));
+    const rangedCompleted = rangedPayments.filter((p) => isSuccess(p.status));
+
+    // MRR from currently active subscriptions, normalised to one month (USD).
+    const { data: subs } = await admin.from("subscriptions")
+      .select("status, current_period_end, grace_days, plans(price_usd, interval, interval_count)")
+      .in("status", ["active", "trialing", "grace"]);
+    const monthlyFactor = (interval: string, count: number) => {
+      const n = Math.max(1, Number(count) || 1);
+      if (interval === "day") return 30 / n;
+      if (interval === "week") return 30 / (7 * n);
+      if (interval === "year") return 1 / (12 * n);
+      return 1 / n;
+    };
+    const nowMs = Date.now();
+    const mrr = round2((subs ?? []).reduce((acc: number, sub: any) => {
+      const end = Date.parse(sub.current_period_end) + (Number(sub.grace_days) || 0) * 86_400_000;
+      if (end <= nowMs || !sub.plans) return acc;
+      return acc + Number(sub.plans.price_usd || 0) * monthlyFactor(sub.plans.interval, sub.plans.interval_count);
+    }, 0));
     const today = new Date().toISOString().split("T")[0];
     const [{ data: views }, { count: subscriberCount }, { count: openTickets }] = await Promise.all([
-      admin.from("page_views").select("created_at, session_id"),
+      (() => { let q = admin.from("page_views").select("created_at, session_id"); if (!Number.isNaN(fromMs)) q = q.gte("created_at", new Date(fromMs).toISOString()); if (!Number.isNaN(toMs)) q = q.lte("created_at", new Date(toMs).toISOString()); return q; })(),
       admin.from("subscribers").select("id", { count: "exact", head: true }),
       admin.from("support_tickets").select("id", { count: "exact", head: true }).eq("status", "open"),
     ]);
@@ -105,29 +132,35 @@ serve(async (req) => {
 
     const sum = (arr: any[], f: (p: any) => number) => round2(arr.reduce((s, p) => s + f(p), 0));
 
+    const completedAll = completed;
     const stats = {
-      totalRevenue: sum(completed, (p) => p.amount),
-      totalRevenueUsd: sum(completed, (p) => p.usd),
-      organicRevenue: sum(completed.filter((p) => !p.promo_code), (p) => p.amount),
-      influencerRevenue: sum(completed.filter((p) => !!p.promo_code), (p) => p.amount),
-      totalPayments: payments.length,
-      completedPayments: completed.length,
+      mrrUsd: mrr,
+      arrUsd: round2(mrr * 12),
+      activeSubscriptions: (subs ?? []).length,
+      totalRevenue: sum(rangedCompleted, (p) => p.amount),
+      totalRevenueUsd: sum(rangedCompleted, (p) => p.usd),
+      organicRevenue: sum(rangedCompleted.filter((p) => !p.promo_code), (p) => p.amount),
+      influencerRevenue: sum(rangedCompleted.filter((p) => !!p.promo_code), (p) => p.amount),
+      totalPayments: rangedPayments.length,
+      completedPayments: rangedCompleted.length,
       todayPayments: payments.filter((p) => String(p.created_at).startsWith(today)).length,
       totalPageViews: viewsArr.length,
       uniqueSessions,
-      conversionRate: uniqueSessions > 0 ? round2((completed.length / uniqueSessions) * 100) : 0,
+      conversionRate: uniqueSessions > 0 ? round2((rangedCompleted.length / uniqueSessions) * 100) : 0,
       totalSubscribers: subscriberCount ?? 0,
       openTickets: openTickets ?? 0,
     };
 
-    const days = Array.from({ length: 7 }, (_, i) => {
-      const d = new Date();
-      d.setDate(d.getDate() - (6 - i));
+    const endDay = Number.isNaN(toMs) ? new Date() : new Date(toMs);
+    const spanDays = Number.isNaN(fromMs) ? 7 : Math.min(62, Math.max(1, Math.ceil((endDay.getTime() - fromMs) / 86_400_000)));
+    const days = Array.from({ length: spanDays }, (_, i) => {
+      const d = new Date(endDay);
+      d.setDate(d.getDate() - (spanDays - 1 - i));
       const dateStr = d.toISOString().split("T")[0];
-      const dayPayments = completed.filter((p) => String(p.created_at).startsWith(dateStr));
+      const dayPayments = completedAll.filter((p) => String(p.created_at).startsWith(dateStr));
       const dayViews = viewsArr.filter((v: any) => String(v.created_at).startsWith(dateStr));
       return {
-        date: d.toLocaleDateString("en", { weekday: "short" }),
+        date: spanDays <= 7 ? d.toLocaleDateString("en", { weekday: "short" }) : d.toLocaleDateString("en", { month: "short", day: "numeric" }),
         revenue: sum(dayPayments, (p) => p.amount),
         count: dayPayments.length,
         views: dayViews.length,
@@ -135,7 +168,7 @@ serve(async (req) => {
       };
     });
 
-    return json({ stats, days, recentPayments: payments.slice(0, 10) });
+    return json({ stats, days, recentPayments: rangedPayments.slice(0, 10) });
   } catch (err) {
     console.error("admin-metrics error:", err);
     return json({ error: (err as Error).message }, 500);

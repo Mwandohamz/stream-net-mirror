@@ -1,7 +1,9 @@
 export const COMPETITIONS = ["PL", "CL", "PD"] as const;
 export const SYNC_TTL_MS = 10 * 60_000;
-export function isFresh(value: string | null, now = Date.now()) {
-  return Boolean(value && now - Date.parse(value) >= 0 && now - Date.parse(value) < SYNC_TTL_MS);
+export const MATCH_WINDOW_TTL_MS = 4 * 60_000;
+export const IDLE_TTL_MS = 6 * 60 * 60_000;
+export function isFresh(value: string | null, now = Date.now(), ttl = SYNC_TTL_MS) {
+  return Boolean(value && now - Date.parse(value) >= 0 && now - Date.parse(value) < ttl);
 }
 export function mapMatch(match: any, code: string, competition: any, synced: string) {
   if (!Number.isSafeInteger(match?.id) || !match?.homeTeam?.name || !match?.awayTeam?.name || !Number.isFinite(Date.parse(match?.utcDate))) return null;
@@ -23,4 +25,9 @@ export async function equalSecret(received: string | null, expected: string | un
   let difference = 0;
   for (let i = 0; i < x.length; i++) difference |= x[i] ^ y[i];
   return difference === 0;
+}
+/** Small date window: yesterday through 30 days ahead, so live/finished scores update too. */
+export function matchesUrl(code: string, now = Date.now()) {
+  const day = (ms: number) => new Date(ms).toISOString().slice(0, 10);
+  return `https://api.football-data.org/v4/competitions/${code}/matches?dateFrom=${day(now - 86_400_000)}&dateTo=${day(now + 30 * 86_400_000)}`;
 }

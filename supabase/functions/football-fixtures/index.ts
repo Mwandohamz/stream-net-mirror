@@ -1,6 +1,6 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders as sdkCorsHeaders } from "npm:@supabase/supabase-js@2/cors";
-import { COMPETITIONS, equalSecret, isFresh, mapMatch } from "./logic.ts";
+import { COMPETITIONS, IDLE_TTL_MS, MATCH_WINDOW_TTL_MS, equalSecret, isFresh, mapMatch, matchesUrl } from "./logic.ts";
 
 const corsHeaders = { ...sdkCorsHeaders, "Access-Control-Allow-Headers": `${sdkCorsHeaders["Access-Control-Allow-Headers"]}, x-sync-secret`, "Access-Control-Allow-Methods": "POST, OPTIONS" };
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -32,14 +32,21 @@ export async function handler(req: Request) {
     const admin = createClient(url, service, { auth: { persistSession: false, autoRefreshToken: false } });
     const results: Record<string, unknown> = {};
     let requested = false;
+    // Sync often only around kick-off/live games; otherwise a few times a day.
+    const nowMs = Date.now();
+    const active = await admin.from("fixtures").select("competition_code")
+      .gt("kickoff_utc", new Date(nowMs - 3 * 3_600_000).toISOString())
+      .lt("kickoff_utc", new Date(nowMs + 15 * 60_000).toISOString())
+      .not("status", "in", "(FINISHED,AWARDED,POSTPONED,CANCELLED)");
+    const liveCodes = new Set((active.data ?? []).map((r: { competition_code: string }) => r.competition_code));
     for (const code of COMPETITIONS) {
       try {
         const latest = await admin.from("fixtures").select("last_synced_at").eq("competition_code", code).order("last_synced_at", { ascending: false }).limit(1);
         if (latest.error) throw new Error("fixtures freshness read failed");
-        if (isFresh(latest.data?.[0]?.last_synced_at ?? null)) { results[code] = { skipped: true, reason: "fresh" }; continue; }
+        if (isFresh(latest.data?.[0]?.last_synced_at ?? null, nowMs, liveCodes.has(code) ? MATCH_WINDOW_TTL_MS : IDLE_TTL_MS)) { results[code] = { skipped: true, reason: "fresh" }; continue; }
         if (requested) await new Promise(resolve => setTimeout(resolve, 1000));
         requested = true;
-        const response = await fetch(`https://api.football-data.org/v4/competitions/${code}/matches?status=SCHEDULED`, {
+        const response = await fetch(matchesUrl(code, nowMs), {
           headers: { "X-Auth-Token": apiKey }, signal: AbortSignal.timeout(8000),
         });
         if (!response.ok) {

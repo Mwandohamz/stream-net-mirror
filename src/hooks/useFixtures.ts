@@ -13,13 +13,21 @@ export function useFixtures(competitionCode = "all") {
   const [fixtures, setFixtures] = useState(initial?.rows ?? []);
   const [loading, setLoading] = useState(!initial);
   const [error, setError] = useState(false);
+  const [tick, setTick] = useState(0);
+  const hasLive = fixtures.some((f) => ["IN_PLAY", "PAUSED", "LIVE", "EXTRA_TIME", "PENALTY_SHOOTOUT"].includes(f.status));
+  // Re-read every 60s only while a game is live and the tab is visible.
+  useEffect(() => {
+    if (!hasLive) return;
+    const id = window.setInterval(() => { if (document.visibilityState === "visible") setTick((t) => t + 1); }, 60_000);
+    return () => clearInterval(id);
+  }, [hasLive]);
   useEffect(() => {
     let cancelled = false;
     const abort = new AbortController();
     const timer = window.setTimeout(() => abort.abort(), 8000);
     const recent = cache.get(competitionCode);
     setFixtures(recent?.rows ?? []); setError(false);
-    if (recent && Date.now() - recent.at < FIXTURE_CACHE_MS) { setLoading(false); clearTimeout(timer); return; }
+    if (recent && (tick === 0 || Date.now() - recent.at < 55_000) && Date.now() - recent.at < FIXTURE_CACHE_MS) { setLoading(false); clearTimeout(timer); return; }
     setLoading(!recent);
     void (async () => {
       try {
@@ -33,6 +41,6 @@ export function useFixtures(competitionCode = "all") {
       finally { clearTimeout(timer); if (!cancelled) setLoading(false); }
     })();
     return () => { cancelled = true; clearTimeout(timer); abort.abort(); };
-  }, [competitionCode]);
+  }, [competitionCode, tick]);
   return { fixtures, loading, error };
 }

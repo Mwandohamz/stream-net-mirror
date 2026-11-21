@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
+import DateRangeFilter from "@/components/admin/DateRangeFilter";
+import { inDateRange, type DateRange } from "@/lib/dateRange";
 import CountdownBadge from "@/components/CountdownBadge";
 import { supabase } from "@/integrations/supabase/client";
 import AdminLayout from "@/components/admin/AdminLayout";
@@ -95,17 +97,19 @@ const AdminUsers = () => {
   }, [error]);
 
 
+  const [range, setRange] = useState<DateRange>({ preset: "all" });
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return users;
-    return users.filter(
+    const dated = users.filter((u) => inDateRange(u.created_at, range));
+    if (!q) return dated;
+    return dated.filter(
       (u) =>
         u.email?.toLowerCase().includes(q) ||
         u.profile?.full_name?.toLowerCase().includes(q) ||
         u.profile?.phone?.includes(q) ||
         u.profile?.country_name?.toLowerCase().includes(q)
     );
-  }, [users, search]);
+  }, [users, search, range]);
 
   const openCreate = () => {
     setForm(emptyForm);
@@ -265,9 +269,12 @@ const AdminUsers = () => {
           </div>
         </div>
 
-        <div className="relative max-w-sm">
+        <div className="flex flex-wrap items-center gap-3">
+        <DateRangeFilter value={range} onChange={setRange} />
+        <div className="relative max-w-sm flex-1">
           <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search name, email, phone, country" className="pl-9" />
+        </div>
         </div>
 
         <Card className="bg-card border-border">
