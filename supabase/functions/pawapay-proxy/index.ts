@@ -120,7 +120,20 @@ serve(async (req) => {
 
     // INITIATE DEPOSIT — authenticated; price is computed server-side.
     if (action === "deposit") {
-      const { depositId, currency, phoneNumber, provider, country, promoCode, planId, termsAccepted } = params;
+      const { depositId, currency: requestedCurrency, phoneNumber, provider, country, promoCode, planId, termsAccepted } = params;
+      // Currency is derived server-side from the payer's country, never taken from the client.
+      const COUNTRY_CURRENCY: Record<string, string> = {
+        ZMB: "ZMW", KEN: "KES", UGA: "UGX", TZA: "TZS", RWA: "RWF", MWI: "MWK", GHA: "GHS",
+        NGA: "NGN", CMR: "XAF", COG: "XAF", GAB: "XAF", COD: "CDF", BEN: "XOF", CIV: "XOF",
+        SEN: "XOF", BFA: "XOF", MOZ: "MZN", SLE: "SLE", ETH: "ETB", LSO: "LSL",
+      };
+      const currency = COUNTRY_CURRENCY[String(country ?? "").toUpperCase()];
+      if (!currency || (requestedCurrency && String(requestedCurrency).toUpperCase() !== currency)) {
+        return new Response(JSON.stringify({ error: "Unsupported country or currency" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
 
       // 1) The payer is the signed-in account (session already verified above).
       const authUser = sessionUser;
@@ -140,7 +153,7 @@ serve(async (req) => {
         });
       }
 
-      if (!depositId || !currency || !phoneNumber || !provider) {
+      if (!depositId || !phoneNumber || !provider) {
         return new Response(JSON.stringify({ error: "Missing payment details" }), {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
