@@ -96,6 +96,10 @@ Deno.serve(async (req: Request) => {
       if (roleError || !role) return json({ error: "Administrator access required" }, 403);
     }
 
+    // Feature switch: no YouTube calls while admins have highlights turned off.
+    const { data: flag } = await admin.from("app_settings").select("value").eq("key", "highlights_enabled").maybeSingle();
+    if (flag?.value !== "true") return json({ success: true, skipped: "highlights_disabled" });
+
     // 3. Read enabled sources.
     const { data: sources, error: sourceError } = await admin
       .from("football_video_sources")

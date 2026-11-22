@@ -10,6 +10,9 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { Switch } from "@/components/ui/switch";
+import { useAppSettings } from "@/hooks/useAppSettings";
+import { HIGHLIGHTS_SETTING } from "@/hooks/useHighlightsEnabled";
 
 interface Highlight {
   id: string; youtube_video_id: string; title: string; channel_title: string | null;
@@ -29,6 +32,13 @@ export default function AdminHighlights() {
   const [preview, setPreview] = useState<Highlight | null>(null);
   const [saving, setSaving] = useState<string | null>(null);
   const queryClient = useQueryClient();
+  const { settings, updateSetting } = useAppSettings();
+  const featureOn = settings[HIGHLIGHTS_SETTING] === "true";
+  const toggleFeature = async (on: boolean) => {
+    const { error } = await updateSetting(HIGHLIGHTS_SETTING, String(on));
+    if (error) toast.error("Could not change the highlights setting");
+    else toast.success(on ? "Highlights turned on" : "Highlights turned off and hidden from users");
+  };
   const query = useQuery({
     queryKey: ["admin-highlights", status, page],
     queryFn: async (): Promise<{ highlights: Highlight[]; total: number }> => request({ action: "list", status, page }),
@@ -58,7 +68,12 @@ export default function AdminHighlights() {
     <div className="space-y-5">
       <div className="flex items-center justify-between gap-3"><h1 className="text-2xl font-bold text-foreground">Football highlights</h1>
         <Button variant="outline" size="icon" aria-label="Refresh review list" disabled={query.isFetching} onClick={() => void query.refetch()}><RefreshCw size={16} /></Button></div>
-      <p className="text-sm text-muted-foreground">Automatic checks run every five hours. Review a preview before approving videos for public display.</p>
+      <div className="flex items-center justify-between gap-3 rounded-lg border border-border bg-card p-4">
+        <div><p className="font-semibold text-foreground">Highlights feature</p>
+          <p className="text-sm text-muted-foreground">{featureOn ? "On: approved highlights show to users and YouTube syncing runs." : "Off: highlights are hidden everywhere and no videos are fetched."}</p></div>
+        <Switch checked={featureOn} onCheckedChange={(v) => void toggleFeature(v)} aria-label="Turn highlights feature on or off" />
+      </div>
+      <p className="text-sm text-muted-foreground">Automatic checks run every five hours when the feature is on. Review a preview before approving videos for public display.</p>
       <Tabs value={status} onValueChange={value => { setStatus(value); setPage(1); }}><TabsList>
         <TabsTrigger value="pending">Pending approval</TabsTrigger><TabsTrigger value="published">Published</TabsTrigger><TabsTrigger value="all">All videos</TabsTrigger>
       </TabsList></Tabs>

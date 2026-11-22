@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { FIXTURE_CACHE_MS, FIXTURE_LIMIT, FIXTURE_LOOKBACK_MS, fixtureStatus } from "@/lib/fixtures";
+import { FIXTURE_CACHE_MS, currentMatchweek, fixtureStatus } from "@/lib/fixtures";
 
 export interface Fixture {
   id: number; competition_code: string; competition_name: string; home_team: string; away_team: string;
   home_crest_url: string | null; away_crest_url: string | null; kickoff_utc: string; status: string;
-  home_score: number | null; away_score: number | null;
+  home_score: number | null; away_score: number | null; matchday?: number | null;
 }
 const cache = new Map<string, { rows: Fixture[]; at: number }>();
 export function useFixtures(competitionCode = "all") {
@@ -32,24 +32,14 @@ export function useFixtures(competitionCode = "all") {
     setLoading(!recent);
     void (async () => {
       try {
-        const now = new Date().toISOString();
-        const base = () => {
-          const query = supabase.from("fixtures").select("*").in("competition_code", ["PL", "CL", "PD"]);
-          return competitionCode === "all" ? query : query.eq("competition_code", competitionCode);
-        };
-        // Separate bounded reads prevent upcoming games from crowding out league results.
-        const [recentResults, upcoming] = await Promise.all([
-          base().in("status", ["IN_PLAY", "PAUSED", "LIVE", "EXTRA_TIME", "PENALTY_SHOOTOUT", "FINISHED", "AWARDED"])
-            .gte("kickoff_utc", new Date(Date.now() - FIXTURE_LOOKBACK_MS).toISOString())
-            .lte("kickoff_utc", now).order("kickoff_utc", { ascending: false }).limit(FIXTURE_LIMIT).abortSignal(abort.signal),
-          base().in("status", ["TIMED", "SCHEDULED"]).gt("kickoff_utc", now)
-            .order("kickoff_utc").limit(FIXTURE_LIMIT).abortSignal(abort.signal),
-        ]);
-        if (recentResults.error) throw recentResults.error;
-        if (upcoming.error) throw upcoming.error;
-        const recent = (recentResults.data ?? []).sort((a, b) =>
-          Number(fixtureStatus(b.status) === "Live") - Number(fixtureStatus(a.status) === "Live") || Date.parse(b.kickoff_utc) - Date.parse(a.kickoff_utc));
-        const rows = [...recent, ...(upcoming.data ?? [])];
+        let query = supabase.from("fixtures").select("*").in("competition_code", ["PL", "CL", "PD"])
+          .not("matchday", "is", null)
+          .gte("kickoff_utc", new Date(Date.now() - 21 * 86400_000).toISOString())
+          .lte("kickoff_utc", new Date(Date.now() + 21 * 86400_000).toISOString());
+        if (competitionCode !== "all") query = query.eq("competition_code", competitionCode);
+        const { data, error } = await query.order("kickoff_utc").limit(400).abortSignal(abort.signal);
+        if (error) throw error;
+        const rows = currentMatchweek((data ?? []) as Fixture[]);
         if (!cancelled) { cache.set(competitionCode, { rows, at: Date.now() }); setFixtures(rows); }
       } catch { if (!cancelled) setError(true); }
       finally { clearTimeout(timer); if (!cancelled) setLoading(false); }

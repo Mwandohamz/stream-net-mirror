@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Play, RefreshCw, Video } from "lucide-react";
+import { useHighlightsEnabled } from "@/hooks/useHighlightsEnabled";
 
 interface Highlight {
   id: string;
@@ -39,8 +40,10 @@ const FootballHighlights = ({
 }: Props) => {
   const [playing, setPlaying] = useState<string | null>(null);
   const queryClient = useQueryClient();
+  const highlightsOn = useHighlightsEnabled();
   const highlights = useQuery({
     queryKey: ["football-highlights", competition ?? null],
+    enabled: highlightsOn,
     queryFn: async (): Promise<Highlight[]> => {
       const { data, error } = await supabase.functions.invoke("get-football-highlights", { body: competition ? { competition } : {} });
       if (error || !data?.success) throw new Error("Highlights unavailable");
@@ -93,6 +96,7 @@ const FootballHighlights = ({
         });
   };
 
+  if (!highlightsOn) return null;
   return (
     <section className="space-y-5">
       <div className="flex items-center justify-between gap-3">

@@ -1,3 +1,4 @@
+import { useHighlightsEnabled } from "@/hooks/useHighlightsEnabled";
 import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -91,6 +92,7 @@ const DashboardShell = ({ tab, onTabChange, children }: Props) => {
     }, 150);
   };
   const openSearch = () => openSection("movies", "catalog-search", true);
+  const highlightsOn = useHighlightsEnabled();
   const openHighlights = () => openSection("football", "football-highlights");
 
   return (
@@ -160,7 +162,7 @@ const DashboardShell = ({ tab, onTabChange, children }: Props) => {
           <nav className="space-y-1" aria-label="Mobile sidebar">
             {DASHBOARD_TABS.map(t => <div key={t.id}><Button variant="ghost" onClick={() => changeTab(t.id)} className={`h-12 w-full justify-start gap-3 ${tab === t.id ? "bg-secondary text-foreground" : "text-muted-foreground"}`}><t.icon size={20} className={t.id === "watch" ? "fill-current text-primary" : ""} />{t.label}</Button>
               {t.id === "dashboard" && <Button variant="ghost" className="h-12 w-full justify-start gap-3 text-muted-foreground" onClick={openSearch}><Search size={20} /> Browse &amp; Search</Button>}
-              {t.id === "football" && <div className="ml-8 border-l border-border pl-2">{LEAGUE_OPTIONS.map(l => <Button key={l.code} variant="ghost" size="sm" className={`h-10 w-full justify-start text-xs ${activeLeague === l.code && tab === "football" ? "text-primary" : "text-muted-foreground"}`} onClick={() => openLeague(l.code)}>{l.label}</Button>)}<Button variant="ghost" size="sm" className="h-10 w-full justify-start gap-2 text-xs text-muted-foreground" onClick={openHighlights}><Video size={14} /> Highlights</Button></div>}
+              {t.id === "football" && <div className="ml-8 border-l border-border pl-2">{LEAGUE_OPTIONS.map(l => <Button key={l.code} variant="ghost" size="sm" className={`h-10 w-full justify-start text-xs ${activeLeague === l.code && tab === "football" ? "text-primary" : "text-muted-foreground"}`} onClick={() => openLeague(l.code)}>{l.label}</Button>)}{highlightsOn && <Button variant="ghost" size="sm" className="h-10 w-full justify-start gap-2 text-xs text-muted-foreground" onClick={openHighlights}><Video size={14} /> Highlights</Button>}</div>}
             </div>)}
             <Button variant="ghost" className="h-12 w-full justify-start gap-3 text-muted-foreground" onClick={() => { changeTab("account"); setTimeout(() => document.getElementById("transaction-history")?.scrollIntoView({ behavior: "smooth" }), 100); }}><Receipt size={20} /> Transaction history</Button>
           </nav>
@@ -213,14 +215,14 @@ const DashboardShell = ({ tab, onTabChange, children }: Props) => {
                         {league.label}
                       </Button>
                     ))}
-                    <Button
+                    {highlightsOn && <Button
                       variant="ghost"
                       size="sm"
                       onClick={openHighlights}
                       className="h-8 w-full justify-start gap-2 rounded-md px-2 text-xs text-muted-foreground hover:text-foreground"
                     >
                       <Video size={14} /> Highlights
-                    </Button>
+                    </Button>}
                   </div>
                 )}
                 {t.id === "dashboard" && (
