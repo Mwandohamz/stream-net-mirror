@@ -39,7 +39,7 @@ export function useFixtures(competitionCode = "all") {
         if (competitionCode !== "all") query = query.eq("competition_code", competitionCode);
         const { data, error } = await query.order("kickoff_utc").limit(400).abortSignal(abort.signal);
         if (error) throw error;
-        const rows = currentMatchweek((data ?? []) as Fixture[]);
+        const rows: Fixture[] = currentMatchweek<Fixture>((data ?? []) as Fixture[]);
         if (!cancelled) { cache.set(competitionCode, { rows, at: Date.now() }); setFixtures(rows); }
       } catch { if (!cancelled) setError(true); }
       finally { clearTimeout(timer); if (!cancelled) setLoading(false); }
