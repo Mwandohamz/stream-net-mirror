@@ -2,6 +2,12 @@ export const COMPETITIONS = ["PL", "CL", "PD"] as const;
 export const SYNC_TTL_MS = 10 * 60_000;
 export const MATCH_WINDOW_TTL_MS = 4 * 60_000;
 export const IDLE_TTL_MS = 6 * 60 * 60_000;
+export const RESULTS_LOOKBACK_MS = 30 * 86_400_000;
+export function needsScoreRefresh(fixture: { kickoff_utc: string; status: string }, now = Date.now()) {
+  const kickoff = Date.parse(fixture.kickoff_utc);
+  return Number.isFinite(kickoff) && kickoff >= now - RESULTS_LOOKBACK_MS && kickoff <= now + 15 * 60_000
+    && !["FINISHED", "AWARDED", "POSTPONED", "CANCELLED", "SUSPENDED"].includes(fixture.status);
+}
 export function isFresh(value: string | null, now = Date.now(), ttl = SYNC_TTL_MS) {
   return Boolean(value && now - Date.parse(value) >= 0 && now - Date.parse(value) < ttl);
 }
@@ -26,8 +32,8 @@ export async function equalSecret(received: string | null, expected: string | un
   for (let i = 0; i < x.length; i++) difference |= x[i] ^ y[i];
   return difference === 0;
 }
-/** Small date window: yesterday through 30 days ahead, so live/finished scores update too. */
+/** Include recent results for every competition, including gaps between UEFA matchdays. */
 export function matchesUrl(code: string, now = Date.now()) {
   const day = (ms: number) => new Date(ms).toISOString().slice(0, 10);
-  return `https://api.football-data.org/v4/competitions/${code}/matches?dateFrom=${day(now - 86_400_000)}&dateTo=${day(now + 30 * 86_400_000)}`;
+  return `https://api.football-data.org/v4/competitions/${code}/matches?dateFrom=${day(now - RESULTS_LOOKBACK_MS)}&dateTo=${day(now + 30 * 86_400_000)}`;
 }

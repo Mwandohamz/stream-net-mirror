@@ -23,7 +23,7 @@ const json = (body: unknown, status = 200) =>
   });
 
 const YOUTUBE_API = "https://www.googleapis.com/youtube/v3";
-const MAX_VIDEOS_PER_CHANNEL = 20;
+const MAX_VIDEOS_PER_CHANNEL = 50;
 const CACHE_HOURS = 24;
 
 async function youtubeRequest(
@@ -189,7 +189,7 @@ Deno.serve(async (req: Request) => {
           throw new Error("Channel uploads playlist was not found");
         }
 
-        // 4b. Get the latest 20 uploads.
+        // 4b. Get 50 uploads for the same quota cost; busy channels publish many shorts.
         sourceRequestCount++;
         totalRequests++;
         const playlistData = await youtubeRequest("playlistItems", {
@@ -198,11 +198,18 @@ Deno.serve(async (req: Request) => {
           maxResults: String(MAX_VIDEOS_PER_CHANNEL),
         });
 
-        const videoIds = (playlistData.items || [])
+        const uploadedIds = (playlistData.items || [])
           .map((item: PlaylistItem) =>
             item.contentDetails?.videoId || item.snippet?.resourceId?.videoId
           )
           .filter(Boolean);
+
+        // Revalidate approved videos even after they leave the latest uploads page.
+        const approved = await admin.from("football_highlights").select("youtube_video_id")
+          .eq("source_id", source.id).eq("is_published", true)
+          .order("published_at", { ascending: false }).limit(40);
+        if (approved.error) throw approved.error;
+        const videoIds = [...new Set<string>([...uploadedIds, ...(approved.data ?? []).map(row => row.youtube_video_id)])];
 
         if (videoIds.length === 0) {
           successfulSources++;
@@ -237,15 +244,17 @@ Deno.serve(async (req: Request) => {
         }
 
         // 4c. Retrieve video metadata and embeddability.
-        sourceRequestCount++;
-        totalRequests++;
-        const videoData = await youtubeRequest("videos", {
-          part: "snippet,status,contentDetails",
-          id: videoIds.join(","),
-          maxResults: String(MAX_VIDEOS_PER_CHANNEL),
-        });
-
-        const videos: YouTubeVideo[] = videoData.items || [];
+        const videos: YouTubeVideo[] = [];
+        for (let offset = 0; offset < videoIds.length; offset += 50) {
+          sourceRequestCount++;
+          totalRequests++;
+          const videoData = await youtubeRequest("videos", {
+            part: "snippet,status,contentDetails",
+            id: videoIds.slice(offset, offset + 50).join(","),
+            maxResults: "50",
+          });
+          videos.push(...(videoData.items || []));
+        }
         // Deleted/private videos omitted by YouTube must stop appearing publicly.
         const returnedIds = new Set(videos.map(video => video.id));
         for (const id of videoIds as string[]) {

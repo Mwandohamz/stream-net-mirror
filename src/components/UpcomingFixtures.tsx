@@ -13,7 +13,7 @@ import WatchHub from "@/components/member/WatchHub";
 
 export default function UpcomingFixtures({ onUnlock }: { onUnlock?: () => void }) {
   const [searchParams, setSearchParams] = useSearchParams();
-  const competition = LEAGUE_OPTIONS.some(o => o.code === searchParams.get("league")) ? searchParams.get("league")! : "all";
+  const competition = LEAGUE_OPTIONS.find(o => o.code === searchParams.get("league"))?.code ?? "all";
   const [pickerFor, setPickerFor] = useState<Fixture | null>(null);
   const { fixtures, loading, error } = useFixtures(competition);
   const membership = useMembership();
@@ -34,7 +34,7 @@ export default function UpcomingFixtures({ onUnlock }: { onUnlock?: () => void }
 
   return <section className="space-y-4" aria-label="Upcoming Fixtures">
     <div className="flex flex-wrap items-center justify-between gap-3">
-      <h2 className="dashboard-heading text-xl font-semibold text-foreground">Upcoming Fixtures</h2>
+      <h2 className="dashboard-heading text-xl font-semibold text-foreground">Live games, results & fixtures</h2>
     </div>
     <Tabs value={competition} onValueChange={selectLeague}>
       <TabsList className="grid h-auto w-full grid-cols-2 gap-1 sm:grid-cols-4" aria-label="Choose a league">

@@ -1,6 +1,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders as sdkCorsHeaders } from "npm:@supabase/supabase-js@2/cors";
-import { COMPETITIONS, IDLE_TTL_MS, MATCH_WINDOW_TTL_MS, equalSecret, isFresh, mapMatch, matchesUrl } from "./logic.ts";
+import { COMPETITIONS, IDLE_TTL_MS, MATCH_WINDOW_TTL_MS, RESULTS_LOOKBACK_MS, equalSecret, isFresh, mapMatch, matchesUrl, needsScoreRefresh } from "./logic.ts";
+import { authenticateCronRequest } from "../_shared/cron-auth.ts";
 
 const corsHeaders = { ...sdkCorsHeaders, "Access-Control-Allow-Headers": `${sdkCorsHeaders["Access-Control-Allow-Headers"]}, x-sync-secret`, "Access-Control-Allow-Methods": "POST, OPTIONS" };
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -13,7 +14,7 @@ export async function handler(req: Request) {
     const anon = Deno.env.get("SUPABASE_ANON_KEY");
     const service = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     if (!url || !anon || !service) return json({ error: "Server configuration unavailable" }, 503);
-    let authorized = await equalSecret(req.headers.get("x-sync-secret"), Deno.env.get("FIXTURES_SYNC_SECRET"));
+    let authorized = authenticateCronRequest(req) === null || await equalSecret(req.headers.get("x-sync-secret"), Deno.env.get("FIXTURES_SYNC_SECRET"));
     if (!authorized) {
       const authorization = req.headers.get("Authorization");
       if (!authorization?.startsWith("Bearer ")) return json({ error: "Unauthorized" }, 401);
@@ -34,11 +35,12 @@ export async function handler(req: Request) {
     let requested = false;
     // Sync often only around kick-off/live games; otherwise a few times a day.
     const nowMs = Date.now();
-    const active = await admin.from("fixtures").select("competition_code")
-      .gt("kickoff_utc", new Date(nowMs - 3 * 3_600_000).toISOString())
+    const active = await admin.from("fixtures").select("competition_code,kickoff_utc,status")
+      .gte("kickoff_utc", new Date(nowMs - RESULTS_LOOKBACK_MS).toISOString())
       .lt("kickoff_utc", new Date(nowMs + 15 * 60_000).toISOString())
       .not("status", "in", "(FINISHED,AWARDED,POSTPONED,CANCELLED)");
-    const liveCodes = new Set((active.data ?? []).map((r: { competition_code: string }) => r.competition_code));
+    if (active.error) throw new Error("fixtures activity read failed");
+    const liveCodes = new Set((active.data ?? []).filter(r => needsScoreRefresh(r, nowMs)).map(r => r.competition_code));
     for (const code of COMPETITIONS) {
       try {
         const latest = await admin.from("fixtures").select("last_synced_at").eq("competition_code", code).order("last_synced_at", { ascending: false }).limit(1);

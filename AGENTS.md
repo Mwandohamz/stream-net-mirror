@@ -21,5 +21,7 @@
 - Discovery rows (`TMDBRow`) read live TMDB trending/discover through the cached `tmdb-catalog` function; public Watch taps follow `publicWatchDestination` (account → payment → Watch).
 - Server-side guard rails use `_shared/rateLimit.ts` with the service-only `check_rate_limit` function (hashed user/IP subjects, fail-open on errors); client cooldowns are UX only, never the enforcement.
 - Admin Edge Functions authenticate through `_shared/adminAuth.ts` (local JWT claims + allow-list/role) and the client reads failure bodies with `functionErrorMessage`, so admins see the real reason instead of a generic status error.
-- Fixture sync uses an adaptive freshness window (frequent only around kick-off/live games) over a date-window fetch, so live scores update without polling the API all day.
+- Fixture sync uses adaptive freshness for upcoming/live/overdue unfinished games and a thirty-day results window; bounded recent/upcoming reads prevent fixtures from crowding out scores in any league.
+- Auth and app emails share BrandHeader with a public storage PNG, so email logos remain accessible independently of frontend publishing.
+- Highlight review uses the admin-highlights endpoint with server-side admin authentication, 100-row pagination, and availability checks before publishing; sync never overwrites approval.
 - Admin date filters share `src/lib/dateRange.ts`/`DateRangeFilter`; MRR/ARR come from currently active subscriptions normalised by plan interval, independent of the selected dates.

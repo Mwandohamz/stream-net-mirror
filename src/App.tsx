@@ -40,6 +40,7 @@ const SupportTickets = lazy(() => import("./pages/admin/SupportTickets.tsx"));
 const Influencers = lazy(() => import("./pages/admin/Influencers.tsx"));
 const InfluencerDashboard = lazy(() => import("./pages/InfluencerDashboard.tsx"));
 const AdminContent = lazy(() => import("./pages/admin/Content.tsx"));
+const AdminHighlights = lazy(() => import("./pages/admin/Highlights.tsx"));
 import Support from "./pages/Support.tsx";
 import LiveSports from "./pages/LiveSports.tsx";
 import OAuthConsent from "./pages/OAuthConsent.tsx";
@@ -113,6 +114,7 @@ const AnimatedRoutes = () => {
         <Route path="/admin/support" element={<AdminRoute><SupportTickets /></AdminRoute>} />
         <Route path="/admin/influencers" element={<AdminRoute><Influencers /></AdminRoute>} />
         <Route path="/admin/content" element={<AdminRoute><AdminContent /></AdminRoute>} />
+        <Route path="/admin/highlights" element={<AdminRoute><AdminHighlights /></AdminRoute>} />
         <Route path="/influencer/:promoCode" element={<InfluencerDashboard />} />
         <Route path="/live-sports" element={<PageTransition><LiveSports /></PageTransition>} />
         <Route path="/movies" element={<PageTransition><Movies /></PageTransition>} />

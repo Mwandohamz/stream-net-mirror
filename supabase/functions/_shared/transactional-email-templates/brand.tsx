@@ -3,7 +3,7 @@
 import * as React from 'npm:react@18.3.1'
 import { Img, Section, Text } from 'npm:@react-email/components@0.0.22'
 
-export const LOGO_URL = 'https://streamnetmirror.app/logo-hexagon.png'
+export const LOGO_URL = 'https://rhobeyejmrnnreepacmr.supabase.co/storage/v1/object/public/content-media/email%2Fstreamnetmirror-logo.png'
 export const SITE_URL = 'https://streamnetmirror.app'
 
 /** Branded header band used by every app email. */

@@ -1,6 +1,11 @@
 # Roadmap — dashboard native polish + in-app streaming + APK downloads
 
 ## Current request
+- [x] Verify and repair live scores/results across PL, CL and PD, including league selection; signed-in desktop/mobile scores and reload persistence checked
+- [x] Repair shared email logo and clarify sender-avatar requirements; four deployed email previews rendered with the public PNG
+- [x] Diagnose missing highlights and enable three verified official sources; 60 videos ingested, three-hour schedule retained, approval preserved
+- [x] Add admin-only highlights review/publish controls; preview → approve → public read → unpublish verified with a real video and original pending state restored
+- [ ] Configure inbox sender-avatar branding — email providers control display; requires a separate verified-brand/BIMI setup, not an email-template change
 - [x] Audit and correct TMDB catalogue, provider/genre filters, caching and highlights integration
 - [x] Verify protected tables, four deployed functions, configured credentials and authenticated hourly scheduling
 - [x] 52 automated tests, scoped lint, Deno checks and desktop/mobile signed-in/public browser checks passed; frontend publishing requested
