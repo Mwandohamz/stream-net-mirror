@@ -1,6 +1,14 @@
 # Roadmap — dashboard native polish + in-app streaming + APK downloads
 
 ## Current request
+- [x] Change football highlight sync from every three hours to five daily checks at five-hour UTC intervals
+- [x] Verify the admin Highlights sidebar destination and approval page are available with pending videos loaded
+- [x] Make USD the default admin money view with a USD/ZMW selector using each payment's stored historical rate; missing rates stay unavailable
+- [x] Correct Overview, Payments, Customers and Analytics totals so currencies are never added together and ARR is clearly MRR × 12
+- [x] Close seven expired pending payments and add lazy member/admin reconciliation without another scheduled job; zero pending payments remain
+- [x] Pass 82 tests and typecheck, deploy three affected functions, verify signed-in admin screens with no runtime errors, and prepare the commit
+
+## Previous request
 - [x] Verify and repair live scores/results across PL, CL and PD, including league selection; signed-in desktop/mobile scores and reload persistence checked
 - [x] Repair shared email logo and clarify sender-avatar requirements; four deployed email previews rendered with the public PNG
 - [x] Diagnose missing highlights and enable three verified official sources; 60 videos ingested, three-hour schedule retained, approval preserved

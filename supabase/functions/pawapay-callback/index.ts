@@ -35,7 +35,7 @@ serve(async (req) => {
     // Only query pawaPay for deposits this app actually created and has not finalised.
     const validId = typeof depositId === "string" && /^[0-9a-fA-F-]{36}$/.test(depositId);
     const { data: known } = validId
-      ? await supabase.from("payments").select("id").eq("deposit_id", depositId).eq("status", "pending").maybeSingle()
+      ? await supabase.from("payments").select("id").eq("deposit_id", depositId).in("status", ["pending", "expired"]).maybeSingle()
       : { data: null };
     if (!known) {
       return new Response(JSON.stringify({ received: true }), {

@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { closeExpiredPayments } from "../_shared/paymentExpiry.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -17,11 +18,33 @@ const SUCCESS = ["completed", "success", "succeeded"];
 const isSuccess = (s: unknown) => SUCCESS.includes(String(s ?? "").toLowerCase());
 const round2 = (n: number) => Math.round((Number.isFinite(n) ? n : 0) * 100) / 100;
 
-const usdOf = (p: any): number => {
-  if (p.amount_usd !== null && p.amount_usd !== undefined) return Number(p.amount_usd);
-  if (p.fx_rate) return Number(p.amount) / Number(p.fx_rate);
-  return 0;
+const usdOf = (p: any): number | null => {
+  if (p.amount_usd !== null && p.amount_usd !== undefined && Number.isFinite(Number(p.amount_usd))) {
+    return Number(p.amount_usd);
+  }
+  if (Number(p.fx_rate) > 0 && Number.isFinite(Number(p.amount))) return Number(p.amount) / Number(p.fx_rate);
+  return null;
 };
+
+// Only an original ZMW payment supplies a trustworthy historical ZMW value.
+const zmwOf = (p: any): number | null =>
+  String(p.currency ?? "").toUpperCase() === "ZMW" && Number.isFinite(Number(p.amount))
+    ? Number(p.amount)
+    : null;
+
+const sumKnown = (rows: any[], value: (p: any) => number | null) =>
+  round2(rows.reduce((total, row) => total + (value(row) ?? 0), 0));
+const missingCount = (rows: any[], value: (p: any) => number | null) =>
+  rows.filter((row) => value(row) === null).length;
+const moneyFields = (p: any) => ({
+  id: p.id,
+  amount: p.amount,
+  currency: p.currency,
+  amount_usd: p.amount_usd,
+  fx_rate: p.fx_rate,
+  promo_code: p.promo_code,
+  created_at: p.created_at,
+});
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -41,7 +64,6 @@ serve(async (req) => {
     if (!user) return json({ error: "Unauthorized" }, 401);
 
     const admin = createClient(supabaseUrl, serviceKey);
-
     const callerEmail = (user.email || "").toLowerCase();
     const allowList = (Deno.env.get("ADMIN_EMAILS") || "")
       .split(",").map((e) => e.trim().toLowerCase()).filter(Boolean);
@@ -57,6 +79,9 @@ serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const scope = (body?.scope as string) ?? "overview";
 
+    // Reconcile abandoned requests when admin data is used, avoiding a cron job.
+    await closeExpiredPayments(admin);
+
     const { data: paymentsRaw, error: payErr } = await admin
       .from("payments")
       .select("*")
@@ -66,7 +91,7 @@ serve(async (req) => {
     const payments = (paymentsRaw ?? []).map((p: any) => ({
       ...p,
       amount: Number(p.amount ?? 0),
-      usd: round2(usdOf(p)),
+      usd: usdOf(p) === null ? null : round2(usdOf(p)!),
       normalized_status: String(p.status ?? "").toLowerCase(),
     }));
     const completed = payments.filter((p) => isSuccess(p.status));
@@ -81,31 +106,41 @@ serve(async (req) => {
         const key = String(p.email ?? "").toLowerCase();
         const existing = byEmail.get(key);
         if (!existing) {
-          byEmail.set(key, { ...p, paymentCount: 1, totalPaid: p.amount, totalPaidUsd: p.usd });
+          byEmail.set(key, {
+            ...p,
+            paymentCount: 1,
+            paymentAmounts: [moneyFields(p)],
+            totalPaid: zmwOf(p) ?? 0,
+            totalPaidUsd: p.usd ?? 0,
+            totalPaidMissingUsd: p.usd === null ? 1 : 0,
+          });
         } else {
           existing.paymentCount += 1;
-          existing.totalPaid = round2(existing.totalPaid + p.amount);
-          existing.totalPaidUsd = round2(existing.totalPaidUsd + p.usd);
+          existing.paymentAmounts.push(moneyFields(p));
+          existing.totalPaid = round2(existing.totalPaid + (zmwOf(p) ?? 0));
+          existing.totalPaidUsd = round2(existing.totalPaidUsd + (p.usd ?? 0));
+          existing.totalPaidMissingUsd += p.usd === null ? 1 : 0;
         }
       }
       const customers = Array.from(byEmail.values());
       return json({ customers, total: customers.length });
     }
 
-    // overview — optional date range (ISO strings) narrows revenue, payments and visits.
+    // Overview — optional date range narrows revenue, payments and visits.
     const fromMs = body?.from ? Date.parse(String(body.from)) : NaN;
     const toMs = body?.to ? Date.parse(String(body.to)) : NaN;
     const inRange = (iso: string) => {
       const t = Date.parse(iso);
       return (Number.isNaN(fromMs) || t >= fromMs) && (Number.isNaN(toMs) || t <= toMs);
     };
-    const allPayments = payments;
-    const rangedPayments = allPayments.filter((p) => inRange(p.created_at));
+    const rangedPayments = payments.filter((p) => inRange(p.created_at));
     const rangedCompleted = rangedPayments.filter((p) => isSuccess(p.status));
+    const organic = rangedCompleted.filter((p) => !p.promo_code);
+    const influencer = rangedCompleted.filter((p) => !!p.promo_code);
 
-    // MRR from currently active subscriptions, normalised to one month (USD).
+    // MRR uses currently active subscriptions and their authoritative USD plan prices.
     const { data: subs } = await admin.from("subscriptions")
-      .select("status, current_period_end, grace_days, plans(price_usd, interval, interval_count)")
+      .select("user_id, plan_id, status, current_period_end, grace_days, plans(price_usd, interval, interval_count)")
       .in("status", ["active", "trialing", "grace"]);
     const monthlyFactor = (interval: string, count: number) => {
       const n = Math.max(1, Number(count) || 1);
@@ -115,11 +150,23 @@ serve(async (req) => {
       return 1 / n;
     };
     const nowMs = Date.now();
-    const mrr = round2((subs ?? []).reduce((acc: number, sub: any) => {
-      const end = Date.parse(sub.current_period_end) + (Number(sub.grace_days) || 0) * 86_400_000;
-      if (end <= nowMs || !sub.plans) return acc;
-      return acc + Number(sub.plans.price_usd || 0) * monthlyFactor(sub.plans.interval, sub.plans.interval_count);
+    const activeSubs = (subs ?? []).filter((sub: any) =>
+      Date.parse(sub.current_period_end) + (Number(sub.grace_days) || 0) * 86_400_000 > nowMs && sub.plans
+    );
+    let mrrZmw = 0;
+    let mrrMissingZmw = 0;
+    const mrr = round2(activeSubs.reduce((acc: number, sub: any) => {
+      const monthlyUsd = Number(sub.plans.price_usd || 0) * monthlyFactor(sub.plans.interval, sub.plans.interval_count);
+      const historicalPayment = completed.find((p) =>
+        p.user_id === sub.user_id && p.plan_id === sub.plan_id &&
+        String(p.currency).toUpperCase() === "ZMW" && Number(p.fx_rate) > 0
+      );
+      if (historicalPayment) mrrZmw += monthlyUsd * Number(historicalPayment.fx_rate);
+      else mrrMissingZmw += 1;
+      return acc + monthlyUsd;
     }, 0));
+    mrrZmw = round2(mrrZmw);
+
     const today = new Date().toISOString().split("T")[0];
     const [{ data: views }, { count: subscriberCount }, { count: openTickets }] = await Promise.all([
       (() => { let q = admin.from("page_views").select("created_at, session_id"); if (!Number.isNaN(fromMs)) q = q.gte("created_at", new Date(fromMs).toISOString()); if (!Number.isNaN(toMs)) q = q.lte("created_at", new Date(toMs).toISOString()); return q; })(),
@@ -129,18 +176,20 @@ serve(async (req) => {
 
     const viewsArr = views ?? [];
     const uniqueSessions = new Set(viewsArr.map((v: any) => v.session_id)).size;
-
-    const sum = (arr: any[], f: (p: any) => number) => round2(arr.reduce((s, p) => s + f(p), 0));
-
-    const completedAll = completed;
     const stats = {
       mrrUsd: mrr,
       arrUsd: round2(mrr * 12),
-      activeSubscriptions: (subs ?? []).length,
-      totalRevenue: sum(rangedCompleted, (p) => p.amount),
-      totalRevenueUsd: sum(rangedCompleted, (p) => p.usd),
-      organicRevenue: sum(rangedCompleted.filter((p) => !p.promo_code), (p) => p.amount),
-      influencerRevenue: sum(rangedCompleted.filter((p) => !!p.promo_code), (p) => p.amount),
+      mrrZmw,
+      arrZmw: round2(mrrZmw * 12),
+      mrrMissingZmw,
+      activeSubscriptions: activeSubs.length,
+      totalRevenue: sumKnown(rangedCompleted, zmwOf),
+      totalRevenueUsd: sumKnown(rangedCompleted, usdOf),
+      totalRevenueMissingUsd: missingCount(rangedCompleted, usdOf),
+      organicRevenue: sumKnown(organic, zmwOf),
+      organicRevenueUsd: sumKnown(organic, usdOf),
+      influencerRevenue: sumKnown(influencer, zmwOf),
+      influencerRevenueUsd: sumKnown(influencer, usdOf),
       totalPayments: rangedPayments.length,
       completedPayments: rangedCompleted.length,
       todayPayments: payments.filter((p) => String(p.created_at).startsWith(today)).length,
@@ -157,18 +206,25 @@ serve(async (req) => {
       const d = new Date(endDay);
       d.setDate(d.getDate() - (spanDays - 1 - i));
       const dateStr = d.toISOString().split("T")[0];
-      const dayPayments = completedAll.filter((p) => String(p.created_at).startsWith(dateStr));
+      const dayPayments = completed.filter((p) => String(p.created_at).startsWith(dateStr));
       const dayViews = viewsArr.filter((v: any) => String(v.created_at).startsWith(dateStr));
       return {
         date: spanDays <= 7 ? d.toLocaleDateString("en", { weekday: "short" }) : d.toLocaleDateString("en", { month: "short", day: "numeric" }),
-        revenue: sum(dayPayments, (p) => p.amount),
+        revenue: sumKnown(dayPayments, zmwOf),
+        revenueUsd: sumKnown(dayPayments, usdOf),
+        paymentAmounts: dayPayments.map(moneyFields),
         count: dayPayments.length,
         views: dayViews.length,
         sessions: new Set(dayViews.map((v: any) => v.session_id)).size,
       };
     });
 
-    return json({ stats, days, recentPayments: rangedPayments.slice(0, 10) });
+    return json({
+      stats,
+      days,
+      recentPayments: rangedPayments.slice(0, 10),
+      revenuePayments: rangedCompleted.map(moneyFields),
+    });
   } catch (err) {
     console.error("admin-metrics error:", err);
     return json({ error: (err as Error).message }, 500);

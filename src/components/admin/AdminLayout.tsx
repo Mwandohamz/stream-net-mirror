@@ -17,6 +17,7 @@ import {
 import { NavLink } from "@/components/NavLink";
 import { LayoutDashboard, CreditCard, BarChart3, Users, Settings, LogOut, Megaphone, MessageSquare, UserCog, Package, Mail, Link2, Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { AdminCurrencyToggle } from "@/components/admin/AdminCurrency";
 
 const navItems = [
   { title: "Overview", url: "/admin", icon: LayoutDashboard, badgeKey: null },
@@ -188,6 +189,7 @@ const AdminLayout = ({ children }: { children: React.ReactNode }) => {
           <header className="h-14 flex items-center border-b border-border px-4">
             <SidebarTrigger className="mr-4" />
             <span className="text-sm text-muted-foreground">Admin Dashboard</span>
+            <AdminCurrencyToggle />
           </header>
           <main className="flex-1 p-4 md:p-6 overflow-auto">
             {children}

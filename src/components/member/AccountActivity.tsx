@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Receipt, CalendarDays } from "lucide-react";
 import PlayLoader from "@/components/PlayLoader";
+import { displayPaymentStatus } from "@/lib/paymentStatus";
 
 export default function AccountActivity() {
   const [page, setPage] = useState(0);
@@ -14,9 +15,11 @@ export default function AccountActivity() {
     queryFn: async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error("Please sign in again.");
+      // Also claims completed guest payments and closes this account's expired requests.
+      await supabase.functions.invoke("claim-payments").catch(() => undefined);
       const [payments, subscriptions] = await Promise.all([
         // Existing own-user/JWT-email policies cover linked and historical guest payments.
-        supabase.from("payments").select("id, amount, currency, status, created_at, transaction_id, plans(name)", { count: "exact" }).order("created_at", { ascending: false }).range(page * 20, page * 20 + 19).abortSignal(AbortSignal.timeout(8000)),
+        supabase.from("payments").select("id, amount, currency, status, created_at, expires_at, transaction_id, plans(name)", { count: "exact" }).order("created_at", { ascending: false }).range(page * 20, page * 20 + 19).abortSignal(AbortSignal.timeout(8000)),
         supabase.from("subscriptions").select("id, status, current_period_start, current_period_end, plans(name)", { count: "exact" }).eq("user_id", session.user.id).order("created_at", { ascending: false }).range(page * 20, page * 20 + 19).abortSignal(AbortSignal.timeout(8000)),
       ]);
       if (payments.error) throw payments.error;
@@ -32,7 +35,7 @@ export default function AccountActivity() {
         {!query.data?.payments.length && <p className="py-5 text-sm text-muted-foreground">No payments yet.</p>}
         {query.data?.payments.map(p => <div key={p.id} className="space-y-2 py-4">
           <div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="font-medium">{p.plans?.name || "Subscription payment"}</p><p className="text-xs text-muted-foreground">{new Date(p.created_at).toLocaleString()}</p></div><p className="shrink-0 text-sm font-semibold">{p.currency || "—"} {Number(p.amount).toFixed(2)}</p></div>
-          <Badge variant="outline" className="capitalize">{p.status}</Badge>
+          <Badge variant="outline" className="capitalize">{displayPaymentStatus(p)}</Badge>
           {p.transaction_id && <p className="break-all font-mono text-[11px] text-muted-foreground">{p.transaction_id}</p>}
         </div>)}
       </TabsContent>

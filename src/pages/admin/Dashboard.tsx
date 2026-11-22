@@ -11,7 +11,9 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { formatCurrencyAmount, formatUsd } from "@/lib/currency";
+import { formatCurrencyAmount } from "@/lib/currency";
+import { arrFromMrr, formatPaymentMoney, formatPaymentTotal, missingRateLabel, sumPaymentAmounts, type PaymentMoney } from "@/lib/adminCurrency";
+import { useAdminCurrency } from "@/components/admin/AdminCurrency";
 
 const SUCCESS_PAYMENT_STATUSES = ["completed", "success", "succeeded"];
 
@@ -30,23 +32,37 @@ const EMPTY_STATS = {
   openTickets: 0,
   mrrUsd: 0,
   arrUsd: 0,
+  mrrZmw: 0,
+  mrrMissingZmw: 0,
   activeSubscriptions: 0,
 };
 
 const Dashboard = () => {
   const [showGuide, setShowGuide] = useState(false);
+  const { currency } = useAdminCurrency();
   const refresh = useAdminRefresh();
   const [range, setRange] = useState<DateRange>({ preset: "30d" });
   const params = rangeParams(range);
 
   const { data, isFetching } = useAdminQuery(["admin", "overview", params.from ?? "", params.to ?? ""], () =>
-    fetchAdminMetrics<{ stats: typeof EMPTY_STATS & { mrrUsd?: number; arrUsd?: number; activeSubscriptions?: number }; days: any[]; recentPayments: any[] }>("overview", params)
+    fetchAdminMetrics<{ stats: typeof EMPTY_STATS & { mrrZmw?: number; mrrMissingZmw?: number; completedPayments?: number }; days: any[]; recentPayments: any[]; revenuePayments: PaymentMoney[] }>("overview", params)
   );
 
   const stats = data?.stats ?? EMPTY_STATS;
-  const revenueData = data?.days ?? [];
+  const revenuePayments = data?.revenuePayments ?? [];
+  const totalRevenue = sumPaymentAmounts(revenuePayments, currency);
+  const organicPayments = revenuePayments.filter((p: any) => !p.promo_code);
+  const promoPayments = revenuePayments.filter((p: any) => !!p.promo_code);
+  const organicRevenue = sumPaymentAmounts(organicPayments, currency);
+  const promoRevenue = sumPaymentAmounts(promoPayments, currency);
+  const revenueData = (data?.days ?? []).map((day) => ({
+    ...day,
+    revenue: sumPaymentAmounts(day.paymentAmounts ?? [], currency).amount,
+  }));
   const viewsData = data?.days ?? [];
   const recentPayments = data?.recentPayments ?? [];
+  const recurringValue = currency === "USD" ? Number(stats.mrrUsd) : Number(stats.mrrZmw ?? 0);
+  const recurringMissing = currency === "ZMW" ? Number(stats.mrrMissingZmw ?? 0) : 0;
   const refreshing = isFetching;
   const fetchStats = () => refresh(["admin", "overview", params.from ?? "", params.to ?? ""]);
 
@@ -159,19 +175,19 @@ const Dashboard = () => {
 
         <div className="flex flex-wrap items-center justify-between gap-3">
           <DateRangeFilter value={range} onChange={setRange} />
-          <p className="text-xs text-muted-foreground">MRR and ARR use active subscriptions today; other figures follow the dates.</p>
+          <p className="text-xs text-muted-foreground">MRR and ARR use active subscriptions today; other figures follow the dates. Conversions use locked payment rates.</p>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-          <StatCard title="MRR" value={formatUsd(Number(stats.mrrUsd ?? 0))} icon={TrendingUp} description="Monthly recurring revenue" />
-          <StatCard title="ARR" value={formatUsd(Number(stats.arrUsd ?? 0))} icon={BarChart3} description="MRR × 12" />
+          <StatCard title="MRR" value={formatCurrencyAmount(recurringValue, currency)} icon={TrendingUp} description={missingRateLabel(recurringMissing, "subscription") || "Monthly recurring revenue"} />
+          <StatCard title="ARR" value={formatCurrencyAmount(arrFromMrr(recurringValue), currency)} icon={BarChart3} description={`MRR × 12 = ${formatCurrencyAmount(recurringValue, currency)} × 12`} />
           <StatCard title="Active subscriptions" value={Number(stats.activeSubscriptions ?? 0)} icon={UserPlus} description="Paying right now" />
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <StatCard title="Total Revenue" value={formatCurrencyAmount(stats.totalRevenue, "ZMW")} icon={DollarSign} description={`≈ ${formatUsd(stats.totalRevenueUsd)}`} />
-          <StatCard title="Organic Revenue" value={formatCurrencyAmount(Number(stats.organicRevenue), "ZMW")} icon={DollarSign} description="No promo code" />
-          <StatCard title="Promo Revenue" value={formatCurrencyAmount(Number(stats.influencerRevenue), "ZMW")} icon={TrendingUp} description="Via influencers" />
+          <StatCard title="Total Revenue" value={formatPaymentTotal(revenuePayments, currency)} icon={DollarSign} description={missingRateLabel(totalRevenue.missing) || `${stats.completedPayments} completed payments`} />
+          <StatCard title="Organic Revenue" value={formatPaymentTotal(organicPayments, currency)} icon={DollarSign} description={missingRateLabel(organicRevenue.missing) || "No promo code"} />
+          <StatCard title="Promo Revenue" value={formatPaymentTotal(promoPayments, currency)} icon={TrendingUp} description={missingRateLabel(promoRevenue.missing) || "Via influencers"} />
           <StatCard title="Total Payments" value={stats.totalPayments} icon={CreditCard} description="All statuses" />
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -184,7 +200,7 @@ const Dashboard = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <Card className="bg-card border-border">
             <CardHeader>
-              <CardTitle className="netflix-title text-lg text-foreground">REVENUE (SELECTED DATES)</CardTitle>
+              <CardTitle className="netflix-title text-lg text-foreground">REVENUE ({currency}) · SELECTED DATES</CardTitle>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={250}>
@@ -251,7 +267,10 @@ const Dashboard = () => {
                         <TableCell className="font-medium text-foreground">{p.name}</TableCell>
                         <TableCell className="text-muted-foreground text-sm">{p.email}</TableCell>
                         <TableCell className="text-muted-foreground text-sm">{p.phone}</TableCell>
-                        <TableCell className="text-foreground font-medium">{p.currency || "ZMW"} {p.amount}</TableCell>
+                        <TableCell className="text-foreground font-medium">
+                          <div>{formatPaymentMoney(p, currency)}</div>
+                          <div className="text-xs font-normal text-muted-foreground">Original: {formatCurrencyAmount(Number(p.amount), p.currency || "ZMW")}</div>
+                        </TableCell>
                         <TableCell>
                           <Badge
                             variant={isSuccess ? "default" : "secondary"}

@@ -25,3 +25,4 @@
 - Auth and app emails share BrandHeader with a public storage PNG, so email logos remain accessible independently of frontend publishing.
 - Highlight review uses the admin-highlights endpoint with server-side admin authentication, 100-row pagination, and availability checks before publishing; sync never overwrites approval.
 - Admin date filters share `src/lib/dateRange.ts`/`DateRangeFilter`; MRR/ARR come from currently active subscriptions normalised by plan interval, independent of the selected dates.
+- Admin money reporting defaults to USD and uses payment-locked FX for ZMW; missing historical rates stay excluded and visible, while expired payments reconcile lazily without a polling job to prevent mixed-currency totals and stale pending records.

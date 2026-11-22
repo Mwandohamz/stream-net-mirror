@@ -19,15 +19,18 @@ import { useToast } from "@/hooks/use-toast";
 import DateRangeFilter from "@/components/admin/DateRangeFilter";
 import { inDateRange, type DateRange } from "@/lib/dateRange";
 import { useAdminQuery, useAdminRefresh, fetchAdminMetrics } from "@/hooks/useAdminQuery";
-import { formatCurrencyAmount, formatUsd } from "@/lib/currency";
+import { formatCurrencyAmount } from "@/lib/currency";
+import { formatPaymentMoney, paymentUsd } from "@/lib/adminCurrency";
+import { useAdminCurrency } from "@/components/admin/AdminCurrency";
 
 const PAGE_SIZE = 100;
-const STATUSES = ["completed", "pending", "failed", "refunded"];
+const STATUSES = ["completed", "pending", "failed", "expired", "refunded"];
 const QUERY_KEY = ["admin", "payments"];
 
 
 const Payments = () => {
   const { toast } = useToast();
+  const { currency } = useAdminCurrency();
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
   const [range, setRange] = useState<DateRange>({ preset: "all" });
@@ -104,7 +107,7 @@ const Payments = () => {
       .order("created_at", { ascending: false });
     const all = allData || [];
 
-    const headers = ["Name", "Email", "Phone", "Provider", "Amount", "Currency", "Status", "Promo Code", "Discount", "Transaction ID", "Date"];
+    const headers = ["Name", "Email", "Phone", "Provider", "Amount", "Currency", "Recorded USD", "Historical FX", "Status", "Promo Code", "Discount", "Transaction ID", "Date"];
     const rows = all.map((p: any) => [
       p.name,
       p.email,
@@ -112,6 +115,8 @@ const Payments = () => {
       p.provider,
       p.amount,
       p.currency || "ZMW",
+      paymentUsd(p) ?? "Rate unavailable",
+      p.fx_rate ? `1 USD = ${p.fx_rate} ${p.currency || "ZMW"}` : "Not recorded",
       p.status,
       p.promo_code || "",
       p.discount_applied || 0,
@@ -171,9 +176,9 @@ const Payments = () => {
                   <TableHead>Email</TableHead>
                   <TableHead>Phone</TableHead>
                   <TableHead>Provider</TableHead>
-                  <TableHead>Amount</TableHead>
-                  <TableHead>Currency</TableHead>
-                  <TableHead>USD equiv.</TableHead>
+                  <TableHead>Amount ({currency})</TableHead>
+                  <TableHead>Original amount</TableHead>
+                  <TableHead>Historical FX</TableHead>
                   <TableHead>Promo Code</TableHead>
                   <TableHead>Discount</TableHead>
                   <TableHead>Status</TableHead>
@@ -194,20 +199,15 @@ const Payments = () => {
                 ) : (
                   pageRows.map((p) => {
                     const normalizedStatus = String(p.status || "").toLowerCase();
-                    const usd = p.amount_usd
-                      ? Number(p.amount_usd)
-                      : p.fx_rate
-                        ? Number(p.amount) / Number(p.fx_rate)
-                        : null;
                     return (
                       <TableRow key={p.id}>
                         <TableCell className="font-medium text-foreground">{p.name}</TableCell>
                         <TableCell className="text-muted-foreground">{p.email}</TableCell>
                         <TableCell className="text-muted-foreground">{p.phone}</TableCell>
                         <TableCell className="capitalize text-muted-foreground">{p.provider}</TableCell>
-                        <TableCell className="text-foreground font-medium">{formatCurrencyAmount(Number(p.amount), p.currency || "ZMW").replace(`${p.currency || "ZMW"} `, "")}</TableCell>
-                        <TableCell className="text-muted-foreground">{p.currency || "ZMW"}</TableCell>
-                        <TableCell className="text-muted-foreground">{usd !== null ? formatUsd(usd) : "—"}</TableCell>
+                        <TableCell className="text-foreground font-medium">{formatPaymentMoney(p, currency)}</TableCell>
+                        <TableCell className="text-muted-foreground">{formatCurrencyAmount(Number(p.amount), p.currency || "ZMW")}</TableCell>
+                        <TableCell className="text-muted-foreground text-xs">{p.fx_rate ? `1 USD = ${Number(p.fx_rate).toFixed(6)} ${p.currency || "ZMW"}` : "Not recorded"}</TableCell>
                         <TableCell className="text-muted-foreground">{p.promo_code || "—"}</TableCell>
                         <TableCell className="text-muted-foreground">{p.discount_applied ? `${p.discount_applied}%` : "—"}</TableCell>
                         <TableCell>

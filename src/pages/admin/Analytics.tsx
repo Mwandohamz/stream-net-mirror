@@ -5,7 +5,12 @@ import StatCard from "@/components/admin/StatCard";
 import { getAdminCache, setAdminCache } from "@/lib/adminCache";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Eye, Users, Globe, TrendingDown } from "lucide-react";
+import { Eye, Users, Globe, TrendingDown, DollarSign, CreditCard, BarChart3 } from "lucide-react";
+import DateRangeFilter from "@/components/admin/DateRangeFilter";
+import { rangeParams, type DateRange } from "@/lib/dateRange";
+import { fetchAdminMetrics, useAdminQuery } from "@/hooks/useAdminQuery";
+import { formatPaymentTotal, missingRateLabel, sumPaymentAmounts, type PaymentMoney } from "@/lib/adminCurrency";
+import { useAdminCurrency } from "@/components/admin/AdminCurrency";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 
 const COLORS = ["hsl(0 85% 50%)", "hsl(270 60% 55%)", "hsl(200 80% 50%)", "hsl(120 60% 45%)", "hsl(40 90% 55%)"];
@@ -13,6 +18,21 @@ const COLORS = ["hsl(0 85% 50%)", "hsl(270 60% 55%)", "hsl(200 80% 50%)", "hsl(1
 const CACHE_KEY = "admin:analytics";
 
 const Analytics = () => {
+  const { currency } = useAdminCurrency();
+  const [range, setRange] = useState<DateRange>({ preset: "30d" });
+  const params = rangeParams(range);
+  const revenueQuery = useAdminQuery<{
+    stats: { completedPayments: number; conversionRate: number };
+    days: any[];
+    revenuePayments: PaymentMoney[];
+  }>(["admin", "overview", params.from ?? "", params.to ?? ""], () => fetchAdminMetrics("overview", params));
+  const revenuePayments = revenueQuery.data?.revenuePayments ?? [];
+  const revenueTotal = sumPaymentAmounts(revenuePayments, currency);
+  const revenueData = (revenueQuery.data?.days ?? []).map((day) => ({
+    ...day,
+    revenue: sumPaymentAmounts(day.paymentAmounts ?? [], currency).amount,
+  }));
+
   // Reading the whole page-view history is slow, so the last result is reused
   // while a fresh one loads in the background.
   const cached = getAdminCache<any>(CACHE_KEY);
@@ -114,6 +134,32 @@ const Analytics = () => {
       <div className="space-y-6">
         <h1 className="netflix-title text-3xl text-foreground">ANALYTICS</h1>
 
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <DateRangeFilter value={range} onChange={setRange} />
+          <p className="text-xs text-muted-foreground">The date filter applies to payment analytics; visitor totals cover all recorded visits.</p>
+        </div>
+
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <StatCard title="Revenue" value={formatPaymentTotal(revenuePayments, currency)} icon={DollarSign} description={missingRateLabel(revenueTotal.missing) || `Completed payments in ${currency}`} />
+          <StatCard title="Successful payments" value={revenueQuery.data?.stats.completedPayments ?? 0} icon={CreditCard} description="Selected dates" />
+          <StatCard title="Visitor conversion" value={`${revenueQuery.data?.stats.conversionRate ?? 0}%`} icon={BarChart3} description="Visitors → paid" />
+        </div>
+
+        <Card className="bg-card border-border">
+          <CardHeader><CardTitle className="netflix-title text-lg text-foreground">REVENUE ({currency}) · SELECTED DATES</CardTitle></CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={250}>
+              <BarChart data={revenueData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, color: "hsl(var(--foreground))" }} />
+                <Bar dataKey="revenue" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <StatCard title="Total Views" value={stats.totalViews} icon={Eye} />
           <StatCard title="Unique Sessions" value={stats.uniqueSessions} icon={Users} />
@@ -177,7 +223,7 @@ const Analytics = () => {
 
         <div className="flex items-center justify-between text-sm text-muted-foreground">
           <p>Based on all {totalCount} recorded visits. Admin screens and our own testing are excluded.</p>
-          <Button variant="outline" size="sm" onClick={() => void fetchAnalytics()} className="border-border text-foreground">
+          <Button variant="outline" size="sm" onClick={() => { void fetchAnalytics(); void revenueQuery.refetch(); }} className="border-border text-foreground">
             Refresh
           </Button>
         </div>

@@ -8,12 +8,14 @@ import { Search, ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
 import DateRangeFilter from "@/components/admin/DateRangeFilter";
 import { inDateRange, type DateRange } from "@/lib/dateRange";
 import { useAdminQuery, useAdminRefresh, fetchAdminMetrics } from "@/hooks/useAdminQuery";
-import { formatCurrencyAmount, formatUsd } from "@/lib/currency";
+import { formatPaymentTotal, missingRateLabel, sumPaymentAmounts } from "@/lib/adminCurrency";
+import { useAdminCurrency } from "@/components/admin/AdminCurrency";
 
 const PAGE_SIZE = 100;
 const QUERY_KEY = ["admin", "customers"];
 
 const Customers = () => {
+  const { currency } = useAdminCurrency();
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
   const [range, setRange] = useState<DateRange>({ preset: "all" });
@@ -74,8 +76,8 @@ const Customers = () => {
                   <TableHead>Email</TableHead>
                   <TableHead>Phone</TableHead>
                   <TableHead>Country</TableHead>
-                  <TableHead>Total paid</TableHead>
-                  <TableHead>USD equiv.</TableHead>
+                  <TableHead>Total paid ({currency})</TableHead>
+                  <TableHead>Original currency</TableHead>
                   <TableHead>Promo code</TableHead>
                   <TableHead>Payments</TableHead>
                   <TableHead>Last payment</TableHead>
@@ -98,9 +100,10 @@ const Customers = () => {
                       <TableCell className="text-muted-foreground">{c.phone}</TableCell>
                       <TableCell className="text-muted-foreground">{c.country || "—"}</TableCell>
                       <TableCell className="text-foreground font-medium">
-                        {formatCurrencyAmount(Number(c.totalPaid ?? 0), c.currency || "ZMW")}
+                        <div>{formatPaymentTotal(c.paymentAmounts ?? [], currency)}</div>
+                        {sumPaymentAmounts(c.paymentAmounts ?? [], currency).missing > 0 && <div className="text-xs font-normal text-muted-foreground">{missingRateLabel(sumPaymentAmounts(c.paymentAmounts ?? [], currency).missing)}</div>}
                       </TableCell>
-                      <TableCell className="text-muted-foreground">{formatUsd(Number(c.totalPaidUsd ?? 0))}</TableCell>
+                      <TableCell className="text-muted-foreground">{c.currency || "—"}</TableCell>
                       <TableCell className="text-muted-foreground">{c.promo_code || "—"}</TableCell>
                       <TableCell className="text-foreground">{c.paymentCount}</TableCell>
                       <TableCell className="text-muted-foreground text-xs whitespace-nowrap">

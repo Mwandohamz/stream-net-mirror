@@ -1,6 +1,7 @@
 import { Navigate } from "react-router-dom";
 import { useAdmin } from "@/hooks/useAdmin";
 import { Loader2, AlertTriangle } from "lucide-react";
+import { AdminCurrencyProvider } from "@/components/admin/AdminCurrency";
 
 const AdminRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, isAdmin, loading, authError } = useAdmin();
@@ -27,7 +28,7 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
     return <Navigate to="/admin/login" replace />;
   }
 
-  return <>{children}</>;
+  return <AdminCurrencyProvider>{children}</AdminCurrencyProvider>;
 };
 
 export default AdminRoute;
