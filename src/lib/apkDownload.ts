@@ -12,11 +12,16 @@ export const detectPlatform = (): string => {
 };
 
 /**
- * Anyone (signed in or not) can download the APK. The public apk-download
- * function logs the download (device, time) and returns a short-lived link.
+ * Signed-in accounts can download the APK. The apk-download function
+ * checks the session, logs the download and returns a short-lived link.
  */
 export async function downloadApk(): Promise<boolean> {
   try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      window.location.assign(`/login?redirect=${encodeURIComponent(window.location.pathname)}`);
+      return false;
+    }
     const { data, error } = await supabase.functions.invoke("apk-download", {
       body: { platform: detectPlatform() },
     });

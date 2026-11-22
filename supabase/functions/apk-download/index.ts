@@ -31,14 +31,15 @@ serve(async (req) => {
     if (typeof body?.platform === "string") platform = body.platform.slice(0, 40);
   } catch { /* no body is fine */ }
 
-  // Attach the caller's user id when a valid session token is present.
-  const authHeader = req.headers.get("Authorization");
-  if (authHeader) {
-    try {
-      const { data: { user } } = await supabase.auth.getUser(authHeader.replace("Bearer ", ""));
-      userId = user?.id ?? null;
-    } catch { /* anonymous download */ }
-  }
+  // Downloads require a signed-in account.
+  const authHeader = req.headers.get("Authorization") || "";
+  const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
+  if (!token) return json({ error: "Please sign in to download the app" }, 401);
+  try {
+    const { data: { user } } = await supabase.auth.getUser(token);
+    userId = user?.id ?? null;
+  } catch { userId = null; }
+  if (!userId) return json({ error: "Please sign in to download the app" }, 401);
 
   // Track the download; a logging failure must never block the file.
   try {
