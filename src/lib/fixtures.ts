@@ -17,7 +17,7 @@ export function formatKickoff(utc: string, timeZone?: string) {
 export function fixturesWatchDestination(member: boolean, state: string) {
   return member ? null : state === "guest" ? "/signup" : "/payment";
 }
-type MatchdayRow = { competition_code: string; matchday: number | null; status: string; kickoff_utc: string };
+type MatchdayRow = { competition_code: string; matchday?: number | null; status: string; kickoff_utc: string };
 /** Keeps only each league's current matchweek: the round of a live game, else the round of the next game to kick off. */
 export function currentMatchweek<T extends MatchdayRow>(rows: T[], now = Date.now()): T[] {
   const out: T[] = [];
