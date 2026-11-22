@@ -9,7 +9,7 @@
 - [x] Audit and correct TMDB catalogue, provider/genre filters, caching and highlights integration
 - [x] Verify protected tables, four deployed functions, configured credentials and authenticated hourly scheduling
 - [x] 52 automated tests, scoped lint, Deno checks and desktop/mobile signed-in/public browser checks passed; frontend publishing requested
-- [ ] Configure verified official YouTube channel IDs and approve highlights — eight source records have no channel IDs and remain disabled; ingestion/playback requires verified sources
+- [x] Configure verified official PL/UEFA/La Liga YouTube channels and admin approval; other channels remain disabled pending verification
 - [x] Confirm production frontend deployment: https://streamnetmirror.app/movies returned 200 with new controls and 19 movie cards; Live Sports highlights empty state passed, no runtime errors
 - [x] Shared streaming warning with in-app and external website choices for every platform and player switch
 - [x] Admin-editable exact plan days using existing fields; default 30 days and zero implicit grace on future activations; 16 tests passed and preview compilation clean
