@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { APP_APK_SETTING, isOwnAppApkPath } from "../lib/appApk";
+import { APP_APK_SETTING, hasOwnAppApk, isOwnAppApkPath } from "../lib/appApk";
 describe("own application APK", () => {
   it("uses a separate setting from the external APK", () => {
     expect(APP_APK_SETTING).toBe("streamnetmirror_apk_file_name");
@@ -9,5 +9,9 @@ describe("own application APK", () => {
     expect(isOwnAppApkPath("downloads/streamnetmirror-123.apk")).toBe(false);
     expect(isOwnAppApkPath("downloads/streamnetmirror-own-123.apk")).toBe(true);
     expect(isOwnAppApkPath("downloads/streamnetmirror-own-../old.apk")).toBe(false);
+  });
+  it("shows download actions only for the current own-app setting", () => {
+    expect(hasOwnAppApk({ [APP_APK_SETTING]: "downloads/streamnetmirror-own-123.apk" })).toBe(true);
+    expect(hasOwnAppApk({ apk_file_name: "downloads/streamnetmirror-123.apk" })).toBe(false);
   });
 });

@@ -24,6 +24,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAppSettings } from "@/hooks/useAppSettings";
 import { openExternalUrl } from "@/lib/native";
 import ApkDownloadButton from "@/components/ApkDownloadButton";
+import { hasOwnAppApk } from "@/lib/appApk";
 import AccountActivity from "@/components/member/AccountActivity";
 import moviesHero from "@/assets/dashboard-movies.jpg";
 import CatalogBrowser from "@/components/CatalogBrowser";
@@ -519,7 +520,7 @@ const MemberDashboard = () => {
                     <strong className="text-foreground">Tip:</strong> You can also use the TV's built-in browser to visit the portal URL directly if APK installation isn't possible.
                   </p>
                 </div>
-                {settings.apk_file_name ? (
+                {hasOwnAppApk(settings) ? (
                   <ApkDownloadButton label="Download TV APK" variant="outline" className="mt-3 w-full gap-1 border-green-500/30 hover:bg-green-500/10" />
                 ) : (
                   <a href={portalUrl} target="_blank" rel="noopener noreferrer" className="block mt-3">

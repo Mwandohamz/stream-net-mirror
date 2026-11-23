@@ -68,7 +68,7 @@ privacy policy URL, content rating, and enabling Play App Signing.
 3. Test it on an Android phone: login, payment, account history, notification inbox, back navigation, movies and football. A debug installation usually needs uninstalling before the differently signed release can install; this clears its local session.
 4. In Stream NetMirror, open **Admin → Settings → Android APK** and upload `app-release.apk`, not the artifact ZIP or AAB.
 5. The existing private `app-files` bucket stores the file. A separate `streamnetmirror_apk_file_name` setting selects your own app. The legacy external APK setting is intentionally ignored by public download buttons.
-6. Test Download App while signed out and signed in. Anyone can download, including unpaid users. Short-lived links protect storage; device/time logs count download requests, not completed installations.
+6. Test Download App while signed out and signed in. Signed-out visitors go to the existing sign-in page and return to their original page afterward; any signed-in user can download, including unpaid users. Short-lived links protect storage; device/time logs count download requests, not completed installations.
 7. Actions ZIPs expire; your uploaded APK remains in app storage. Upload replacements from your own repository only.
 
 ### Native experience

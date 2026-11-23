@@ -287,7 +287,7 @@ const AdminSettings = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-xs text-muted-foreground">
-              Upload your own Stream NetMirror APK from GitHub Actions, not an external app’s APK. Everyone can download it, with or without a subscription. Use the signed release APK for distribution; an AAB is for Google Play, not installation.
+              Upload your own Stream NetMirror APK from GitHub Actions, not an external app’s APK. Signed-in users can download it, with or without a paid subscription. Use the signed release APK for distribution; an AAB is for Google Play, not installation.
             </p>
 
             {apkFileName && apkUrl ? (
