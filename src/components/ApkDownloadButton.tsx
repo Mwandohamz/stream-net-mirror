@@ -16,7 +16,7 @@ interface Props {
   size?: "default" | "sm" | "lg" | "icon";
 }
 
-/** Download button with an Android install warning, available to everyone. */
+/** Download button with an Android install warning for signed-in accounts. */
 const ApkDownloadButton = ({ label = "Download APK", className, variant = "default", size = "sm" }: Props) => {
   const { toast } = useToast();
   const [confirmOpen, setConfirmOpen] = useState(false);

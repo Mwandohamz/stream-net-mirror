@@ -18,7 +18,7 @@ const AppDownload = () => {
               DOWNLOAD THE APP
             </h2>
             <p className="text-xs md:text-lg text-muted-foreground mb-4 md:mb-6">
-              Get StreamNetMirror on your favourite device. Free app for Android phones and TVs — no account needed to download.
+              Get StreamNetMirror on your favourite device. Free app for Android phones and TVs — sign in to download securely.
             </p>
 
             <div className="space-y-3 md:space-y-4 mb-5 md:mb-8">

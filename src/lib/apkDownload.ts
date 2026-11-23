@@ -15,11 +15,15 @@ export const detectPlatform = (): string => {
  * Signed-in accounts can download the APK. The apk-download function
  * checks the session, logs the download and returns a short-lived link.
  */
+export const apkSignInDestination = (currentPath: string) =>
+  `/signin?next=${encodeURIComponent(currentPath)}`;
+
 export async function downloadApk(): Promise<boolean> {
   try {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
-      window.location.assign(`/login?redirect=${encodeURIComponent(window.location.pathname)}`);
+      const currentPath = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+      window.location.assign(apkSignInDestination(currentPath));
       return false;
     }
     const { data, error } = await supabase.functions.invoke("apk-download", {
