@@ -15,7 +15,7 @@ const json = (body: unknown, status = 200) =>
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 
-const MAX_RECIPIENTS = 200;
+const MAX_RECIPIENTS = 50;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -26,9 +26,9 @@ serve(async (req) => {
     const { admin, email: callerEmail } = auth;
 
     const body = await req.json().catch(() => ({}));
-    const emails: string[] = Array.isArray(body?.emails)
+    const emails: string[] = [...new Set<string>( Array.isArray(body?.emails)
       ? body.emails.map((e: unknown) => String(e).trim().toLowerCase()).filter(Boolean)
-      : [];
+      : [])];
     const subject = String(body?.subject ?? "").trim();
     const heading = String(body?.heading ?? subject).trim();
     const message = String(body?.body ?? "").trim();
@@ -37,6 +37,22 @@ serve(async (req) => {
     const emailType = String(body?.emailType ?? "account-notice").trim();
 
     if (!subject) return json({ error: "A subject is required" }, 400);
+    if (subject.length > 150 || heading.length > 150) return json({ error: "Subject and heading must be 150 characters or fewer" }, 400);
+    if (message.length > 5000) return json({ error: "Message must be 5000 characters or fewer" }, 400);
+    if (ctaLabel.length > 40) return json({ error: "Button label must be 40 characters or fewer" }, 400);
+    if (!/^[a-z0-9-]{1,40}$/.test(emailType)) return json({ error: "Invalid email type" }, 400);
+    try {
+      const u = new URL(ctaUrl);
+      const allowed = ["streamnetmirror.app", "www.streamnetmirror.app", "stream-net-mirror.lovable.app"];
+      if (u.protocol !== "https:" || !allowed.includes(u.hostname)) {
+        return json({ error: "Button link must point to the official StreamNetMirror site" }, 400);
+      }
+    } catch {
+      return json({ error: "Button link is not a valid URL" }, 400);
+    }
+    if (emails.some((e) => e.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e))) {
+      return json({ error: "One or more recipient addresses are invalid" }, 400);
+    }
     if (!message) return json({ error: "A message body is required" }, 400);
     if (emails.length === 0) return json({ error: "Select at least one recipient" }, 400);
     if (emails.length > MAX_RECIPIENTS) {
@@ -111,6 +127,6 @@ serve(async (req) => {
     return json({ success: true, sent, failed, suppressed, total: valid.length });
   } catch (err) {
     console.error("admin-send-email error", err);
-    return json({ error: (err as Error)?.message ?? "Unexpected error" }, 500);
+    return json({ error: "Could not send emails" }, 500);
   }
 });
